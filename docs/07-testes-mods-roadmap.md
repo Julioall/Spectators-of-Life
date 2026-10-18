@@ -1,23 +1,31 @@
-# Testes, mods e roadmap
+# Testes, mods e referência ao roadmap
 
-## Testes
+## Fonte de verdade
 
-Pirâmide: unitários do core; cenários com seed; integração Worker/save/protocolo; screenshots de canvas; experimentos longos de evolução e performance. Smoke test: abrir, gerar seed, pausar, avançar, acelerar, selecionar, abrir painel, salvar/recarregar e repetir a seed.
+As fases e seus critérios estão exclusivamente em [09-roadmap.md](09-roadmap.md). Este arquivo mantém o caminho original para compatibilidade e concentra qualidade e extensibilidade. Escopo natural obrigatório: [10-ecologia-e-biologia.md](10-ecologia-e-biologia.md).
 
-IA deve testar NaN, máscara de ação, exploração, serialização, mutação, herança, memória cheia, morte durante update e irmãos. Visual deve testar âncora, escala, biomas, HUD, janela estreita, pausa e reduced-motion. Alvo inicial: 60 FPS no desktop de referência e budget explícito por tick.
+## Validação contínua
 
-## Mods
+F0: RNG, ticks, protocolo Worker, pausa, avanço e save/load.
+F1: água, fontes/perdas, escoamento e cadências.
+F2: germinação, limitações ambientais, competição, biomassa e decomposição.
+F3: metabolismo, ações simultâneas, reprodução, desenvolvimento, saúde, doença e morte.
+F4: aprendizado online, máscara de ação, update terminal, serialização, memória limitada, herança e comparação entre seeds.
 
-A primeira API é data-first: espécies, biomas, plantas, recursos, construções, eventos, recompensas e cenários declarativos. Mod contém manifest, schemas, data, assets, localization e previews. IDs são namespaced; validação checa schemas, referências, ciclos, limites e versão; save registra mods, versões e checksums. Código arbitrário fica fora do primeiro escopo.
+Verificar consumo de recurso disputado, prevenção de nascimento sem custo e causa de extinção. Extinção pode ser resultado legítimo; não maquiar cenários com reposição automática.
 
-## Fases
+Repetir cenários com render desligado e câmera em regiões diferentes: o estado natural deve permanecer equivalente. Saves devem reproduzir a continuação do mundo e do controlador na mesma versão/ambiente testado.
 
-0 Fundação: contratos, Worker, seed, schemas, CI e cenário vazio.
-1 Mundo observável: mapa, biomas, água, clima, câmera, pausa e inspeção.
-2 Cadeia alimentar: necessidades, percepção, ações, plantas, animais, morte e reprodução.
-3 Aprendizado: MLP, update online, memória, mutação, herança e métricas.
-4 Sociedades: grupos, trabalho, plantio, construção, reputação, diplomacia e guerra.
-5 História: timeline, replay, genealogia, filtros e causalidade.
-6 Mods e escala: schemas públicos, loader, exemplos, compatibilidade e otimização.
+Playtest com screenshots verifica mapa, leitura de fases biológicas, âncora, painel contextual, teclado, janela estreita e reduced-motion. Inspeção e eventos existem desde os primeiros marcos; não esperar sociedades para tornar o mundo compreensível.
 
-Cada gate exige documentação, cenário reproduzível, testes, playtest, métricas e riscos registrados.
+60 FPS é meta de apresentação a aferir em equipamento registrado. Reportar separadamente tempo por tick, velocidade efetiva da simulação, população, memória e FPS. Tolerâncias de fluxos são definidas por sistema antes de executar ensaios.
+
+## Mods por capacidade
+
+IDs e schemas são preparados desde F0. Primeiro conteúdo externo: biomas, plantas, fauna e cenários naturais. Conteúdo humano exige os módulos futuros correspondentes.
+
+Manifesto declara versão, dependências e capacidades exigidas; fase de produção sozinha não garante compatibilidade. Loader rejeita módulo ausente, referência inválida e parâmetro fora de limites. Saves registram versões/checksums. Mods data-first não executam código arbitrário.
+
+## Relatórios
+
+Registrar fase, cenário, seed, build, duração, população, resultado, limites do modelo e evidências. Revisões documentais verificam links e consistência; não podem alegar aprovação ecológica ou playtest sem runtime.
