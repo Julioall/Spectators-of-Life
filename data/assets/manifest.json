@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "assets": {
+    "characters.placeholder": {
+      "domain": "characters",
+      "kind": "procedural",
+      "source": "src/assets/procedural/placeholder",
+      "frameSize": [64, 64],
+      "anchor": [32, 56],
+      "status": "planned",
+      "license": "project-original"
+    },
+    "environment.placeholder-ground": {
+      "domain": "environment",
+      "kind": "procedural",
+      "source": "src/assets/procedural/ground",
+      "frameSize": [64, 64],
+      "anchor": [32, 64],
+      "status": "planned",
+      "license": "project-original"
+    }
+  }
+}
