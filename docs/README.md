@@ -12,5 +12,6 @@ Esta pasta é a fonte humana e operacional de verdade. Schemas, cenários e mani
 | 05-prompt-bible.md | comunicação padronizada com IAs |
 | 06-assets-ui-tracker.md | arte, manifesto e interface de observação |
 | 07-testes-mods-roadmap.md | qualidade, mods e fases |
+| 08-pesquisa-e-validacao.md | hipóteses, experimentos e evidências |
 
 ADRs ficam em docs/adr/. A regra geral para agentes está em AGENTS.md. Cada assunto deve ter um documento dono; evitar um documento gigante misturando design, código e balanceamento.
