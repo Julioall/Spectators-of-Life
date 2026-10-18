@@ -17,7 +17,13 @@ Status: especificação de produção, não modelo científico validado. Define 
 | Ciclo de vida | Nascimento, dependência juvenil, maturação, reprodução custosa, envelhecimento e morte | Descendentes dependem de condições; biomassa nova tem origem contabilizada |
 | Saúde | Dano e uma doença simplificada com exposição, transmissão, recuperação e mortalidade | Contato/densidade e condição corporal afetam o cenário; sem microbiologia detalhada |
 | Populações | Competição, deslocamento por recurso, predação, reprodução e extinção local | Capacidade de suporte emerge dos recursos; nenhum respawn oculto |
-| Adaptação | Aprendizado animal, traços herdáveis, mutações e linhagens | Mudanças medidas separadamente por vida e geração; ver especificação de IA |
+| Adaptação | F3: baseline de comportamento; F4: aprendizado online, traços herdáveis, mutações e linhagens | Efeito durante a vida separado de mudanças entre gerações; ver especificação de IA |
+
+## Contrato biológico por espécie
+
+Cada perfil declara as condições e restrições que realmente entram no modelo: dieta, habitat, faixa térmica, necessidades de água e alimento, sentidos, custos de movimento, ciclo de vida e estratégia reprodutiva. Para plantas, registra-se preferência por luz, água, temperatura e substrato; para animais, também tamanho corporal, maturação, sazonalidade reprodutiva, quantidade de descendentes e cuidado parental quando representados. Uma simplificação por espécie deve ser explícita, não presumida como regra de todos os animais.
+
+F3 valida perfis e ciclos de vida com comportamento de referência; F4 acrescenta aprendizagem online e variação herdável. Diferenças populacionais em F3 não devem ser descritas como evolução genética se genoma, herança e mutação ainda estiverem desligados.
 
 ## Simplificações explícitas
 
@@ -27,9 +33,16 @@ A simulação não reproduz química molecular, tectônica, atmosfera tridimensi
 
 Faixas climáticas e biológicas são parâmetros de jogo até calibração. A documentação não afirma validação científica apenas por usar termos ecológicos.
 
-## Fluxos
+## Fluxos e orçamentos biológicos
 
-Luz e condições ambientais permitem produção vegetal; nutrientes e água limitam a produção. Consumo transfere parte da biomassa para reservas do consumidor e resíduos. Metabolismo dissipa energia. Morte produz detritos; decomposição disponibiliza nutrientes. Água tem entradas, transferências e perdas explícitas.
+Luz e condições ambientais permitem produção vegetal; água e nutrientes limitam essa produção. Consumo remove biomassa comestível disponível. Cada cenário declara quais partes são modeladas e usa unidades compatíveis.
+
+Manter registros separados para:
+- **Matéria/biomassa:** produção vegetal, consumo, crescimento corporal, descendentes, resíduos, detritos e decomposição. Transferências internas têm origem e destino explícitos; fontes e perdas de borda são registradas.
+- **Energia utilizável:** assimilação do alimento e alocação para manutenção, termorregulação quando modelada, movimento, reparo, crescimento e reprodução. Eficiência de assimilação e custos devem ser parâmetros explícitos; metabolismo dissipa energia do sistema.
+- **Água:** ingestão, armazenamento corporal quando modelado, perdas e disponibilidade ambiental.
+
+O tamanho ou massa estrutural do corpo não é a mesma coisa que reserva energética. Crescimento e reprodução consomem recursos; nascimento não pode criar biomassa sem custo ou fonte declarada. Isso não exige implementar a teoria completa de Dynamic Energy Budget (DEB): o protótipo pode usar um orçamento simplificado, desde que as unidades, fluxos, limites e perdas estejam visíveis e sejam testáveis.
 
 Balanceamento pode usar fontes e sumidouros de borda, desde que apareçam nas métricas. Não fabricar matéria ou animais para sustentar uma aparência de equilíbrio.
 
@@ -41,6 +54,6 @@ Selecionar uma planta mostra estágio e fatores limitantes. Selecionar um animal
 
 ## Cenários de aceite
 
-Chuva após seca; escoamento para área baixa; vegetação em solo inadequado; competição vegetal; morte e decomposição; herbivoria; perseguição com gasto energético; reprodução sem reserva suficiente; doença em grupos densos; recuperação após redução de consumo.
+Chuva após seca; escoamento para área baixa; vegetação em solo inadequado; competição vegetal; morte e decomposição; herbivoria; perseguição com gasto energético; alimentação seguida de manutenção, crescimento e reprodução; resíduos e mortalidade retornando ao estoque de detritos; reprodução sem reserva suficiente; doença em grupos densos; recuperação após redução de consumo.
 
 Cada cenário declara seed, parâmetros, duração, expectativa direcional, tolerâncias e invariantes. Referência quantitativa e tolerância são fixadas antes do teste. Uma trajetória específica de população não deve ser imposta a todas as seeds.
