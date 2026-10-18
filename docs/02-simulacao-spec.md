@@ -26,7 +26,7 @@ Humanos futuros usam as mesmas etapas biológicas; sistemas sociais entram por m
 
 IDs únicos e estáveis; valores finitos; estoques não negativos; consumo simultâneo nunca excede o disponível; indivíduo morto não age nem aprende em ticks futuros. A transição terminal ainda pode receber uma última atualização.
 
-Transferências de água, nutrientes e biomassa registram origem e destino. Fontes externas e perdas previstas são contabilizadas. Energia pode entrar pela produção e sair por metabolismo; não se impõe conservação artificial entre quantidades de unidades diferentes.
+Transferências de água, nutrientes e biomassa registram origem e destino. Para animais, registrar separadamente biomassa ingerida/residual e energia assimilada/alocada a manutenção, movimento, crescimento e reprodução; parâmetros de assimilação e dissipação devem ser explícitos. Fontes externas e perdas previstas são contabilizadas. Não somar ou impor conservação artificial entre quantidades de unidades diferentes.
 
 Falha numérica pausa com diagnóstico; não corrigir silenciosamente estoque inválido.
 
