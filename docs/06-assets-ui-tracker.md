@@ -21,3 +21,24 @@ Indivíduo mostra necessidades, ação, percepção, recompensa decomposta, mem�
 ## Tracker
 
 Status, responsável, dependências, licença e critério de aceite devem aparecer na tabela de produção. O tracker humano não substitui o manifesto nem a validação automática.
+
+## Prioridade visual e de interface
+
+F1–F2: relevo, margens, água, solo, rochas, plantas em diferentes estágios e detritos.
+F3–F4: animais juvenis/adultos, deslocamento, alimentação, repouso, reprodução e morte; inspeção de saúde, necessidades e linhagem.
+F5–F6: humanos, recursos coletados, abrigos e acampamentos simples.
+F7–F9: cultivo, edifícios, ferramentas profissionais, cidades e instituições.
+
+Pixel art desenhado em código é a base escolhida. Grade de 64 pixels é referência de detalhe, não limite de tamanho nem unidade biológica. Objetos maiores usam múltiplas células/partes; registrar footprint, pivô, ocupação e área visual separadamente. Seeds de variação visual não alteram ecologia.
+
+Painéis de profissões, economia ou política só aparecem quando seus módulos existem. Antes disso, priorizar água, solo, habitat, vegetação, ciclos de vida, fluxos e teias alimentares.
+
+O manifesto atual contém exemplos planejados com caminhos ainda inexistentes; não deve ser tratado como catálogo carregável. Estado planned não autoriza anunciar asset integrado. O tracker inicial abaixo registra a prioridade, sem atribuir autoria/licença a assets ainda não produzidos.
+
+| ID de planejamento | Fase | Estado | Aceite |
+| --- | --- | --- | --- |
+| natural.terrain-water | F1 | planned | Solo, relevo e água legíveis em zoom de jogo |
+| natural.plant-lifecycle | F2 | planned | Estágios, variações e morte distinguíveis |
+| natural.detritus | F2 | planned | Decomposição visível sem ruído excessivo |
+| natural.fauna-lifecycle | F3 | planned | Âncora e proporção estáveis entre estados |
+| human.primitive | F5 | deferred | Só planejar em detalhe após gate natural |
