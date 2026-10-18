@@ -19,6 +19,7 @@ Estado: fundação documental. O marco atual é F0; conteúdo especificado não 
 | [08 — Pesquisa](08-pesquisa-e-validacao.md) | Hipóteses; ainda sem resultados validados |
 | [09 — Roadmap](09-roadmap.md) | Única fonte de fases F0–F9 e gates |
 | [10 — Ecologia e biologia](10-ecologia-e-biologia.md) | Escopo natural obrigatório e abstrações |
+| [11 — Skills de agentes](11-agent-skills.md) | Roteamento de skills focadas para tarefas de desenvolvimento por IA |
 
 [AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos.
 
