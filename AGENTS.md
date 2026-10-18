@@ -21,3 +21,8 @@ Leia docs/09-roadmap.md e docs/10-ecologia-e-biologia.md antes de escolher taref
 Módulos naturais não dependem de sociedade. Ações, dados, assets e UI obedecem às capacidades da fase. Plantas e decompositores podem usar regras agregadas; redes online individuais começam na fauna. Não anunciar como implementados os sistemas apenas especificados.
 
 Mudanças documentais exigem leitura de coerência e validação dos links; comandos de build/test só se aplicam quando houver implementação e ferramentas correspondentes.
+
+
+## Skills do projeto
+
+Skills focadas vivem em .agents/skills/. Use a skill quando a tarefa corresponder ao seu gatilho; combine apenas as necessárias. Índice e roteamento: docs/11-agent-skills.md. A ordem ecológica de docs/09-roadmap.md prevalece: não implementar sistemas humanos antes da aprovação documentada do gate natural.
