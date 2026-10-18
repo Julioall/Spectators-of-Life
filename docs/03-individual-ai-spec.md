@@ -11,8 +11,8 @@ O baseline heurístico mede o aprendizado; não substitui a meta de controladore
 
 ## Separação dos dados
 
-Genoma: parâmetros herdáveis como metabolismo, tamanho, sentidos, resistência e custo de movimento.
-Estado corporal: idade, reservas, hidratação, saúde, desenvolvimento e condição reprodutiva.
+Genoma: parâmetros herdáveis como metabolismo, tamanho, sentidos, resistência e custo de movimento; cada traço precisa de uma regra explícita de expressão, limites e mutação.
+Estado corporal: idade, massa/tamanho estrutural, reservas energéticas, hidratação, condição térmica quando modelada, saúde, desenvolvimento e condição reprodutiva.
 Controlador: pesos, hiperparâmetros, memória, exploração, transição pendente e métricas.
 Linhagem: pais, geração, alterações herdadas e nascimento.
 Cultura futura: práticas e habilidades aprendidas por experiência ou contato, separadas de genes.
@@ -33,7 +33,7 @@ Candidato inicial: MLP pequena com uma saída Q por ação discreta e escolha ep
 
 Não misturar logits de política com saídas Q. A adoção definitiva depende de experimentos: aproximação neural e múltiplos agentes aprendendo não garantem convergência. Dimensões, limites, taxa de aprendizado, clipping e memória serão fixados no contrato de experimento antes de implementar.
 
-Cada animal mantém pesos próprios. Atualizações e experiências são limitadas por orçamento determinístico; falhas numéricas geram diagnóstico. Não há pré-treino externo ou inferência remota.
+Cada animal mantém pesos próprios. Atualizações e experiências são limitadas por orçamento determinístico; falhas numéricas geram diagnóstico. Não há pré-treino externo ou inferência remota. O tempo até uma mudança ambiental, a cadência das decisões e o ritmo de atualização da rede são variáveis diferentes e devem ser declarados.
 
 ## Herança e aprendizado
 
@@ -41,11 +41,17 @@ Tratar dois eixos independentes:
 - Aprendizado em vida: ligado ou desligado no cenário.
 - Herança: traços genéticos; ou traços mais transferência experimental de pesos compatíveis.
 
-Referência biológica: traços são herdados, experiências e pesos aprendidos não são copiados por reprodução. O efeito do aprendizado sobre seleção pode ser investigado sem essa cópia.
+Condição padrão: a reprodução transmite os traços herdáveis segundo o modelo da espécie; experiências, memória episódica e pesos aprendidos não são copiados. O controlador do descendente segue uma regra de inicialização registrada.
 
-Modo de jogo Lamarckiano: descendente recebe parte dos pesos aprendidos com mistura/ruído limitado; é uma abstração explícita, configurável e comparada ao baseline. Não afirmar que genes e pesos são o mesmo mecanismo. Cultura humana futura transmite práticas, sem cópia automática de memória completa.
+Separar duas hipóteses: (1) aprendizagem durante a vida pode alterar o comportamento e, por consequência, quais traços herdáveis são favorecidos pela reprodução, mesmo sem copiar pesos; (2) a transferência direta de parte dos pesos parentais é um experimento de transferência de controlador, configurável e comparado ao padrão. A segunda condição não é herança genética nem, por si só, demonstra o efeito Baldwin. Registrar a origem de cada peso herdado. Cultura humana futura transmite práticas por mecanismos sociais próprios, sem cópia automática da memória completa.
 
 Seleção decorre de sobrevivência e reprodução custosas no ambiente. Não eliminar automaticamente indivíduos por ranking de recompensa. Mudanças corporais possuem compensações: capacidade maior implica custo correspondente no modelo.
+
+## Comparação experimental de F4
+
+Comparar controlador heurístico, rede congelada sem atualização, rede com aprendizagem online sem transferência de pesos e rede com transferência direta de pesos. Usar os mesmos cenários, perfis e populações iniciais em seeds pareadas, mantendo explícitas as diferenças de RNG entre condições.
+
+Incluir disponibilidade estável e cíclica de recursos. Medir o tempo de adaptação do controlador e testar ciclos ambientais mais lentos e mais rápidos que essa janela; não presumir que aprendizagem sempre melhora sobrevivência ou que uma velocidade de ciclo produz um resultado universal. Congelar a rede na avaliação e reportar separadamente comportamento aprendido, aptidão reprodutiva, traços herdáveis, diversidade, condição corporal, causas de morte e extinção. O protocolo completo está em [08-pesquisa-e-validacao.md](08-pesquisa-e-validacao.md).
 
 ## Recompensa e avaliação
 
