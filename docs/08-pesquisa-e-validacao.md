@@ -17,3 +17,13 @@ Medir sobrevivência, reprodução, diversidade, consumo, migração, extinção
 A bibliografia deve cobrir aprendizado online, aprendizado incremental, evolução digital, plasticidade fenotípica, herança de controladores e evolução de redes sociais. Artigos formulam hipóteses; não substituem testes no domínio.
 
 Decisão vigente: Phaser + TypeScript e redes pequenas no runtime por portabilidade, inspeção, determinismo e evolução observável. Modelos externos são pesquisa futura, não requisito.
+
+## Ordem dos experimentos
+
+Primeiro validar água/solo, produção vegetal, consumo, decomposição e ciclos de vida. Depois medir o efeito do aprendizado animal sobre sobrevivência e reprodução. Separar alterações do ambiente, do genoma, dos pesos e da política de herança.
+
+O experimento de F4 compara: controlador heurístico; rede sem atualização; rede aprendendo em vida sem herança de pesos; rede aprendendo com transferência experimental de pesos. Controlar recursos, seeds e população inicial; reportar distribuição, não apenas a melhor execução.
+
+Pesquisa social detalhada começa após o gate natural e deve distinguir práticas aprendidas, habilidades e instituições de características genéticas. Não assumir evolução inevitável de tribos para impérios.
+
+Este arquivo define perguntas e método; ainda não contém bibliografia verificada ou resultados experimentais. Estudos futuros devem registrar referência, limite de aplicabilidade e hipótese de jogo correspondente.
