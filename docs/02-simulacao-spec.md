@@ -1,31 +1,47 @@
 # Especificação da simulação
 
-Core é puro e determinístico. Web Worker possui o estado, aplica comandos, avança ticks e emite snapshots/deltas. Phaser não cria, destrói ou decide entidades.
+## Estado e execução
 
-## Ordem de tick
+Core em TypeScript, independente de Phaser e DOM. Worker executa ticks fixos; renderização recebe snapshots e deltas. Velocidade altera quantos ticks são processados, não as regras ou a duração lógica de um tick.
 
-1. Relógio, luz e clima.
-2. Água, solo e disponibilidade.
-3. Crescimento, decomposição e regeneração.
-4. Percepção e necessidades.
-5. Escolha de ação e movimento.
-6. Alimentação, predação, conflito, cooperação e construção.
-7. Dano, doença, envelhecimento e morte.
-8. Reprodução, herança e mutação.
-9. Eventos, métricas e snapshot.
+Estado básico: versões, seed, estado do RNG, tick, agenda dos sistemas, mapa, clima, reservatórios de água, solo, vegetação, detritos, organismos, linhagens, métricas e eventos. Cérebro existe apenas em entidades que possuem esse componente. Estado humano e institucional é opcional e ausente em cenários naturais.
 
-A ordem é contrato e qualquer mudança exige ADR e testes.
+## Ordem de atualização
 
-## Estado
+1. Relógio, luz e forçantes climáticas.
+2. Fluxos de água e temperatura.
+3. Solo, detritos, decomposição e nutrientes.
+4. Vegetação: crescimento, competição, sementes e mortalidade.
+5. Necessidades e percepção dos animais.
+6. Escolha de ações, reservas de alvo e resolução de movimento/interações.
+7. Dano, doença, morte e transferência de biomassa para detritos.
+8. Reprodução elegível, herança, mutação e novos indivíduos.
+9. Recompensa da transição, aprendizado, eventos, métricas e snapshot.
 
-Versão; seed; tick; clima e água; mapa; recursos; entidades; populações; grupos; assentamentos; relações; fila de eventos; métricas; configuração de cenário.
+Sistemas possuem cadências distintas em múltiplos inteiros do tick. Atualizações usam o intervalo lógico efetivamente decorrido; agendas são salvas. Ordem de resolução e desempates são estáveis. Mortes são resolvidas antes de nascimentos; regras para reprodução já iniciada são explícitas por espécie.
 
-## Determinismo e invariantes
+Humanos futuros usam as mesmas etapas biológicas; sistemas sociais entram por módulos com dependências e ordem declaradas.
 
-IDs não dependem de índices. Cada sistema recebe RNG derivado de seed, tick, sistema e ID. A mesma versão, seed e comandos geram o mesmo checksum e eventos. Valores ficam em faixas válidas; morto não escolhe; ação impossível é mascarada; recursos são debitados uma vez; referências são limpas; IDs são únicos.
+## Invariantes
 
-## Eventos e save
+IDs únicos e estáveis; valores finitos; estoques não negativos; consumo simultâneo nunca excede o disponível; indivíduo morto não age nem aprende em ticks futuros. A transição terminal ainda pode receber uma última atualização.
 
-Evento tem ID, tick, tipo, atores, local, causa, impacto e severidade. Tipos iniciais: nascimento, morte, alimento, migração, conflito, aliança, doença, fundação, construção, colheita, guerra, tratado, sucessão e colapso. Salvar apenas dados de simulação, cérebro, genoma, config, seed, versão e histórico necessário; nunca sprites ou cenas.
+Transferências de água, nutrientes e biomassa registram origem e destino. Fontes externas e perdas previstas são contabilizadas. Energia pode entrar pela produção e sair por metabolismo; não se impõe conservação artificial entre quantidades de unidades diferentes.
 
-Usar deltas, lotes e checkpoints. Entidades fora da câmera podem ser menos renderizadas, nunca menos simuladas.
+Falha numérica pausa com diagnóstico; não corrigir silenciosamente estoque inválido.
+
+## Reprodução de cenários
+
+RNG controlado com fluxos por sistema e estado serializado. Nunca usar relógio real ou Math.random no core. Ordenação, agenda e orçamento de aprendizado dependem do tick, não de latência do dispositivo.
+
+Garantia inicial: repetição na mesma versão e ambiente testado. Equivalência numérica entre plataformas exige verificação específica antes de ser prometida.
+
+## Eventos e persistência
+
+Eventos naturais: chuva, seca, inundação, germinação, dispersão, alimentação, predação, nascimento, doença, migração, morte, decomposição e extinção local. Eventos sociais são adicionados nas fases correspondentes.
+
+Evento registra tick, atores, local, alterações e evidências de causa. A UI distingue causa registrada de hipótese estatística.
+
+Save inclui agenda, RNG, versões de conteúdo, organismos, pesos, memória necessária ao aprendizado e checkpoints. Não inclui objetos Phaser/DOM. Observabilidade e save são entregas desde F0–F2; timeline completa vem depois.
+
+O mundo continua sendo simulado fora da câmera. Agregação e cadências são propriedades do modelo e precisam de testes, nunca decisões dependentes da visibilidade.
