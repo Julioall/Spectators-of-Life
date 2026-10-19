@@ -8,10 +8,10 @@ Este diretório transforma a visão e os contratos de domínio em requisitos ver
 | --- | --- | --- | --- |
 | SPEC-000 | [Fundação do runtime](000-fundacao-runtime.md) | F0 | Proposta pronta para revisão de implementação |
 | SPEC-001 | [Relógio e métricas](001-relogio-e-metricas.md) | F0–F4 | Proposta pronta para revisão de implementação |
-| SPEC-100 | Mundo físico: terreno, clima e água | F1 | Pendente |
-| SPEC-200 | Solo, vegetação e decomposição | F2 | Pendente |
-| SPEC-300 | Corpo, necessidades e ciclo de vida animal | F3 | Pendente |
-| SPEC-400 | Aprendizado online, genoma e experimentos | F4 | Pendente |
+| SPEC-100 | [Mundo físico: terreno, clima e água](100-mundo-fisico.md) | F1 | Rascunho; parâmetros aguardam cenário |
+| SPEC-200 | [Solo, vegetação e decomposição](200-vegetacao-e-decomposicao.md) | F2 | Rascunho; perfis/taxas pendentes |
+| SPEC-300 | [Biologia animal e populações](300-biologia-animal.md) | F3 | Rascunho; perfis/calibração pendentes |
+| SPEC-400 | [Aprendizado online e evolução](400-aprendizado-e-evolucao.md) | F4 | Rascunho experimental; parâmetros pendentes |
 
 “Pronta para revisão” significa que há um contrato e critérios de aceite para discussão técnica. Não significa implementada, testada ou aprovada. A fase F0 continua sendo o marco atual; ver [roadmap](../09-roadmap.md).
 
