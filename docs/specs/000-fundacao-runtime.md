@@ -56,7 +56,7 @@ Todas as mensagens têm `protocolVersion: 1` e `requestId` único para a sessão
 
 O Worker processa pedidos de estado em ordem FIFO. Não intercala mutações de outro pedido no meio de um `STEP`. Um erro de validação não altera o mundo. Erro de invariante numérica pausa o processamento e preserva diagnóstico; não corrige estoque silenciosamente. `requestId` repetido não executa duas vezes: retorna o resultado já conhecido ou um erro de duplicidade.
 
-Códigos mínimos: `UNSUPPORTED_PROTOCOL`, `INVALID_MESSAGE`, `INVALID_SCENARIO`, `UNKNOWN_WORLD`, `STEP_LIMIT_EXCEEDED`, `INVALID_SAVE`, `UNSUPPORTED_SAVE_VERSION`, `INVARIANT_VIOLATION` e `INTERNAL_ERROR`.
+Códigos mínimos: `UNSUPPORTED_PROTOCOL`, `INVALID_MESSAGE`, `INVALID_SCENARIO`, `UNKNOWN_WORLD`, `DUPLICATE_REQUEST`, `STEP_LIMIT_EXCEEDED`, `INVALID_SAVE`, `UNSUPPORTED_SAVE_VERSION`, `INVARIANT_VIOLATION` e `INTERNAL_ERROR`.
 
 ## 5. Determinismo
 
@@ -91,7 +91,7 @@ Não serializar Worker, objetos Phaser, DOM, timers, referências de função ou
 2. Avançar a mesma quantidade de ticks em partições diferentes e comparar estados/eventos.
 3. Repetir comandos com a mesma seed e comparar snapshots serializados canonicamente.
 4. Executar os mesmos ticks com render desligado, FPS diferente e câmera em locais diferentes; o estado deve ser igual.
-5. Salvar no tick `t`, avançar `N`, carregar o save e avançar `N` novamente; estado final e estado de RNG devem coincidir.
+5. Na execução A, salvar no tick `t` e avançar `N`. Na execução B, carregar o save de `t` e avançar `N`; comparar estado final e estado de RNG entre A e B.
 6. Enviar mensagem malformada, versão desconhecida, tick fracionário, `STEP(0)` e `STEP(257)`; cada um deve retornar erro e preservar o estado.
 7. Tentar carregar save truncado ou incompatível; mundo ativo permanece intacto.
 8. Executar testes do core sem navegador e verificar que core/IA não importam Phaser nem DOM.
