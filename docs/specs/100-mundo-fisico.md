@@ -50,9 +50,9 @@ Cada atualização calcula, por célula:
 - evaporação da superfície;
 - evaporação do solo e drenagem profunda como perdas separadas.
 
-Para cada reservatório, registrar estoque inicial, entradas, transferências, saídas e estoque final. Transferência entre células reduz o doador e aumenta o receptor pela mesma quantidade. Overflow, evaporação, drenagem e saída da borda são sinks explícitos. Valores negativos ou fluxos maiores que o estoque causam diagnóstico, sem clamp silencioso.
+Para cada reservatório, registrar estoque inicial, entradas, transferências, saídas e estoque final. Transferência entre células reduz o doador e aumenta o receptor pela mesma quantidade. Overflow interno permanece na superfície ou é transferido a outro reservatório; só vira perda quando cruza uma borda declarada. Evaporação, drenagem fora do domínio e saída da borda são sinks explícitos. Valores negativos ou fluxos maiores que o estoque causam diagnóstico, sem clamp silencioso.
 
-Escoamento segue gradiente hidráulico usando elevação mais lâmina superficial. Regras para depressões, lagos temporários, divisores e bordas devem ser determinísticas e constar na configuração. A condição de borda pode reter, refletir ou remover fluxo, mas não pode ficar implícita.
+Escoamento usa carga hidráulica em metros: `elevação_m + lâmina_mm / 1000`. Regras para depressões, lagos temporários, divisores e bordas devem ser determinísticas e constar na configuração. A fixture escolhe borda fechada (fluxo externo zero) ou aberta com saídas identificadas e auditadas; não há entrada exterior implícita.
 
 ## 6. Eventos e inspeção
 
@@ -75,3 +75,13 @@ Cada fixture fixa mapa, seed, calendário, condição de borda, parâmetros, dur
 ## 8. Decisões ainda necessárias antes da calibração
 
 A primeira fixture de referência deve fixar dimensões, tamanho de célula, calendário (ticks por dia e dias por estação), tipos de substrato, perfil climático, bordas e tolerâncias numéricas. Esses valores serão propriedades do cenário e de sua versão, não “constantes naturais” do projeto.
+
+## 9. Integração de unidades e competição entre fluxos
+
+Para área A em m²: `volume_L = lâmina_mm × A`; `volume_mL = lâmina_mm × A × 1000`. Conversão de ingestão animal deve descontar o volume equivalente do reservatório. Parâmetro de infiltração informa mm/dia; capacidade de armazenamento informa mm. Converter taxas pelo tempo lógico decorrido, nunca pelo FPS.
+
+Calcular propostas de saída a partir do mesmo estoque inicial; infiltração, evaporação e escoamento disputam esse estoque. Resolver a soma por regra documentada antes de aplicar deltas, sem exceder o doador. Água recebida de vizinhos fica disponível no próximo passo do solver. Em F2, transpiração é uma transferência auditada para a fronteira atmosférica; não descontar o mesmo consumo novamente no sistema de água.
+
+A fixture fixa tolerância absoluta com unidade e tolerância relativa adimensional para resíduos de arredondamento. Resíduo numérico fica no diagnóstico; qualquer ajuste permitido precisa de regra explícita e fluxo contabilizado. Tolerância não autoriza criar recurso ou ocultar estoque inválido.
+
+Além dos parâmetros ambientais, bloquear a aceitação da implementação até definir solver, alocação de fluxos concorrentes, integração temporal e fixture numérica de referência. Testar explicitamente conversões m/mm/L/mL e múltiplas saídas simultâneas.

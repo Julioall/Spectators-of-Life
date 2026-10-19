@@ -5,7 +5,7 @@ description: Implement or review animal life cycles, food webs, health, online l
 
 # Animal biology and evolution
 
-Use for animal organisms and their adaptation. Confirm the roadmap phase; F3–F4 follow the natural-world gate and do not include humans.
+Use for animal organisms and their adaptation. Confirm the roadmap phase; F3–F4 follow F1–F2 and contribute to the natural-world gate at the end of F4. They do not include humans.
 
 ## Read the relevant contracts
 

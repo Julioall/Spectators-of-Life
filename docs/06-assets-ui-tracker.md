@@ -42,3 +42,5 @@ O manifesto atual contém exemplos planejados com caminhos ainda inexistentes; n
 | natural.detritus | F2 | planned | Decomposição visível sem ruído excessivo |
 | natural.fauna-lifecycle | F3 | planned | Âncora e proporção estáveis entre estados |
 | human.primitive | F5 | deferred | Só planejar em detalhe após gate natural |
+
+Campos de autoria e licença permanecem `null` enquanto não verificados. Caminhos `planned` são intenções, não arquivos carregáveis; o loader futuro filtra por estado. O schema F0 deve separar campos mínimos de planejamento dos campos obrigatórios de integração, e fixtures devem cobrir ambos.

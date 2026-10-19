@@ -4,11 +4,11 @@ Os schemas ainda serão implementados com fixtures válidas e inválidas. Não s
 
 | Fase | Contratos |
 | --- | --- |
-| F0 | world, scenario, save, module-manifest, asset-manifest, event |
+| F0 | world, scenario, save, worker-request, worker-response, module-manifest, asset-manifest, event |
 | F1 | terrain, climate, water-reservoir, water-flux, soil |
 | F2 | plant-profile, vegetation, detritus, decomposition |
-| F3 | species, organism, metabolism, health, reproduction, population |
-| F4 | observation, action, brain, genome, lineage, learning-experiment |
+| F3 | species, organism, metabolism, health, reproduction, population, observation, action, heuristic-controller |
+| F4 | versões neurais de observation/action, brain, genome, lineage, learning-experiment |
 | F5–F6 | human-capabilities, relationships, culture, tribe |
 | F7–F9 | skills, profession, settlement, economy, institution, polity |
 

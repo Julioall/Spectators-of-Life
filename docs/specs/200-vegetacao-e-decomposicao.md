@@ -8,13 +8,13 @@
 
 Acrescentar solo, nutrientes, sementes, crescimento vegetal, competição, mortalidade e retorno de matéria orgânica. A vida vegetal precisa responder à água, luz, temperatura e substrato de cada célula e produzir padrões persistentes entre estações.
 
-**Proposta de F2:** representar plantas e decomposição como coortes agregadas por célula, espécie e estágio, em vez de simular cada folha/raiz/microrganismo. A renderização pode desenhar plantas individuais variadas, mas a quantidade e distribuição visual derivam das densidades simuladas. Essa representação deve poder ser substituída por indivíduos em espécies cujo comportamento exija resolução maior, sem mudar a fonte de verdade do mapa.
+**Proposta de F2:** representar plantas como coortes por célula, espécie e estágio, e decompositores como atividade agregada por célula, em vez de simular cada folha/raiz/microrganismo. A renderização pode desenhar plantas individuais variadas, mas a quantidade e distribuição visual derivam das densidades simuladas. Essa representação deve poder ser substituída por indivíduos em espécies cujo comportamento exija resolução maior, sem mudar a fonte de verdade do mapa.
 
 ## 2. Estado e unidades
 
 Cada célula acompanha:
 
-- água do solo em mm, fertilidade/agregado de nitrogênio mineral em g N/m²;
+- água do solo em mm, nutriente mineral agregado (proposta: nitrogênio em g N/m², a confirmar no cenário);
 - matéria orgânica do solo e detritos por tipo, em g de matéria seca/m²;
 - atividade decompositora agregada em faixa 0–1;
 - por espécie e estágio: biomassa viva em g de matéria seca/m², cobertura, sementes/m², idade/estágio agregado e reservas quando modeladas.
@@ -25,7 +25,7 @@ O calendário e unidades vêm da SPEC-100. Estoques não podem ser negativos. Va
 
 ## 3. Crescimento e competição
 
-Uma atualização vegetal em período definido no cenário determina fatores limitantes independentes para luz, água, temperatura e nutriente, dentro de 0–1. Crescimento potencial é limitado pelo menor fator aplicável e pelos limites de biomassa, N, água e energia solar disponíveis. Registrar os fatores limitantes para inspeção.
+Uma atualização vegetal em período definido no cenário determina fatores limitantes independentes para luz, água, temperatura e nutriente, dentro de 0–1. Como simplificação candidata do jogo, crescimento potencial é limitado pelo menor fator aplicável e pelos limites de biomassa, N, água e energia solar disponíveis. Registrar os fatores limitantes para inspeção.
 
 Consumo de água e N é agregado por célula antes de aplicar deltas. Competidores não podem usar duas vezes o mesmo recurso. Cobertura/luz disponível considera a estrutura vegetal declarada; não permitir crescimento ilimitado por ordem de iteração.
 
@@ -41,7 +41,7 @@ Crescimento, competição, morte e sucessão devem ser observáveis em conjunto.
 
 ## 5. Detritos e decomposição
 
-Folhas, sementes não germinadas, mortalidade vegetal e resíduos explicitamente modelados entram no estoque de detritos. A decomposição depende de temperatura, água, substrato e atividade agregada, com taxa limitada pelo material disponível. Matéria seca perdida e N mineralizado são fluxos diferentes; respiração/CO₂ pode ser registrada como perda de matéria seca na fronteira.
+Folhas, sementes mortas/inviáveis, mortalidade vegetal e resíduos explicitamente modelados entram no estoque de detritos. A decomposição depende de temperatura, água, substrato e atividade agregada, com taxa limitada pelo material disponível. Matéria seca perdida e N mineralizado são fluxos diferentes; respiração/CO₂ pode ser registrada como perda de matéria seca na fronteira.
 
 A atividade decompositora pode crescer/declinar por regras agregadas dependentes de habitat e detrito, sem agentes microbianos. Não usar um multiplicador sem unidade: taxa sempre informa unidade por dia/tick e estoque sobre o qual age.
 
@@ -54,7 +54,7 @@ Camadas mínimas: biomassa, cobertura, sementes, nutriente mineral, detrito e fa
 ## 7. Cenários de aceite
 
 - Espécie fora de sua faixa ambiental não ganha biomassa como se o habitat fosse adequado.
-- Reduzir água/N limita crescimento e aparece no diagnóstico; remover limitação restaura o crescimento quando há sementes.
+- Reduzir água/N limita crescimento e aparece no diagnóstico; remover limitação restaura o crescimento em plantas viáveis; recolonização após extinção local depende de sementes viáveis ou dispersão registrada.
 - Competição por nutriente/água respeita estoque compartilhado.
 - Sementes não germinam sem disponibilidade e condições; germinação reduz o banco de sementes.
 - Mortalidade e queda de folhas transferem matéria a detritos; decomposição reduz detritos e mineraliza N dentro do balanço definido.
@@ -64,3 +64,15 @@ Camadas mínimas: biomassa, cobertura, sementes, nutriente mineral, detrito e fa
 ## 8. Decisões para a primeira implementação F2
 
 Escolher um conjunto pequeno de perfis contrastantes (por exemplo, gramínea, herbácea e arbusto/árvore) para fixtures, unidades e tolerâncias. Definir como o mapa fornece N e matéria orgânica inicial, os fatores de crescimento efetivamente ativos, a representação de árvores longevas e a regra de atividade decompositora. Cada escolha deve ser identificada como abstração do jogo e validada com testes direcionais antes de calibrar taxas.
+
+## 9. Coortes, nutrientes, reservas e erosão
+
+Sementes dormentes viáveis permanecem no banco até germinar, morrer ou ser consumidas; não viram detrito apenas por não germinar. Cada semente tem massa e teor de nutriente declarados. Germinação transfere matéria da semente ao juvenil, descontando perdas declaradas. Reservas vegetais, biomassa estrutural e sementes são estoques distintos com transferências e custos; o perfil não pode omitir todas as reservas se elas forem usadas para manutenção ou reprodução.
+
+Coortes preservam idade de germinação ou classes etárias explicitamente discretizadas. Não fundir idades numa média que provoque maturação instantânea; a regra de fusão/divisão e seus efeitos são versionados e testados. A inspeção mostra coorte/estimativa quando o sprite não representa um indivíduo simulado.
+
+A escolha de N é proposta de fechamento do estoque agregado canônico. Até sua aceitação, não chamar um índice abstrato de fertilidade de g N. Se N for adotado, rastrear N mineral e orgânico por estoque; mineralização é limitada pelo N orgânico removido, mantendo frações/conversões consistentes. Matéria seca e N são balanços distintos; g N não são somados a g de biomassa como recursos independentes quando já fazem parte do tecido.
+
+Erosão simplificada integra F2: escoamento exporta uma quantidade limitada de solo/material e seus nutrientes associados para célula receptora ou saída de borda. Depositar no receptor, conservar transferências internas e declarar perdas externas. Cobertura vegetal e classe de substrato modulam a taxa. Alterações de retenção do solo precisam redistribuir água excedente explicitamente. Topografia pode permanecer fixa nesse recorte, simplificação que deve constar no cenário.
+
+Fechar regra de competição vegetal, estoques de reserva, massa por semente, transporte erosivo e mineralização antes de aceitar a implementação. Acrescentar fixtures de dormência, germinação com balanço, coortes etárias, nutriente esgotado e erosão com deposição/saída. Ao transferir biomassa para animais, converter `g = g/m² × área_m²`; não descontar gramas diretamente de uma densidade.

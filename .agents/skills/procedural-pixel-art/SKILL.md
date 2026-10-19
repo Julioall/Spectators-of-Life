@@ -20,7 +20,7 @@ Use when drawing assets directly in code or integrating pixel-art sprites and an
 3. Preserve strong top-down silhouettes, limited palette families, stable baselines/anchors, and readable states at the camera's actual zoom.
 4. Treat a 64-pixel grid as a common detail reference, not a maximum size or mandatory footprint. Compose large resources and buildings from parts or cells with explicit pivots, occupied footprint, and selection bounds.
 5. Derive animation from organism state. Maintain the same silhouette, scale, and anchor across frames; make the action readable at game scale.
-6. Add or update a manifest entry only when its implementation exists. Record dimensions, anchor, status, source, and license honestly.
+6. Allow planned entries with explicitly provisional source paths and unknown authorship/license. Only mark an entry integrated when its implementation exists and its dimensions, anchor, source, authorship, and license have been verified.
 7. Preview representative states in the game and check pixel alignment, palette, scale, occlusion, and selection footprint.
 
 ## Boundaries

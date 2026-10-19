@@ -16,7 +16,7 @@ Informe fantasia, verbo do jogador, câmera, estado observado, causa legível, r
 
 ## Arte
 
-Informe espécie ou objeto, top-down, escala, grade, silhueta, paleta, âncora bottom-center, direção, frames, transparência, seed, referência aprovada e licença. Gerar a tira completa a partir de um frame-semente; não aprovar frames isolados que mudem proporção.
+Informe espécie ou objeto, top-down, escala, grade, silhueta, paleta, âncora bottom-center, direção, frames, transparência, seed, referência aprovada e licença. No desenho procedural, definir geometria e poses a partir de uma silhueta-base e validar a tira completa. Para referências raster solicitadas, usar um frame-semente aprovado. Não aprovar frames isolados que mudem proporção.
 
 ## Experimento de IA
 

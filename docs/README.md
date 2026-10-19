@@ -31,3 +31,7 @@ O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
 
 [Contratos de dados](../data/schemas/README.md) ainda são planejados. [Manifesto de assets](../data/assets/manifest.json) contém exemplos planned, com fontes ainda inexistentes.
+
+## Revisão documental
+
+[12 — Validação documental e pendências](12-validacao-documental.md) registra cobertura, correções, prontidão por fase e evidências exigidas antes da implementação.

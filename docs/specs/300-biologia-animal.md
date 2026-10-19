@@ -21,13 +21,13 @@ Cada organismo tem ID estável, espécie, posição, orientação, idade em tick
 - maturidade, condição reprodutiva e dependência/cuidado parental se aplicável;
 - ação e alvo atuais, percepção recente e estado de transição para inspeção.
 
-Cérebro, genoma e cultura são componentes opcionais e não existem no runtime F3. Entidades mortas deixam de agir e aprender; restos são transferidos a detritos conforme as regras do perfil.
+Rede neural, genoma evolutivo e cultura não existem no runtime F3. O controlador heurístico possui estado persistente próprio (memória de alvos, agenda e transição), necessário para reproduzir seu comportamento. Entidades mortas deixam de agir e aprender; restos são transferidos a detritos conforme as regras do perfil.
 
 ## 3. Perfil de espécie e recursos
 
 Perfil declara dieta e classes consumíveis, habitat, alcance sensorial, tolerâncias ambientais, massa de referência, maturação, longevidade, taxa de manutenção, custo locomotor, velocidade, necessidade de água, digestibilidade e estratégias reprodutivas. Campos não modelados são omitidos, não preenchidos com zeros enganosos.
 
-Unidades alimentares compatíveis com F2: g de matéria seca ingerida; energia do alimento em kJ/g matéria seca; frações de digestibilidade e de energia assimilada no intervalo 0–1. A alimentação remove biomassa comestível disponível. Energia assimilada é calculada da ingestão e eficiência; a diferença energética é dissipada explicitamente. Matéria não assimilada e resíduos retornam ao estoque de detritos.
+Unidades alimentares compatíveis com F2: g de matéria seca ingerida; energia do alimento em kJ/g matéria seca; frações de digestibilidade e de energia assimilada no intervalo 0–1. A alimentação remove biomassa comestível disponível. Energia assimilada é calculada da ingestão e eficiência; a energia não assimilada acompanha os resíduos ou outras perdas declaradas; apenas as parcelas metabólicas correspondentes são dissipadas como calor. Não contabilizar toda energia não assimilada como calor. Matéria não assimilada e resíduos retornam ao estoque de detritos.
 
 A energia corporal é alocada em ordem declarada pelo perfil: manutenção, termorregulação se ativa, atividade/movimento, reparo, crescimento e reprodução. Manutenção não pode deixar a reserva negativa. Crescimento exige matéria assimilável e energia; reprodução exige reserva/custo e fonte de biomassa do descendente. Toda fonte, transferência e perda aparece na auditoria.
 
@@ -67,3 +67,17 @@ Painel individual mostra necessidade, reserva, dieta, percepção, ação e hist
 ## 8. Decisões para a primeira implementação F3
 
 Selecionar no mínimo três perfis com nichos contrastantes para testar herbivoria, predação e competição; definir quais campos de corpo, água, doença e cuidado parental entram no primeiro recorte. Fechar cadências, limiares e tolerâncias em cenários com versão, sem declarar que os perfis representam universalmente a espécie na natureza.
+
+## 9. Contratos de integração corporal
+
+Além da energia em kJ, reservas mobilizáveis precisam de massa em g de matéria seca ou conversão explícita e versionada entre reserva material e conteúdo energético. Estrutura, reserva, alimento em processamento, resíduos e descendentes não podem contar duas vezes a mesma matéria. Fixar assimilação, alocação, catabolismo e perdas de fronteira antes da implementação. Isso é um balanço simplificado; não converter matéria seca diretamente em massa de CO₂ sem estequiometria e entradas correspondentes.
+
+Déficit de manutenção gera consumo de reserva, catabolismo estrutural se previsto, deterioração e morte conforme regra do perfil. Não zerar a reserva para conceder manutenção gratuita. Na morte, contabilizar a biomassa restante disponível e a parcela consumida pelo predador, sem duplicar cadáver e alimento. Água corporal e nutrientes também recebem destino explícito. Usar conversões por área da SPEC-100/SPEC-200.
+
+Termorregulação simplificada e descanso são obrigatórios em F3: declarar indicador térmico, exposição, abrigo, efeito na atividade/manutenção e limiares de dano. O modelo não precisa resolver calor corporal completo. Hidratação, saúde, doença e reprodução permanecem obrigatórias; estratégias de cuidado parental variam por perfil.
+
+A navegação pode consultar colisões autoritativas para executar uma intenção, mas não revelar ao controlador recursos/alvos fora de seus sensores ou memória. Decisões concorrentes usam um estado perceptivo definido antes da resolução; executores revalidam disponibilidade. A regra de desempate deve ser testada quanto a favorecimento persistente de IDs.
+
+Animais nascidos na etapa de reprodução só percebem, agem e consomem a partir do próximo tick. Eventos de detecção/movimento podem ser amostrados no buffer de inspeção; fatos que mudam estado, recompensas e contadores são computados integralmente. Limites de telemetria seguem a SPEC-001 e não afetam o modelo.
+
+Testes adicionais: reserva esgotada sem manutenção gratuita; morte durante disputa de alimento; cadáver consumido uma única vez; conversão de densidade vegetal para gramas; água corporal para mm da célula; sensor sem vazamento global; estado heurístico preservado no save.

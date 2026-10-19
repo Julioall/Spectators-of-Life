@@ -1,7 +1,7 @@
 # SPEC-001 — Relógio lógico e comparação de métricas
 
 **Fases:** F0–F4  
-**Estado:** proposta pronta para revisão de implementação  
+**Estado:** proposta revisada; unidades/cenários por fase ainda pendentes
 **Motivação:** separar velocidade visual, tempo ecológico e cadência de decisão para que benchmarks de alimentação/sobrevivência possam ser comparados.
 
 ## 1. Cinco tempos diferentes
@@ -22,7 +22,7 @@ F0 usa só tick lógico. F1 introduz unidades de calendário e cadências junto 
 
 ## 2. Avanço e sistemas com cadências distintas
 
-O cliente transforma o controle de velocidade em pedidos inteiros de `STEP`; o core não recebe `deltaTime` real. Se o dispositivo não acompanhar a velocidade escolhida, o mundo avança mais devagar em tempo de parede e a interface pode informar atraso. O simulador preserva todos os ticks pendentes.
+O cliente transforma o controle de velocidade em pedidos inteiros de `STEP`; o core não recebe `deltaTime` real. Se o dispositivo não acompanhar a velocidade escolhida, o mundo avança mais devagar em tempo de parede e a interface pode informar atraso. O simulador preserva ticks já admitidos no lote em voo. O driver usa fila limitada e não acumula dívida ilimitada de relógio real; pausa e retomada seguem a SPEC-000.
 
 Todo sistema que não roda a cada tick declara `periodTicks`, fase inicial e a regra de intervalo usada ao atualizar. Para processos integrados entre atualizações, declarar o intervalo lógico efetivamente decorrido; não fingir que o processo ocorreu em um tick. A agenda/cursor é persistida para que save/load continue o mesmo ciclo.
 
@@ -53,9 +53,9 @@ Para população variável, a métrica ecológica de ingestão recomendada é:
 
 `ingestão por 1.000 ticks-indivíduo = (quantidade total consumida / soma de indivíduos vivos por tick) × 1.000`
 
-A unidade da quantidade (biomassa, itens, energia assimilada) deve aparecer no nome/relatório. Reportar também a distribuição entre indivíduos e seeds. Uma recompensa numérica do controlador não substitui nenhuma dessas métricas.
+A ingestão ecológica usa g de matéria seca; itens só pertencem a métricas discretas explicitamente rotuladas. Energia assimilada é outra métrica, em kJ, e não se soma à biomassa ingerida. Reportar também a distribuição entre indivíduos e seeds. Uma recompensa numérica do controlador não substitui nenhuma dessas métricas.
 
-Para um jogo/benchmark legado que conte “comidas” discretas, definir explicitamente `comidas_consumidas / 100 ticks lógicos`, a janela e os critérios de inclusão. Resultados desse benchmark não se misturam com a métrica ecológica por biomassa sem conversão justificada.
+Para um jogo/benchmark legado que conte “comidas” discretas, definir explicitamente `100 × comidas_consumidas / ticks_lógicos_da_janela`, a janela e os critérios de inclusão. Resultados desse benchmark não se misturam com a métrica ecológica por biomassa sem conversão justificada.
 
 ## 5. Testes e critérios de aceite
 
@@ -66,3 +66,11 @@ Para um jogo/benchmark legado que conte “comidas” discretas, definir explici
 - **Métrica auditável:** teste com pequena trajetória conhecida confirma numerador, denominador, unidade e janela da métrica de ingestão.
 
 F1 deve escolher e documentar `ticksPerDay`, duração das estações e parâmetros de clima por cenário antes do primeiro benchmark climático. F3/F4 acrescentam cadências de metabolismo, movimento, percepção, ação e aprendizado e aprovam intervalos sob cenários de referência. Os valores ficam em aberto até essas specs; não são inferidos da velocidade do jogo nem escolhidos para otimizar uma média isolada.
+
+## 6. Denominador e retenção
+
+Usar janela de transições `(t0, t1]`: para cada tick contar animais elegíveis vivos no início dele; nascidos durante o tick entram no denominador a partir do próximo. Numerador usa ingestão ocorrida nessas transições para o mesmo conjunto elegível. Declarar espécie, estágio e filtros; não comparar herbívoros/predadores por uma média misturada sem composição populacional. Um animal que morre durante o tick contribui para a exposição desse tick. Nenhuma ingestão é atribuída a recém-nascido antes do próximo tick.
+
+Denominador zero retorna `null` com motivo “sem exposição”, nunca NaN/Infinity ou zero que pareça desempenho. Sucesso alimentar usa tentativas concluídas e elegíveis na janela, incluindo falhas; ações ainda pendentes são informadas separadamente. Ausência de tentativas também retorna null.
+
+Contadores acumulados necessários às métricas e continuidade são persistidos. Eventos detalhados de inspeção têm buffer limitado e política declarada; descarte de telemetria não altera estado, reward, RNG ou contadores. Relatórios registram perdas/agregações de telemetria. Histórico completo e replay não são prometidos pelo buffer de inspeção.

@@ -2,7 +2,7 @@
 
 ## Estado e execução
 
-Core em TypeScript, independente de Phaser e DOM. Worker executa ticks fixos; renderização recebe snapshots e deltas. Velocidade altera quantos ticks são processados, não as regras ou a duração lógica de um tick.
+Core em TypeScript, independente de Phaser e DOM. Worker executa ticks fixos; renderização recebe snapshots completos em F0; deltas são uma extensão posterior versionada. Velocidade altera quantos ticks são processados, não as regras ou a duração lógica de um tick.
 
 Estado básico: versões, seed, estado do RNG, tick, agenda dos sistemas, mapa, clima, reservatórios de água, solo, vegetação, detritos, organismos, linhagens, métricas e eventos. Cérebro existe apenas em entidades que possuem esse componente. Estado humano e institucional é opcional e ausente em cenários naturais.
 

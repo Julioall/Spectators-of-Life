@@ -21,7 +21,7 @@ Core e IA não importam Phaser nem DOM. Scenes são finas e projetam snapshots. 
 
 ## Mensagens
 
-Entradas: iniciar cenário, pausar, avançar, velocidade, selecionar, comando de sandbox, salvar e carregar. Saídas: pronto, snapshot, delta, evento, métrica, erro recuperável e diagnóstico. Toda mensagem tem tipo, versão, payload validado e requestId quando necessário.
+A aplicação oferece iniciar, pausar, avançar, mudar velocidade, selecionar, salvar e carregar. Pausa/velocidade controlam o driver no cliente; seleção e câmera são estado de apresentação. O protocolo Worker F0 é definido na [SPEC-000](specs/000-fundacao-runtime.md): CREATE_WORLD, STEP, GET_SNAPSHOT, SAVE, LOAD e DISPOSE, com respostas correlacionadas. F0 usa snapshots completos. Deltas e comandos de sandbox exigem extensão versionada posterior; não são mensagens implementadas. O cliente mantém no máximo um pedido de estado em voo e confirma pausa após sua conclusão.
 
 ## Código, save e plataforma
 

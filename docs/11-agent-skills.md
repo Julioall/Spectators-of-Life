@@ -19,7 +19,7 @@ Use uma skill quando o pedido corresponder ao seu gatilho; combine apenas as nec
 - “Ajuste como o lobo aprende a caçar” → `animal-biology-evolution` e `deterministic-simulation-validation`.
 - “Desenhe uma samambaia em pixel art procedural” → `procedural-pixel-art`.
 - “Mostre a umidade em uma camada do mapa” → `world-observation-ui`.
-- “Planeje a formação de pequenas tribos” → `human-societies-progression`; se o gate natural não estiver aprovado, manter como planejamento.
+- “Planeje a formação de pequenas tribos” → `human-societies-progression`; se o gate natural não estiver aprovado, limitar a direções de alto nível e backlog, sem planejamento detalhado ou implementação.
 
 ## Manutenção
 

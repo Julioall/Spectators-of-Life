@@ -29,11 +29,11 @@ A ação produzida é apenas intenção. Executor da SPEC-300 valida e aplica cu
 
 ## 4. Método candidato e atualização
 
-**Candidato de referência:** MLP pequena com uma saída Q por ação, ação epsilon-greedy entre ações legais e atualização TD online. A equação-alvo usa recompensa observada e valor futuro descontado pelo intervalo lógico: alvo = recompensa + gamma elevado a deltaTicks vezes o maior Q da próxima observação entre ações legais. Em transição terminal, o termo futuro é zero.
+**Candidato de referência:** MLP pequena com uma saída Q por ação, ação epsilon-greedy entre ações legais e atualização TD online. A equação-alvo usa recompensa observada e valor futuro descontado pelo intervalo lógico: alvo = retorno descontado da ação + `gammaTick^deltaTicks × maxQLegal(nextObservation)`. `gammaTick` é o desconto por tick lógico, em (0,1]; se configurado por uma duração de referência, converter explicitamente para tick. O retorno da ação soma recompensas por tick ponderadas por `gammaTick^k`, com k iniciando em zero no primeiro tick da ação. Em transição terminal, o termo futuro é zero.
 
 Esse método é hipótese de implementação, não garantia de convergência em um ambiente multiagente não estacionário. Antes de adotá-lo, fixar topologia, ativação, inicialização, faixa de pesos, taxa de aprendizado, clipping, exploração, desconto, limite e política de memória, precisão numérica e orçamento computacional. Registrar todos no cenário e no relatório de treino.
 
-Updates e exploração têm agenda determinística medida em operações/ticks, nunca em milissegundos. Se houver limite global de atualizações, escalonamento justo usa cursor estável persistido para não favorecer sempre os menores IDs. Na avaliação congelada, pesos não mudam.
+Updates e exploração têm agenda determinística medida em operações/ticks, nunca em milissegundos. Se houver limite global de atualizações, escalonamento justo usa cursor estável persistido para não favorecer sempre os menores IDs. Na avaliação congelada, pesos e estado de treinamento não mudam; o corpo e a memória comportamental continuam evoluindo conforme regras declaradas.
 
 ## 5. Recompensa e avaliação biológica
 
@@ -56,7 +56,7 @@ Executar nos mesmos perfis, populações e seeds pareadas:
 1. baseline heurístico F3;
 2. rede congelada sem atualização;
 3. rede com aprendizado durante a vida, sem transferência de pesos;
-4. rede com transferência de pesos, se a condição anterior estiver estável.
+4. rede com transferência de pesos, após validar os contratos e a estabilidade numérica da condição anterior.
 
 Cada condição fixa duração lógica, cadências ambiental e neural, parâmetros de recompensa e população inicial. Congelar pesos na janela de avaliação. Comparar períodos ambientais mais lentos e mais rápidos que a janela de adaptação como fator controlado, sem misturar esses resultados na comparação principal.
 
@@ -74,3 +74,19 @@ Relatar método, topologia, seed, versão, gerações, população inicial/final
 - Nenhum indivíduo nasce ou morre por ranking artificial de recompensa.
 
 O gate F4 só passa com resultados reproduzíveis e relatório; nenhuma dessas condições é considerada implementada ou validada por estar especificada.
+
+## 9. Avaliação, término e limites experimentais
+
+Morte encerra a transição do indivíduo: admitir uma última atualização terminal e depois liberar seu estado ativo. Pausa, save e fim da janela de benchmark não são morte. Truncamento mantém a continuidade ou aplica regra de bootstrap documentada; não atribuir valor futuro zero automaticamente. Impedir updates duplicados ao retomar uma ação pendente.
+
+Na avaliação congelada, não atualizar pesos, otimizador, buffer de treinamento ou agenda de exploração treinável. Declarar epsilon de avaliação (incluindo zero quando essa for a condição) e desempates. Memória usada como observação pode atualizar, sem contaminar o treino: avaliar cópia de checkpoint com RNG próprio e nunca mesclar experiências de avaliação no mundo original. Rede congelada de controle inicial e avaliação de uma rede já treinada são condições distintas, identificadas no relatório.
+
+Separar fluxos de ambiente, inicialização, exploração e mutação para que draws neurais não desloquem a sequência climática. Seeds pareadas garantem condições iniciais comparáveis; interações posteriores podem divergir legitimamente. Registrar versão dos fluxos e agendas.
+
+Fallback de indivíduo vivo é uma ação de espera legal e custosa conforme o metabolismo; o executor revalida precondições após disputas. Estado terminal não precisa de maxQ nem ação legal. Topologia, vetor e limites são fechados antes dos ensaios; entrada inválida ou peso não finito segue o diagnóstico da SPEC-000, sem substituição silenciosa por zero.
+
+Traços corporais herdáveis têm custos/compensações explicitados no perfil e testes que verifiquem sua expressão. A transferência de pesos mantém memória e experiências separadas; não inicializar genoma a partir de recompensa. Limites de memória por animal, retenção de linhagens mortas e orçamento total precisam de política antes de testes longos.
+
+Adicionar testes de recompensa em ação de múltiplos ticks, truncamento, morte, espera legal, isolamento de avaliação e continuação de treino após save. Se a condição sem transferência apresentar instabilidade numérica ou falhar nos contratos, registrar falha e não aprovar o gate natural; o requisito comparativo do roadmap não é dispensado.
+
+Oscilações populacionais, extinção e ausência de ganho com aprendizado podem ser resultados experimentais válidos; não equivalem, por si só, a instabilidade numérica ou falha do contrato.
