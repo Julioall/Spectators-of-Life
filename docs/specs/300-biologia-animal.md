@@ -16,7 +16,7 @@ Cada organismo tem ID estável, espécie, posição, orientação, idade em tick
 
 - massa estrutural em g de matéria seca;
 - reserva de energia em kJ e condição corporal;
-- água corporal em g ou mL, usando uma unidade única por perfil;
+- água corporal em mL;
 - saúde/lesão, fadiga e condição térmica quando modeladas;
 - maturidade, condição reprodutiva e dependência/cuidado parental se aplicável;
 - ação e alvo atuais, percepção recente e estado de transição para inspeção.
