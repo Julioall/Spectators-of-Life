@@ -10,7 +10,7 @@ src/core: estado, tick, sistemas, eventos e invariantes.
 src/ai: MLP, aprendizado, memória, mutação e herança.
 src/worker: loop, protocolo e checkpoints.
 src/render: cenas Phaser, câmera, entidades e efeitos.
-src/ui: HUD DOM, painéis, filtros e acessibilidade.
+src/ui: HUD DOM compacto, menus flutuantes, fichas contextuais, filtros e acessibilidade. A UI projeta a seleção e os módulos ativos em uma única tela; não mantém dashboards ou painéis laterais permanentes como navegação principal.
 src/assets: manifesto, loader e validação.
 src/mods: schemas, dependências, conflitos e load order.
 src/platform: persistência, arquivos e adaptadores.
