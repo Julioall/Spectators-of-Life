@@ -1,6 +1,6 @@
 # Roadmap de implementação
 
-Status: planejamento. F0 é o marco atual; nenhuma fase está validada como implementada. Este documento é a fonte de verdade para ordem, escopo e critérios de avanço.
+Status: F0 validado localmente em 19/10/2026; F1–F9 ainda não estão validados como marcos concluídos. Este documento é a fonte de verdade para ordem, escopo e critérios de avanço.
 
 ## Regras de progressão
 

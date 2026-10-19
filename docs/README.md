@@ -1,6 +1,6 @@
 # Documentação de Spectators-of-Life
 
-Estado: fundação documental. O marco atual é F0; conteúdo especificado não significa funcionalidade implementada.
+Estado: F0 em implementação inicial. A base vazia possui runtime; conteúdo especificado não significa funcionalidade implementada nem gate aprovado.
 
 ## Ordem de leitura
 
@@ -24,13 +24,13 @@ Estado: fundação documental. O marco atual é F0; conteúdo especificado não 
 
 ## Specs de implementação
 
-O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. As primeiras propostas detalham a fundação do runtime e a comparação correta de tempo e métricas; são especificações para revisão, não funcionalidades implementadas.
+O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. SPEC-000 possui implementação inicial; SPEC-001 e as specs naturais continuam contratos em elaboração.
 
-[AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos.
+[AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos e [ADR 0006](adr/0006-prng-f0.md) fecha os geradores determinísticos de F0.
 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
 
-[Contratos de dados](../data/schemas/README.md) ainda são planejados. [Manifesto de assets](../data/assets/manifest.json) contém exemplos planned, com fontes ainda inexistentes.
+[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures; schemas naturais posteriores ainda são planejados. [Manifesto de assets](../data/assets/manifest.json) contém exemplos planned, com fontes ainda inexistentes.
 
 ## Revisão documental
 

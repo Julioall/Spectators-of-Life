@@ -1,0 +1,10 @@
+{
+  "format": "spectators-of-life-save",
+  "saveSchemaVersion": 1,
+  "simulationVersion": "0.1.0",
+  "scenarioId": "foundation:empty-world",
+  "scenarioVersion": "1.0.0",
+  "seed": "0000000000000000",
+  "tick": 12,
+  "config": {}
+}

@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-19",
+  "sourceRevision": "8b80e82 + working tree",
+  "scenario": "foundation:empty-world@1.0.0",
+  "seed": "0123456789abcdef",
+  "ticksPerProfile": 120,
+  "method": "Loaded the same tick-zero save for each profile, advanced 120 one-tick Worker commands, counted Phaser postrender events over a one-second measurement window, and compared canonical logical snapshots.",
+  "result": "passed",
+  "profiles": [
+    {
+      "profile": "render-off",
+      "requestedFps": 30,
+      "measuredFps": 0,
+      "renderedFrames": 0,
+      "loopRunning": false,
+      "camera": { "x": 0, "y": 0, "zoomX": 1, "zoomY": 1 },
+      "tick": 120,
+      "logicalStateEqual": true
+    },
+    {
+      "profile": "30-fps-camera-origin",
+      "requestedFps": 30,
+      "measuredFps": 31,
+      "renderedFrames": 32,
+      "loopRunning": true,
+      "camera": { "x": 0, "y": 0, "zoomX": 1, "zoomY": 1 },
+      "tick": 120,
+      "logicalStateEqual": true
+    },
+    {
+      "profile": "60-fps-camera-east",
+      "requestedFps": 60,
+      "measuredFps": 59.9,
+      "renderedFrames": 63,
+      "loopRunning": true,
+      "camera": { "x": 320, "y": -180, "zoomX": 1.25, "zoomY": 1.25 },
+      "tick": 120,
+      "logicalStateEqual": true
+    },
+    {
+      "profile": "60-fps-camera-west",
+      "requestedFps": 60,
+      "measuredFps": 60,
+      "renderedFrames": 63,
+      "loopRunning": true,
+      "camera": { "x": -2048, "y": 1024, "zoomX": 0.75, "zoomY": 0.75 },
+      "tick": 120,
+      "logicalStateEqual": true
+    }
+  ],
+  "repeatabilityNote": "Later runs in the embedded browser were throttled below the requested render rate and the harness correctly returned passed=false. Those runs retained equal logical states but are invalid FPS samples; use an unoccluded foreground browser when repeating the rendering measurement."
+}

@@ -1,0 +1,30 @@
+{
+  "name": "spectators-of-life",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "build": "vite build",
+    "verify:boundary": "node scripts/verify-core-boundary.mjs",
+    "benchmark:f0": "node --expose-gc scripts/f0-benchmark.mjs",
+    "check": "npm run typecheck && npm test -- --run && npm run verify:boundary && npm run build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

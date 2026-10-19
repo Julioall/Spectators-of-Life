@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spectators-of-life.invalid/schemas/save.v1.schema.json",
+  "title": "Spectators of Life save v1",
+  "type": "object",
+  "properties": {
+    "format": { "const": "spectators-of-life-save" },
+    "saveSchemaVersion": { "const": 1 },
+    "simulationVersion": { "const": "0.1.0" },
+    "scenarioId": { "const": "foundation:empty-world" },
+    "scenarioVersion": { "const": "1.0.0" },
+    "seed": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "tick": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "config": { "type": "object", "maxProperties": 0 },
+    "activeModules": { "type": "array", "maxItems": 256, "items": { "$ref": "worker-protocol.v1.schema.json#/$defs/module" } },
+    "rng": { "$ref": "worker-protocol.v1.schema.json#/$defs/randomState" },
+    "schedules": { "type": "array", "maxItems": 1024, "items": { "$ref": "worker-protocol.v1.schema.json#/$defs/schedule" } },
+    "entities": { "type": "array", "maxItems": 100000, "items": { "$ref": "worker-protocol.v1.schema.json#/$defs/entity" } },
+    "metrics": { "type": "object", "additionalProperties": { "type": "number" } }
+  },
+  "required": ["format", "saveSchemaVersion", "simulationVersion", "scenarioId", "scenarioVersion", "seed", "tick", "config", "activeModules", "rng", "schedules", "entities", "metrics"],
+  "additionalProperties": false
+}

@@ -1,6 +1,13 @@
-# Contratos de dados planejados
+# Contratos de dados
 
-Os schemas ainda serão implementados com fixtures válidas e inválidas. Não são funcionalidades prontas.
+Os contratos F0 possuem schemas JSON versionados, validação de runtime e fixtures em `data/fixtures/spec-000/`. A cobertura executável não significa que o gate F0 está aprovado nem que existem sistemas ecológicos.
+
+| Arquivo | Contrato |
+| --- | --- |
+| [worker-protocol.v1.schema.json](worker-protocol.v1.schema.json) | Mensagens Worker v1: pedidos e respostas |
+| [save.v1.schema.json](save.v1.schema.json) | Documento de save v1 |
+
+O Worker aplica também limites em bytes e invariantes que não cabem no schema JSON, como ordenação e unicidade de IDs. Limites atuais: pedido/resposta 4 MiB; snapshot/save 3 MiB; estado lógico 3 MiB menos 1 KiB, reservando espaço para metadados do save; 256 fluxos RNG e módulos ativos; 1.024 agendas; 100.000 entidades; até 4.096 eventos na resposta. Eventos excedentes são contados em `eventsOmitted` sem alterar a simulação. Veja [SPEC-000](../../docs/specs/000-fundacao-runtime.md) para o contrato completo.
 
 | Fase | Contratos |
 | --- | --- |

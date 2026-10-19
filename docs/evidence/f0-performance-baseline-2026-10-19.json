@@ -1,0 +1,54 @@
+{
+  "measuredAt": "2026-10-19T05:11:55.607Z",
+  "revision": "8b80e82",
+  "workingTree": "modified",
+  "host": {
+    "platform": "Windows_NT 10.0.26200",
+    "cpu": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+    "logicalCpus": 8,
+    "ramBytes": 17041817600,
+    "freeRamAtStartBytes": 2649624576,
+    "node": "v24.19.0",
+    "v8": "13.6.233.17-node.51",
+    "arch": "x64"
+  },
+  "methodology": "One isolated Node process per population; stepWorld(1), 3 warm-up ticks, 50/25/10 timed ticks, p50/p95/max latency; retained heap delta after GC with both previous and next snapshots live.",
+  "runs": [
+    {
+      "population": 0,
+      "stateBytes": 294,
+      "samples": 50,
+      "p50Ms": 0.035,
+      "p95Ms": 0.059,
+      "maxMs": 0.117,
+      "retainedSecondSnapshotHeapBytes": 0,
+      "rssBeforeCloneBytes": 104538112,
+      "rssWithTwoSnapshotsBytes": 104759296,
+      "resultingTick": 54
+    },
+    {
+      "population": 10000,
+      "stateBytes": 480293,
+      "samples": 25,
+      "p50Ms": 26.138,
+      "p95Ms": 31.624,
+      "maxMs": 31.707,
+      "retainedSecondSnapshotHeapBytes": 1107160,
+      "rssBeforeCloneBytes": 253595648,
+      "rssWithTwoSnapshotsBytes": 253710336,
+      "resultingTick": 29
+    },
+    {
+      "population": 50000,
+      "stateBytes": 2400293,
+      "samples": 10,
+      "p50Ms": 144.098,
+      "p95Ms": 161.896,
+      "maxMs": 161.896,
+      "retainedSecondSnapshotHeapBytes": 5930976,
+      "rssBeforeCloneBytes": 400932864,
+      "rssWithTwoSnapshotsBytes": 401244160,
+      "resultingTick": 14
+    }
+  ]
+}

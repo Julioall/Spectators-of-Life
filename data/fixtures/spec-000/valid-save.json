@@ -1,0 +1,19 @@
+{
+  "format": "spectators-of-life-save",
+  "saveSchemaVersion": 1,
+  "simulationVersion": "0.1.0",
+  "scenarioId": "foundation:empty-world",
+  "scenarioVersion": "1.0.0",
+  "seed": "0000000000000000",
+  "tick": 0,
+  "config": {},
+  "activeModules": [],
+  "rng": {
+    "algorithm": "xoshiro128**-1.1",
+    "derivation": "fnv1a64-xor-splitmix64-v1",
+    "streams": {}
+  },
+  "schedules": [],
+  "entities": [],
+  "metrics": {}
+}

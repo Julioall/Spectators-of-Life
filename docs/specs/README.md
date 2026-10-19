@@ -6,14 +6,14 @@ Este diretório transforma a visão e os contratos de domínio em requisitos ver
 
 | ID | Especificação | Fase | Estado |
 | --- | --- | --- | --- |
-| SPEC-000 | [Fundação do runtime](000-fundacao-runtime.md) | F0 | Proposta revisada; fechamento de contratos pendente |
+| SPEC-000 | [Fundação do runtime](000-fundacao-runtime.md) | F0 | Validada localmente |
 | SPEC-001 | [Relógio e métricas](001-relogio-e-metricas.md) | F0–F4 | Proposta revisada; fechamento de contratos pendente |
 | SPEC-100 | [Mundo físico: terreno, clima e água](100-mundo-fisico.md) | F1 | Rascunho; parâmetros aguardam cenário |
 | SPEC-200 | [Solo, vegetação e decomposição](200-vegetacao-e-decomposicao.md) | F2 | Rascunho; perfis/taxas pendentes |
 | SPEC-300 | [Biologia animal e populações](300-biologia-animal.md) | F3 | Rascunho; perfis/calibração pendentes |
 | SPEC-400 | [Aprendizado online e evolução](400-aprendizado-e-evolucao.md) | F4 | Rascunho experimental; parâmetros pendentes |
 
-“Proposta revisada” significa que o contrato foi revisto documentalmente, mas ainda possui decisões bloqueantes identificadas. Não significa pronta para implementação integral, implementada, testada ou aprovada. A fase F0 continua sendo o marco atual; ver [roadmap](../09-roadmap.md).
+O estado “validada localmente” registra a evidência e o ambiente descritos no relatório F0; não declara compatibilidade entre plataformas nem aprova F1 ou o gate natural. Ver [roadmap](../09-roadmap.md) e [validação documental](../12-validacao-documental.md).
 
 ## Como uma spec fica completa
 

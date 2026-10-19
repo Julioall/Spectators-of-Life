@@ -8,4 +8,6 @@ Commits usam uma categoria curta: design, sim, ai, render, ui, content, mods, te
 
 Cada contribuição identifica fase F0–F9 e critério de saída em docs/09-roadmap.md. Contribuições atuais devem fortalecer a fundação natural. Não tratar instituições futuras como requisitos do primeiro recorte.
 
+Para o runtime local, use Node.js 24+ e npm 11+: `npm ci`, `npm run dev` e `npm run check`. O check inclui typecheck, testes determinísticos, fronteira headless e build; CI usa o mesmo comando.
+
 Relatórios de ecologia incluem balanços de água/biomassa/nutrientes, causas de mortalidade e simplificações usadas. Alterações de documentação validam referências e consistência; não exigem playtest de sistemas ainda inexistentes.

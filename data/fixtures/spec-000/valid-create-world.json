@@ -1,0 +1,9 @@
+{
+  "protocolVersion": 1,
+  "requestId": 1,
+  "type": "CREATE_WORLD",
+  "scenarioId": "foundation:empty-world",
+  "scenarioVersion": "1.0.0",
+  "seed": "0000000000000000",
+  "config": {}
+}

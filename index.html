@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101916" />
+    <meta name="description" content="Fundação determinística do simulador Spectators of Life." />
+    <title>Spectators of Life — Fundação F0</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SPECTATORS OF LIFE · F0</p>
+          <h1>Um mundo começa vazio</h1>
+        </div>
+        <output id="runtime-status" class="status" role="status" aria-live="polite">Preparando runtime…</output>
+      </header>
+
+      <main class="workspace">
+        <section class="world-panel" aria-label="Projeção do mundo">
+          <div id="world-canvas" class="world-canvas"></div>
+        </section>
+
+        <aside class="control-panel" aria-label="Controles da simulação">
+          <section class="control-section">
+            <h2>Execução</h2>
+            <label for="seed-input">Seed hexadecimal (64 bits)</label>
+            <div class="seed-row">
+              <input id="seed-input" inputmode="text" autocomplete="off" spellcheck="false" maxlength="16" aria-describedby="seed-help" />
+              <button id="new-seed-button" class="icon-button" type="button" aria-label="Gerar nova seed" title="Gerar nova seed">↻</button>
+            </div>
+            <p id="seed-help" class="help-text">16 dígitos hexadecimais minúsculos.</p>
+            <button id="create-button" class="primary-button" type="button">Criar mundo vazio</button>
+            <div class="button-row">
+              <button id="resume-button" type="button" disabled>Retomar</button>
+              <button id="pause-button" type="button" disabled>Pausar</button>
+              <button id="step-button" type="button" disabled>+1 tick</button>
+            </div>
+            <label for="speed-select">Velocidade de apresentação</label>
+            <select id="speed-select" disabled>
+              <option value="1">1 tick/s</option>
+              <option value="8">8 ticks/s</option>
+              <option value="32">32 ticks/s</option>
+              <option value="128">128 ticks/s</option>
+              <option value="1024">1.024 ticks/s</option>
+            </select>
+          </section>
+
+          <section class="control-section">
+            <h2>Persistência</h2>
+            <div class="button-row">
+              <button id="save-button" type="button" disabled>Exportar save</button>
+              <button id="load-button" type="button">Importar save</button>
+              <input id="load-input" type="file" accept="application/json,.json" hidden />
+            </div>
+            <p class="help-text">O save contém apenas o estado lógico do mundo. Câmera, velocidade e objetos visuais não são persistidos.</p>
+          </section>
+
+          <section class="diagnostic-section" aria-label="Diagnóstico">
+            <h2>Diagnóstico</h2>
+            <dl>
+              <div><dt>Tick</dt><dd id="tick-value">—</dd></div>
+              <div><dt>Seed</dt><dd id="seed-value">—</dd></div>
+              <div><dt>Versão</dt><dd id="version-value">—</dd></div>
+            </dl>
+            <p id="error-output" class="error-output" role="alert" hidden></p>
+          </section>
+        </aside>
+      </main>
+      <footer><span>F0 · Runtime headless + Worker</span><span>Renderização é uma projeção descartável</span></footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
