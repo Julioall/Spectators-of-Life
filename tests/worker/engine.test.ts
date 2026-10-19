@@ -97,6 +97,8 @@ describe('SPEC-000 · Worker protocol', () => {
     const systems = [{
       id: 'core:save-rng-fixture',
       order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
       run: (draft: import('../../src/core/types').WorldState) => {
         const draw = drawFromSystem(draft.rng, draft.seed, 'core:save-rng-fixture');
         draft.metrics['drawSum'] = (draft.metrics['drawSum'] ?? 0) + draw;
@@ -124,12 +126,34 @@ describe('SPEC-000 · Worker protocol', () => {
     expect(resumedSnapshot.snapshot.rng.streams['core:save-rng-fixture']?.draws).toBe(11);
   });
 
+  it('recusa LOAD com cadência divergente sem substituir o mundo ativo', () => {
+    const systems = [{
+      id: 'fixture:scheduled-system',
+      order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
+      run: (draft: import('../../src/core/types').WorldState, tick: number) => { draft.metrics['lastTick'] = tick; },
+    }];
+    const engine = new WorkerEngine({ systems });
+    const ready = engine.handle(request(1, { type: 'CREATE_WORLD', scenarioId: 'foundation:empty-world', scenarioVersion: '1.0.0', seed: '0000000000000000', config: {} }));
+    if (ready.type !== 'READY') throw new Error('READY esperado.');
+    engine.handle(request(2, { type: 'STEP', worldId: ready.worldId, ticks: 1 }));
+    const saved = engine.handle(request(3, { type: 'SAVE', worldId: ready.worldId }));
+    if (saved.type !== 'SAVED') throw new Error('SAVED esperado.');
+    const mismatchedSave = structuredClone(saved.save);
+    mismatchedSave.schedules[0]!.periodTicks = 2;
+    mismatchedSave.schedules[0]!.nextTick = 2;
+    expectError(engine.handle(request(4, { type: 'LOAD', save: mismatchedSave })), 'SCHEDULE_MISMATCH');
+    const snapshot = engine.handle(request(5, { type: 'GET_SNAPSHOT', worldId: ready.worldId }));
+    expect(snapshot).toMatchObject({ type: 'SNAPSHOT', snapshot: { tick: 1, metrics: { lastTick: 1 } } });
+  });
+
   it('marca falha de tick, conserva último estado válido e exige LOAD/DISPOSE para retomar', () => {
-    const engine = new WorkerEngine({ systems: [{ id: 'core:fault-fixture', order: 1, run: (_draft, tick) => { if (tick === 4) throw new Error('fault injection'); } }] });
+    const engine = new WorkerEngine({ systems: [{ id: 'core:fault-fixture', order: 1, periodTicks: 1, phaseOffsetTicks: 0, run: (_draft, tick) => { if (tick === 4) throw new Error('fault injection'); } }] });
     const ready = engine.handle(request(1, { type: 'CREATE_WORLD', scenarioId: 'foundation:empty-world', scenarioVersion: '1.0.0', seed: '0000000000000000', config: {} }));
     if (ready.type !== 'READY') throw new Error('READY esperado.');
     const failure = expectError(engine.handle(request(2, { type: 'STEP', worldId: ready.worldId, ticks: 8 })), 'INVARIANT_VIOLATION');
-    expect(failure).toMatchObject({ completedTicks: 3, lastValidTick: 3, systemId: 'core:fault-fixture', tick: 3, simulationVersion: '0.1.0', seed: '0000000000000000' });
+    expect(failure).toMatchObject({ completedTicks: 3, lastValidTick: 3, systemId: 'core:fault-fixture', tick: 3, simulationVersion: '0.2.0', seed: '0000000000000000' });
     const snapshot = engine.handle(request(3, { type: 'GET_SNAPSHOT', worldId: ready.worldId }));
     expect(snapshot).toMatchObject({ type: 'SNAPSHOT', snapshot: { tick: 3 }, diagnostics: { faulted: true, systemId: 'core:fault-fixture' } });
     expectError(engine.handle(request(4, { type: 'STEP', worldId: ready.worldId, ticks: 1 })), 'WORLD_FAULTED');

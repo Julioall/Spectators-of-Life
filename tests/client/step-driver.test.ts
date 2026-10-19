@@ -1,15 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import { WorkerEngine } from '../../src/worker/engine';
-import type { WorkerRequest, WorkerResponse } from '../../src/core/types';
+import type { SimulationEvent, TickSystem, WorkerRequest, WorkerResponse, WorldState } from '../../src/core/types';
 import { SimulationClient, type WorkerPort } from '../../src/client/worker-transport';
 import { StepDriver, type DriverState } from '../../src/client/step-driver';
+import { drawFromSystem } from '../../src/core/rng';
+import { logicalStateString } from '../../src/core/canonical-json';
 
 class FakeWorker implements WorkerPort {
   private readonly listeners = new Set<(event: MessageEvent<WorkerResponse>) => void>();
   readonly pending: WorkerRequest[] = [];
   maxInFlight = 0;
   holdResponses = false;
-  private readonly engine = new WorkerEngine();
+  private readonly engine: WorkerEngine;
+
+  constructor(engine = new WorkerEngine()) {
+    this.engine = engine;
+  }
 
   postMessage(message: WorkerRequest): void {
     this.pending.push(message);
@@ -81,6 +87,50 @@ describe('cliente serial e driver de ticks', () => {
       expect(worker.maxInFlight).toBe(1);
       expect(vi.getTimerCount()).toBe(0);
       client.close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('produz o mesmo estado lógico ao alcançar os mesmos ticks a 1× e 8×', async () => {
+    vi.useFakeTimers();
+    try {
+      const system: TickSystem = {
+        id: 'fixture:presentation-speed',
+        order: 1,
+        periodTicks: 1,
+        phaseOffsetTicks: 0,
+        run: (draft, tick) => {
+          const draw = drawFromSystem(draft.rng, draft.seed, 'fixture:presentation-speed');
+          draft.metrics['drawSum'] = (draft.metrics['drawSum'] ?? 0) + draw;
+          return [{ tick, systemId: 'fixture:presentation-speed', eventType: 'fixture:tick', actorIds: [], data: { draw } }];
+        },
+      };
+      const profile = async (ticksPerSecond: number, elapsedMs: number): Promise<{ state: WorldState; events: SimulationEvent[] }> => {
+        const worker = new FakeWorker(new WorkerEngine({ systems: [system] }));
+        const client = new SimulationClient(worker);
+        await client.createWorld('0123456789abcdef');
+        const events: SimulationEvent[] = [];
+        const driver = new StepDriver(client, {
+          onState: () => undefined,
+          onAdvanced: (response) => { events.push(...response.events); },
+          onError: (error) => { throw error; },
+        });
+        driver.resume(ticksPerSecond);
+        await vi.advanceTimersByTimeAsync(elapsedMs);
+        await driver.pause();
+        const snapshot = await client.getSnapshot();
+        client.close();
+        if (snapshot.type !== 'SNAPSHOT') throw new Error('SNAPSHOT esperado.');
+        return { state: snapshot.snapshot, events };
+      };
+
+      const at1x = await profile(1, 4000);
+      const at8x = await profile(8, 500);
+      expect(at1x.state.tick).toBe(4);
+      expect(at8x.state.tick).toBe(4);
+      expect(logicalStateString(at1x.state)).toBe(logicalStateString(at8x.state));
+      expect(at1x.events).toEqual(at8x.events);
     } finally {
       vi.useRealTimers();
     }

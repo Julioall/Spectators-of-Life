@@ -230,13 +230,13 @@
       "type": "object",
       "properties": {
         "simulationVersion": {
-          "const": "0.1.0"
+          "const": "0.2.0"
         },
         "scenarioId": {
-          "const": "foundation:empty-world"
+          "enum": ["foundation:empty-world", "natural:temperate-valley"]
         },
         "scenarioVersion": {
-          "const": "1.0.0"
+          "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0"]
         },
         "seed": {
           "$ref": "#/$defs/seed"
@@ -306,13 +306,13 @@
           "const": 1
         },
         "simulationVersion": {
-          "const": "0.1.0"
+          "enum": ["0.1.0", "0.2.0"]
         },
         "scenarioId": {
-          "const": "foundation:empty-world"
+          "enum": ["foundation:empty-world", "natural:temperate-valley"]
         },
         "scenarioVersion": {
-          "const": "1.0.0"
+          "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0"]
         },
         "seed": {
           "$ref": "#/$defs/seed"
@@ -423,10 +423,10 @@
               "const": "CREATE_WORLD"
             },
             "scenarioId": {
-              "const": "foundation:empty-world"
+              "enum": ["foundation:empty-world", "natural:temperate-valley"]
             },
             "scenarioVersion": {
-              "const": "1.0.0"
+              "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0"]
             },
             "seed": {
               "$ref": "#/$defs/seed"
@@ -537,13 +537,13 @@
               "$ref": "#/$defs/worldId"
             },
             "simulationVersion": {
-              "const": "0.1.0"
+              "const": "0.2.0"
             },
             "scenarioId": {
-              "const": "foundation:empty-world"
+              "enum": ["foundation:empty-world", "natural:temperate-valley"]
             },
             "scenarioVersion": {
-              "const": "1.0.0"
+              "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0"]
             },
             "seed": {
               "$ref": "#/$defs/seed"
@@ -597,7 +597,7 @@
               "items": {
                 "$ref": "#/$defs/event"
               },
-              "maxItems": 4096
+              "maxItems": 8192
             },
             "eventsOmitted": {
               "type": "integer",
@@ -611,7 +611,7 @@
                   "minimum": 0
                 },
                 "simulationVersion": {
-                  "const": "0.1.0"
+                  "const": "0.2.0"
                 },
                 "seed": {
                   "$ref": "#/$defs/seed"
@@ -737,13 +737,13 @@
               "$ref": "#/$defs/worldId"
             },
             "simulationVersion": {
-              "const": "0.1.0"
+              "const": "0.2.0"
             },
             "scenarioId": {
-              "const": "foundation:empty-world"
+              "enum": ["foundation:empty-world", "natural:temperate-valley"]
             },
             "scenarioVersion": {
-              "const": "1.0.0"
+              "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0"]
             },
             "seed": {
               "$ref": "#/$defs/seed"
@@ -834,7 +834,7 @@
               "minimum": 0
             },
             "simulationVersion": {
-              "const": "0.1.0"
+              "const": "0.2.0"
             },
             "seed": {
               "$ref": "#/$defs/seed"

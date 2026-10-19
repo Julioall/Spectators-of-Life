@@ -1,0 +1,353 @@
+{
+  "package_id": "asterra-rochas-minerios-v1",
+  "name": "ASTERRA / ROCHAS E MINÉRIOS",
+  "description": "Recortes auditáveis da folha de pixel art, excluindo a segunda linha duplicada de pedra comum.",
+  "primary_size": 192,
+  "sizes": [
+    192,
+    128,
+    64
+  ],
+  "growth_stages": 0,
+  "other_states": [
+    "cascalho",
+    "seixo_pequeno",
+    "seixo_medio",
+    "fragmentos",
+    "blocos_duplos",
+    "rocha_angular",
+    "rochedo_grande",
+    "monte_pedras",
+    "lajes_agrupadas",
+    "picos_medios",
+    "picos_altos",
+    "monolito",
+    "escarpa_grande"
+  ],
+  "ground_padding": 9,
+  "crop_padding_x": 0,
+  "trim_padding": 3,
+  "alpha_threshold": 70,
+  "binary_alpha": false,
+  "keep_largest_components": false,
+  "correct_red_fringe": false,
+  "sort_growth_by_bbox": false,
+  "species": [
+    {
+      "id": "pedra",
+      "name": "Pedra comum",
+      "row_y": [
+        0,
+        175
+      ],
+      "growth_x": [],
+      "states_x": {
+        "cascalho": [
+          0,
+          111
+        ],
+        "seixo_pequeno": [
+          111,
+          184
+        ],
+        "seixo_medio": [
+          184,
+          271
+        ],
+        "fragmentos": [
+          271,
+          366
+        ],
+        "blocos_duplos": [
+          366,
+          503
+        ],
+        "rocha_angular": [
+          503,
+          605
+        ],
+        "rochedo_grande": [
+          605,
+          766
+        ],
+        "monte_pedras": [
+          766,
+          933
+        ],
+        "lajes_agrupadas": [
+          933,
+          1226
+        ],
+        "picos_medios": [
+          1226,
+          1338
+        ],
+        "picos_altos": [
+          1338,
+          1457
+        ],
+        "monolito": [
+          1457,
+          1512
+        ],
+        "escarpa_grande": [
+          1512,
+          1672
+        ]
+      }
+    },
+    {
+      "id": "cobre",
+      "name": "Minério de cobre",
+      "row_y": [
+        175,
+        331
+      ],
+      "growth_x": [],
+      "states_x": {
+        "cascalho": [
+          0,
+          111
+        ],
+        "seixo_pequeno": [
+          111,
+          184
+        ],
+        "seixo_medio": [
+          184,
+          271
+        ],
+        "fragmentos": [
+          271,
+          366
+        ],
+        "blocos_duplos": [
+          366,
+          503
+        ],
+        "rocha_angular": [
+          503,
+          605
+        ],
+        "rochedo_grande": [
+          605,
+          766
+        ],
+        "monte_pedras": [
+          766,
+          933
+        ],
+        "lajes_agrupadas": [
+          933,
+          1226
+        ],
+        "picos_medios": [
+          1226,
+          1338
+        ],
+        "picos_altos": [
+          1338,
+          1457
+        ],
+        "monolito": [
+          1457,
+          1512
+        ],
+        "escarpa_grande": [
+          1512,
+          1672
+        ]
+      }
+    },
+    {
+      "id": "ferro",
+      "name": "Minério de ferro",
+      "row_y": [
+        331,
+        488
+      ],
+      "growth_x": [],
+      "states_x": {
+        "cascalho": [
+          0,
+          111
+        ],
+        "seixo_pequeno": [
+          111,
+          184
+        ],
+        "seixo_medio": [
+          184,
+          271
+        ],
+        "fragmentos": [
+          271,
+          366
+        ],
+        "blocos_duplos": [
+          366,
+          503
+        ],
+        "rocha_angular": [
+          503,
+          605
+        ],
+        "rochedo_grande": [
+          605,
+          766
+        ],
+        "monte_pedras": [
+          766,
+          933
+        ],
+        "lajes_agrupadas": [
+          933,
+          1226
+        ],
+        "picos_medios": [
+          1226,
+          1338
+        ],
+        "picos_altos": [
+          1338,
+          1457
+        ],
+        "monolito": [
+          1457,
+          1512
+        ],
+        "escarpa_grande": [
+          1512,
+          1672
+        ]
+      }
+    },
+    {
+      "id": "prata",
+      "name": "Minério de prata",
+      "row_y": [
+        488,
+        632
+      ],
+      "growth_x": [],
+      "states_x": {
+        "cascalho": [
+          0,
+          111
+        ],
+        "seixo_pequeno": [
+          111,
+          184
+        ],
+        "seixo_medio": [
+          184,
+          271
+        ],
+        "fragmentos": [
+          271,
+          366
+        ],
+        "blocos_duplos": [
+          366,
+          503
+        ],
+        "rocha_angular": [
+          503,
+          605
+        ],
+        "rochedo_grande": [
+          605,
+          766
+        ],
+        "monte_pedras": [
+          766,
+          933
+        ],
+        "lajes_agrupadas": [
+          933,
+          1226
+        ],
+        "picos_medios": [
+          1226,
+          1338
+        ],
+        "picos_altos": [
+          1338,
+          1457
+        ],
+        "monolito": [
+          1457,
+          1512
+        ],
+        "escarpa_grande": [
+          1512,
+          1672
+        ]
+      }
+    },
+    {
+      "id": "ouro",
+      "name": "Minério de ouro",
+      "row_y": [
+        632,
+        780
+      ],
+      "growth_x": [],
+      "states_x": {
+        "cascalho": [
+          0,
+          111
+        ],
+        "seixo_pequeno": [
+          111,
+          184
+        ],
+        "seixo_medio": [
+          184,
+          271
+        ],
+        "fragmentos": [
+          271,
+          366
+        ],
+        "blocos_duplos": [
+          366,
+          503
+        ],
+        "rocha_angular": [
+          503,
+          605
+        ],
+        "rochedo_grande": [
+          605,
+          766
+        ],
+        "monte_pedras": [
+          766,
+          933
+        ],
+        "lajes_agrupadas": [
+          933,
+          1226
+        ],
+        "picos_medios": [
+          1226,
+          1338
+        ],
+        "picos_altos": [
+          1338,
+          1457
+        ],
+        "monolito": [
+          1457,
+          1512
+        ],
+        "escarpa_grande": [
+          1512,
+          1672
+        ]
+      }
+    }
+  ],
+  "overrides": {}
+}

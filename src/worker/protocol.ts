@@ -1,6 +1,8 @@
 import {
   EMPTY_SCENARIO_ID,
   EMPTY_SCENARIO_VERSION,
+  NATURAL_SCENARIO_ID,
+  NATURAL_SCENARIO_VERSION,
   MAX_REQUEST_BYTES,
   PROTOCOL_VERSION,
 } from '../core/constants';
@@ -46,11 +48,13 @@ export function validateWorkerRequest(raw: unknown): ProtocolValidation {
       if (typeof raw['scenarioId'] !== 'string' || typeof raw['scenarioVersion'] !== 'string' || typeof raw['seed'] !== 'string' || !isRecord(raw['config'])) {
         return invalid('INVALID_MESSAGE', 'CREATE_WORLD possui campos com tipos inválidos.', requestId, protocolVersion);
       }
-      if (raw['scenarioId'] !== EMPTY_SCENARIO_ID || raw['scenarioVersion'] !== EMPTY_SCENARIO_VERSION) {
+      const supportedScenario = (raw['scenarioId'] === EMPTY_SCENARIO_ID && raw['scenarioVersion'] === EMPTY_SCENARIO_VERSION)
+        || (raw['scenarioId'] === NATURAL_SCENARIO_ID && raw['scenarioVersion'] === NATURAL_SCENARIO_VERSION);
+      if (!supportedScenario) {
         return invalid('INVALID_SCENARIO', `Cenário não suportado: ${raw['scenarioId']}@${raw['scenarioVersion']}.`, requestId, protocolVersion);
       }
       if (!/^[0-9a-f]{16}$/.test(raw['seed'])) return invalid('INVALID_SCENARIO', 'A seed deve conter 16 dígitos hexadecimais minúsculos.', requestId, protocolVersion);
-      if (Object.keys(raw['config']).length !== 0) return invalid('INVALID_SCENARIO', 'O cenário vazio não aceita parâmetros adicionais.', requestId, protocolVersion);
+      if (Object.keys(raw['config']).length !== 0) return invalid('INVALID_SCENARIO', 'O cenário de referência não aceita parâmetros adicionais; a configuração é versionada no catálogo.', requestId, protocolVersion);
       return { ok: true, request: raw as unknown as WorkerRequest, requestId, protocolVersion };
     }
     case 'STEP': {

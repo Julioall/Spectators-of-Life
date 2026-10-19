@@ -19,5 +19,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "tests", "vite.config.ts", "vite.natural-soak.config.ts"]
 }

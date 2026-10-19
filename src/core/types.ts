@@ -1,6 +1,9 @@
 import {
   EMPTY_SCENARIO_ID,
   EMPTY_SCENARIO_VERSION,
+  NATURAL_SCENARIO_ID,
+  NATURAL_SCENARIO_VERSION,
+  SUPPORTED_NATURAL_SCENARIO_VERSIONS,
   RNG_ALGORITHM,
   RNG_SEED_DERIVATION,
   SAVE_FORMAT,
@@ -31,6 +34,7 @@ export type ActiveModule = {
 export type SystemSchedule = {
   systemId: string;
   periodTicks: number;
+  /** Next occurrence; modulo periodTicks preserves phase, zero means no representable next occurrence. */
   nextTick: number;
 };
 
@@ -39,6 +43,8 @@ export type EntityState = {
   kind: string;
   [key: string]: JsonValue;
 };
+
+export type NaturalScenarioVersion = typeof SUPPORTED_NATURAL_SCENARIO_VERSIONS[number];
 
 export type SimulationEvent = {
   tick: number;
@@ -50,8 +56,8 @@ export type SimulationEvent = {
 
 export type WorldState = {
   simulationVersion: typeof SIMULATION_VERSION;
-  scenarioId: typeof EMPTY_SCENARIO_ID;
-  scenarioVersion: typeof EMPTY_SCENARIO_VERSION;
+  scenarioId: typeof EMPTY_SCENARIO_ID | typeof NATURAL_SCENARIO_ID;
+  scenarioVersion: typeof EMPTY_SCENARIO_VERSION | NaturalScenarioVersion;
   seed: string;
   tick: number;
   config: Record<string, never>;
@@ -66,8 +72,8 @@ export type SaveDocument = {
   format: typeof SAVE_FORMAT;
   saveSchemaVersion: typeof SAVE_SCHEMA_VERSION;
   simulationVersion: typeof SIMULATION_VERSION;
-  scenarioId: typeof EMPTY_SCENARIO_ID;
-  scenarioVersion: typeof EMPTY_SCENARIO_VERSION;
+  scenarioId: typeof EMPTY_SCENARIO_ID | typeof NATURAL_SCENARIO_ID;
+  scenarioVersion: typeof EMPTY_SCENARIO_VERSION | NaturalScenarioVersion;
   seed: string;
   tick: number;
   config: Record<string, never>;
@@ -83,8 +89,8 @@ export type WorkerRequest =
       protocolVersion: 1;
       requestId: number;
       type: 'CREATE_WORLD';
-      scenarioId: string;
-      scenarioVersion: string;
+      scenarioId: typeof EMPTY_SCENARIO_ID | typeof NATURAL_SCENARIO_ID;
+      scenarioVersion: typeof EMPTY_SCENARIO_VERSION | typeof NATURAL_SCENARIO_VERSION;
       seed: string;
       config: Record<string, unknown>;
     }
@@ -173,7 +179,15 @@ export type WorkerResponse =
 export type TickSystem = {
   id: string;
   order: number;
-  run: (draft: WorldState, tick: number) => readonly SimulationEvent[] | void;
+  periodTicks: number;
+  phaseOffsetTicks: number;
+  run: (draft: WorldState, tick: number, context: TickSystemContext) => readonly SimulationEvent[] | void;
+};
+
+export type TickSystemContext = {
+  periodTicks: number;
+  phaseOffsetTicks: number;
+  elapsedTicks: number;
 };
 
 export type StepResult = {

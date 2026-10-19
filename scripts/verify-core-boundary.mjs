@@ -18,7 +18,7 @@ collect(coreRoot);
 const forbidden = [
   { pattern: /\bMath\.random\s*\(/, name: 'Math.random' },
   { pattern: /\bDate\.now\s*\(/, name: 'Date.now' },
-  { pattern: /\b(?:window|document|navigator)\b/, name: 'DOM/browser global' },
+  { pattern: /\bglobalThis\s*\.\s*(?:window|document|navigator)\b|(?<![\w$.])(?:window|document|navigator)(?![\w$])(?!(?:\s*:))/, name: 'DOM/browser global' },
   { pattern: /\bperformance\./, name: 'performance clock' },
   { pattern: /\b(?:Phaser|vite)\b/i, name: 'render/build dependency' },
   { pattern: /(?:from\s*|import\s*\()\s*['"](?:node:)?(?:fs|path|worker_threads|perf_hooks|phaser|vite)(?:\/[^'"]*)?['"]/, name: 'platform dependency' },
@@ -26,7 +26,7 @@ const forbidden = [
 
 const failures = [];
 for (const path of files) {
-  const source = readFileSync(path, 'utf8');
+  const source = readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   for (const rule of forbidden) {
     if (rule.pattern.test(source)) failures.push(`${relative(repositoryRoot, path)}: ${rule.name}`);
   }

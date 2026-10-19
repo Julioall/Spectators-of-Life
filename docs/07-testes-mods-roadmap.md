@@ -12,6 +12,8 @@ F2: germinação, limitações ambientais, competição, biomassa e decomposiç�
 F3: metabolismo, ações simultâneas, reprodução, desenvolvimento, saúde, doença e morte.
 F4: aprendizado online, máscara de ação, update terminal, serialização, memória limitada, herança e comparação entre seeds.
 
+O ensaio anual do cenário natural pode ser executado separadamente com `npm run soak:natural`. Ele avança três seeds fixas por quatro estações, registra o pico de bytes do estado/save por estação e mede os resíduos dos balanços de água em m³ e dos estoques mineral e de nitrogênio em unidades totais no mapa, em [natural-soak-2026-10-19.json](evidence/natural-soak-2026-10-19.json). Os limites atuais são 2 m³ por dia e 20 m³ acumulados para água, 1e-7 de erro relativo para massa mineral e 1e-6 para nitrogênio. O estoque mineral aproxima o relevo por uma coluna de densidade configurada e inclui sedimento móvel; não é uma medição geológica calibrada. A suíte curta `npm run check` permanece adequada para regressões cotidianas; o ensaio longo não substitui os cenários de seca, saturação, competição e decomposição requeridos pelo gate F1–F2.
+
 Verificar consumo de recurso disputado, prevenção de nascimento sem custo e causa de extinção. Extinção pode ser resultado legítimo; não maquiar cenários com reposição automática.
 
 Repetir cenários com render desligado e câmera em regiões diferentes: o estado natural deve permanecer equivalente. Saves devem reproduzir a continuação do mundo e do controlador na mesma versão/ambiente testado.

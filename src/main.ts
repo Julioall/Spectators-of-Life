@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 import { StepDriver, type DriverState } from './client/step-driver';
 import { SimulationClient, type WorkerPort } from './client/worker-transport';
 import { logicalStateString } from './core/canonical-json';
+import { EMPTY_SCENARIO_ID, EMPTY_SCENARIO_VERSION, NATURAL_SCENARIO_ID, NATURAL_SCENARIO_VERSION } from './core/constants';
+import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type PlantStageId, type WaterBodyId } from './core/natural/types';
+import type { WorldState } from './core/types';
 import { FoundationScene } from './render/foundation-scene';
 import './styles.css';
 
@@ -10,8 +13,9 @@ const game = new Phaser.Game({
   parent: 'world-canvas',
   width: 1280,
   height: 720,
-  backgroundColor: '#101916',
+  backgroundColor: '#304536',
   scene: [FoundationScene],
+  scale: { mode: Phaser.Scale.RESIZE },
   render: { antialias: false, pixelArt: true },
 });
 
@@ -22,6 +26,8 @@ let currentTick: number | null = null;
 
 const statusOutput = requiredElement<HTMLOutputElement>('runtime-status');
 const seedInput = requiredElement<HTMLInputElement>('seed-input');
+const setupPanel = requiredElement<HTMLDetailsElement>('setup-panel');
+const worldDetails = requiredElement<HTMLDetailsElement>('world-details');
 const createButton = requiredElement<HTMLButtonElement>('create-button');
 const newSeedButton = requiredElement<HTMLButtonElement>('new-seed-button');
 const resumeButton = requiredElement<HTMLButtonElement>('resume-button');
@@ -35,6 +41,14 @@ const tickOutput = requiredElement<HTMLElement>('tick-value');
 const seedOutput = requiredElement<HTMLElement>('seed-value');
 const versionOutput = requiredElement<HTMLElement>('version-value');
 const errorOutput = requiredElement<HTMLElement>('error-output');
+const dateOutput = requiredElement<HTMLElement>('world-date');
+const waterOutput = requiredElement<HTMLElement>('water-reading');
+const climateOutput = requiredElement<HTMLElement>('climate-reading');
+const vegetationOutput = requiredElement<HTMLElement>('vegetation-reading');
+const mineralsOutput = requiredElement<HTMLElement>('minerals-reading');
+const cellInfoOutput = requiredElement<HTMLElement>('cell-info');
+let currentNaturalWorld: NaturalWorldEntity | null = null;
+let selectedCellIndex: number | null = null;
 
 seedInput.value = createRandomSeed();
 statusOutput.value = 'Runtime pronto · mundo pausado';
@@ -61,6 +75,15 @@ speedSelect.addEventListener('change', () => {
 saveButton.addEventListener('click', () => void exportSave());
 loadButton.addEventListener('click', () => loadInput.click());
 loadInput.addEventListener('change', () => void importSave());
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-map-layer]')) {
+  button.addEventListener('click', () => {
+    const layer = button.dataset['mapLayer'];
+    if (layer !== 'relief' && layer !== 'water' && layer !== 'vegetation' && layer !== 'minerals' && layer !== 'geology') return;
+    const enabled = button.getAttribute('aria-pressed') !== 'true';
+    button.setAttribute('aria-pressed', String(enabled));
+    getFoundationScene()?.setLayers({ [layer]: enabled });
+  });
+}
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden' && driver?.isRunning() === true) void pauseWorld();
 });
@@ -71,10 +94,12 @@ async function createWorld(): Promise<void> {
   await pauseDriver();
   createButton.disabled = true;
   try {
-    const ready = await client.createWorld(seedInput.value.trim());
+    selectedCellIndex = null;
+    const ready = await client.createWorld(seedInput.value.trim(), NATURAL_SCENARIO_ID, NATURAL_SCENARIO_VERSION);
     const snapshot = await client.getSnapshot();
     updateSnapshot(snapshot.snapshot, ready.worldId);
     enableWorldControls(true);
+    setupPanel.open = false;
     setStatus('Mundo criado · pausado');
   } catch (error) {
     showError(error);
@@ -134,22 +159,32 @@ async function importSave(): Promise<void> {
   await pauseDriver();
   try {
     const parsed: unknown = JSON.parse(await file.text());
+    selectedCellIndex = null;
     const loaded = await client.load(parsed);
     const snapshot = await client.getSnapshot();
     updateSnapshot(snapshot.snapshot, loaded.worldId);
     enableWorldControls(true);
+    setupPanel.open = false;
     setStatus(`Save carregado · tick ${loaded.tick}`);
   } catch (error) {
     showError(error);
   }
 }
 
-function updateSnapshot(snapshot: { tick: number; seed: string; simulationVersion: string }, _worldId: string): void {
+function updateSnapshot(snapshot: WorldState, _worldId: string): void {
   currentTick = snapshot.tick;
   tickOutput.textContent = snapshot.tick.toLocaleString('pt-BR');
   seedOutput.textContent = snapshot.seed;
   versionOutput.textContent = snapshot.simulationVersion;
-  getFoundationScene()?.showTick(snapshot.tick);
+  currentNaturalWorld = snapshot.scenarioId === NATURAL_SCENARIO_ID ? getNaturalWorld(snapshot) : null;
+  const scene = getFoundationScene();
+  scene?.showWorld(currentNaturalWorld, `${snapshot.scenarioId}:${snapshot.scenarioVersion}:${snapshot.seed}`);
+  scene?.setOnCellSelected((index) => {
+    selectedCellIndex = index;
+    if (index !== null) worldDetails.open = true;
+    updateCellInspection(currentNaturalWorld);
+  });
+  updateWorldReadings(currentNaturalWorld, snapshot);
   if (driver === null) {
     driver = new StepDriver(client, {
       onState: updateDriverState,
@@ -163,6 +198,60 @@ function updateSnapshot(snapshot: { tick: number; seed: string; simulationVersio
       },
     });
   }
+}
+
+function updateWorldReadings(natural: NaturalWorldEntity | null, snapshot: WorldState): void {
+  if (natural === null) {
+    dateOutput.textContent = 'Aguardando cenário natural';
+    waterOutput.textContent = '—';
+    climateOutput.textContent = '—';
+    vegetationOutput.textContent = '—';
+    mineralsOutput.textContent = '—';
+    cellInfoOutput.textContent = snapshot.scenarioId === EMPTY_SCENARIO_ID ? 'Mundo-base vazio · nenhum terreno neste ensaio.' : 'Sem dados ambientais.';
+    selectedCellIndex = null;
+    return;
+  }
+  const year = Math.floor(natural.daysSimulated / natural.yearLengthDays) + 1;
+  dateOutput.textContent = `Ano ${year} · ${SEASON_LABELS[natural.seasonId]} · dia ${natural.seasonDay + 1}`;
+  climateOutput.textContent = `${number(snapshot.metrics['climate.meanTemperatureC'])} °C · ${number((snapshot.metrics['climate.meanRelativeHumidity'] ?? 0) * 100)}% UR`;
+  waterOutput.textContent = `${number(snapshot.metrics['hydrology.meanSoilWaterMm'])} mm no solo · ${number(snapshot.metrics['hydrology.meanSurfaceWaterMm'])} mm na superfície`;
+  vegetationOutput.textContent = `${number(snapshot.metrics['vegetation.totalBiomassGPerM2'])} g/m² · ${number((snapshot.metrics['vegetation.meanCoverage'] ?? 0) * 100)}% de cobertura`;
+  mineralsOutput.textContent = `${Math.round(snapshot.metrics['geology.exposedOreCells'] ?? 0)} células com minério exposto`;
+  updateCellInspection(natural);
+}
+
+function updateCellInspection(natural: NaturalWorldEntity | null): void {
+  const cell = natural?.cells[selectedCellIndex ?? -1];
+  if (cell === undefined) {
+    cellInfoOutput.textContent = natural === null ? 'Nenhuma célula selecionada.' : 'Clique no mapa para inspecionar uma célula.';
+    return;
+  }
+  const plants = cell.plants.filter((plant) => plant.biomassGPerM2 > 0.1)
+    .map((plant) => `${PLANT_LABELS[plant.speciesId]} · ${PLANT_STAGE_LABELS[plant.stage]}${plant.speciesId !== 'grass' && plant.speciesId !== 'shrub' ? `, ${number(plant.ageDays)} dias` : ''} · ${number(plant.biomassGPerM2)} g/m²`).join(' · ') || 'sem biomassa vegetal';
+  const resources = cell.minerals.filter((deposit) => deposit.reserveKg > 0)
+    .map((deposit) => `${MINERAL_LABELS[deposit.resourceId]} ${number(deposit.reserveKg)} kg${deposit.sizeClass === undefined ? '' : ` · ${MINERAL_SIZE_LABELS[deposit.sizeClass]}`}${deposit.exposed ? ' · aflorado' : ` · ${number(deposit.depthM)} m`}`).join(' · ') || 'sem recurso mineral';
+  const rainfall = cell.climate.rainfallFactor === undefined ? '' : ` · chuva regional ×${number(cell.climate.rainfallFactor)}`;
+  const mineralPotential = cell.terrain.mineralPotential === undefined ? '' : ` · potencial geológico ${MINERAL_POTENTIAL_LABELS[cell.terrain.mineralPotential >= 0.72 ? 'high' : cell.terrain.mineralPotential >= 0.44 ? 'medium' : 'low']} (${Math.round(cell.terrain.mineralPotential * 100)}%)`;
+  const hydraulicHeadM = cell.terrain.elevationM + cell.water.surfaceMm / 1000;
+  const waterBody = cell.terrain.waterBody === undefined ? 'none' : cell.terrain.waterBody;
+  const waterBodyLabel = waterBody === 'none' ? '' : ` · ${WATER_BODY_LABELS[waterBody]}`;
+  const erosion = natural?.scenarioVersion !== NATURAL_SCENARIO_VERSION ? '' : ` · incisão ${number(cell.terrain.channelIncisionM ?? 0)} m · sedimento móvel ${number(cell.soil.sedimentLoadKgPerM2)} kg/m² · erosão recente ${number(cell.soil.lastMineralErosionKgPerM2)} kg/m²`;
+  const bankSeepage = cell.water.lastFlows.bankSeepageInMm === undefined ? '' : ` · infiltração da margem ${number(cell.water.lastFlows.bankSeepageInMm)} mm`;
+  cellInfoOutput.textContent = `Célula ${cell.x + 1}, ${cell.y + 1} · ${HABITAT_LABELS[cell.terrain.habitat]}${waterBodyLabel} · ${Math.round(cell.terrain.elevationM)} m · declive ${number(cell.terrain.slope * 100)}% · carga hidráulica ${number(hydraulicHeadM)} m · solo ${SOIL_LABELS[cell.terrain.soilType]}${rainfall}${mineralPotential} · água superficial ${number(cell.water.surfaceMm)} mm · água no solo ${number(cell.water.soilMm)}/${number(cell.water.capacityMm)} mm${erosion}${bankSeepage} · ${plants} · ${resources}`;
+}
+
+const SEASON_LABELS: Record<NaturalWorldEntity['seasonId'], string> = { spring: 'Primavera', summer: 'Verão', autumn: 'Outono', winter: 'Inverno' };
+const PLANT_LABELS: Record<NaturalWorldCellState['plants'][number]['speciesId'], string> = { grass: 'gramínea', shrub: 'arbusto', oak: 'carvalho', pine: 'pinheiro', birch: 'bétula', autumnal: 'árvore outonal', willow: 'salgueiro' };
+const PLANT_STAGE_LABELS: Record<PlantStageId, string> = { seedling: 'plântula', sapling: 'muda', juvenile: 'jovem', mature: 'adulta', senescent: 'senescente' };
+const MINERAL_LABELS: Record<NaturalWorldCellState['minerals'][number]['resourceId'], string> = { stone: 'pedra', copper: 'cobre', iron: 'ferro', silver: 'prata', gold: 'ouro' };
+const MINERAL_SIZE_LABELS: Record<NonNullable<NaturalWorldCellState['minerals'][number]['sizeClass']>, string> = { trace: 'traço', small: 'pequeno', medium: 'médio', large: 'grande' };
+const MINERAL_POTENTIAL_LABELS = { low: 'baixo', medium: 'médio', high: 'alto' } as const;
+const SOIL_LABELS: Record<NaturalWorldCellState['terrain']['soilType'], string> = { sand: 'arenoso', loam: 'franco', clay: 'argiloso', rock: 'rocha' };
+const HABITAT_LABELS: Record<NaturalWorldCellState['terrain']['habitat'], string> = { upland: 'terras altas', woodland: 'floresta', meadow: 'pradaria', wetland: 'pântano', dryland: 'terra seca', desert: 'deserto' };
+const WATER_BODY_LABELS: Record<WaterBodyId, string> = { none: 'terra', lake: 'lago', river: 'rio' };
+
+function number(value: number | undefined): string {
+  return (value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 }
 
 function updateDriverState(state: DriverState): void {
@@ -229,10 +318,12 @@ type F0PresentationProfile = {
 };
 
 function installF0ValidationPanel(): void {
-  const panel = document.createElement('section');
+  const panel = document.createElement('details');
   panel.className = 'dev-harness';
   panel.setAttribute('aria-labelledby', 'f0-validation-title');
 
+  const summary = document.createElement('summary');
+  summary.textContent = 'Verificação visual · F0';
   const title = document.createElement('h2');
   title.id = 'f0-validation-title';
   title.textContent = 'Ensaio F0 · renderização e câmera (modo desenvolvimento)';
@@ -246,7 +337,7 @@ function installF0ValidationPanel(): void {
   output.setAttribute('role', 'status');
   output.setAttribute('aria-live', 'polite');
   output.textContent = 'Aguardando execução.';
-  panel.append(title, description, button, output);
+  panel.append(summary, title, description, button, output);
   document.querySelector('#app')?.append(panel);
 
   button.addEventListener('click', () => {
@@ -268,7 +359,7 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
 
   const seed = '0123456789abcdef';
   seedInput.value = seed;
-  const ready = await client.createWorld(seed);
+  const ready = await client.createWorld(seed, EMPTY_SCENARIO_ID, EMPTY_SCENARIO_VERSION);
   const initial = await client.getSnapshot();
   updateSnapshot(initial.snapshot, ready.worldId);
   enableWorldControls(true);
@@ -307,7 +398,6 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
       for (let tick = 0; tick < 120; tick += 1) {
         const advanced = await client.step(1);
         events.push(...advanced.events);
-        getFoundationScene()?.showTick(advanced.tickTo);
         if ((tick + 1) % 20 === 0) setStatus(`Ensaio F0 · ${profile.label} · ${tick + 1}/120 ticks`);
       }
       let measuredFps = 0;

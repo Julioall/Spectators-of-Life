@@ -36,14 +36,15 @@ Pixel art desenhado em código é a base escolhida. Grade de 64 pixels é refer�
 
 Painéis de profissões, economia ou política só aparecem quando seus módulos existem. Antes disso, priorizar água, solo, habitat, vegetação, ciclos de vida, fluxos e teias alimentares.
 
-O manifesto atual contém exemplos planejados com caminhos ainda inexistentes; não deve ser tratado como catálogo carregável. Estado planned não autoriza anunciar asset integrado. O tracker inicial abaixo registra a prioridade, sem atribuir autoria/licença a assets ainda não produzidos.
+O manifesto distingue placeholders e referências de assets integrados. A cena desenha o solo com textura determinística por coordenadas, transições dither entre superfícies vizinhas e autotile da água usando a vizinhança de oito células; relevo e classe de solo continuam vindo da simulação. As cinco espécies do atlas `data/assets/tree/Spritesheets/arvores_atlas_128.png` usam quadros 01–08 por idade e o quadro seco em senescência. O atlas de rochas e minérios é usado na camada Minérios para afloramentos expostos; a disposição decorativa da pedra é determinística e não modifica a geologia. Espécies têm preferências de solo, habitat, água e temperatura; copas maduras sombreiam vizinhos e limitam o recrutamento de mudas. O atlas ambiental em `data/assets/environment/` permanece como referência visual, pois ainda não há um mapa que associe seus recortes às classes e máscaras do renderer. A autoria/licença dos pacotes ainda não foi confirmada.
 
 | ID de planejamento | Fase | Estado | Aceite |
 | --- | --- | --- | --- |
-| natural.terrain-water | F1 | planned | Solo, relevo e água legíveis em zoom de jogo |
-| natural.plant-lifecycle | F2 | planned | Estágios, variações e morte distinguíveis |
+| natural.terrain-water | F1 | prototype | Relevo, solo, bacias, lagos e escoamento; camadas e inspeção no jogo |
+| natural.plant-lifecycle | F2 | prototype | Gramínea, arbusto e cinco espécies de árvore agregadas; estágios visuais, habitat e competição por luz |
+| natural.minerals | F1 | prototype | Veios no estado e atlas de pedra/minérios nos afloramentos expostos; overlay e inspeção de células |
 | natural.detritus | F2 | planned | Decomposição visível sem ruído excessivo |
 | natural.fauna-lifecycle | F3 | planned | Âncora e proporção estáveis entre estados |
 | human.primitive | F5 | deferred | Só planejar em detalhe após gate natural |
 
-Campos de autoria e licença permanecem `null` enquanto não verificados. Caminhos `planned` são intenções, não arquivos carregáveis; o loader futuro filtra por estado. O schema F0 deve separar campos mínimos de planejamento dos campos obrigatórios de integração, e fixtures devem cobrir ambos.
+Campos de autoria e licença permanecem `null` enquanto não verificados, inclusive nos recursos ambientais adicionados em `data/assets/environment/`. A cena importa os atlas integrados das cinco árvores e de rochas/minérios; os outros recursos ambientais continuam catalogados como referência. O loader futuro deve filtrar por estado e o schema F0 deve separar campos de planejamento de campos de integração.

@@ -20,6 +20,138 @@
       "status": "planned",
       "license": null,
       "author": null
+    },
+    "environment.oak-mature-prototype": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/tree/PNG_128px/carvalho_crescimento_08.png",
+      "frameSize": [128, 128],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Recorte individual mantido para referência. A cena usa o atlas de ciclo de vida; origem/licença ainda não confirmadas."
+    },
+    "environment.pine-mature-prototype": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/tree/PNG_128px/pinheiro_crescimento_08.png",
+      "frameSize": [128, 128],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Recorte individual mantido para referência. A cena usa o atlas de ciclo de vida; origem/licença ainda não confirmadas."
+    },
+    "environment.tree-life-cycle-atlas": {
+      "domain": "environment",
+      "kind": "atlas",
+      "source": "data/assets/tree/Spritesheets/arvores_atlas_128.png",
+      "frameSize": [128, 128],
+      "anchor": [64, 123],
+      "status": "integrated",
+      "license": null,
+      "author": null,
+      "notes": "Atlas 12x5 com carvalho, pinheiro, bétula, árvore outonal e salgueiro; a cena usa crescimento 01–08 e estado seco para senescência. Pivot verificado na documentação do pacote; licença/autoria ainda não confirmadas."
+    },
+    "environment.mineral-outcrop-atlas": {
+      "domain": "environment",
+      "kind": "atlas",
+      "source": "data/assets/rocks/Spritesheets/atlas_128.png",
+      "frameSize": [128, 128],
+      "anchor": [64, 122],
+      "status": "integrated",
+      "license": null,
+      "author": null,
+      "notes": "Atlas 13x5 com pedra, cobre, ferro, prata e ouro; overlay renderiza afloramentos expostos pela camada Minérios. Pivot documentado; autoria/licença ainda não confirmadas."
+    },
+    "environment.asterra-terrain-reference": {
+      "domain": "environment",
+      "kind": "reference",
+      "source": "data/assets/environment/references/asterra-terrain-autotile-atlas.png",
+      "frameSize": [192, 896],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Imagem fornecida pelo usuário; a dimensão sugere células de 64x64, mas a função dos recortes e a licença não foram informadas. Referência, não atlas pronto para runtime."
+    },
+    "environment.asterra-oak": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/oak.png",
+      "frameSize": [162, 200],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas."
+    },
+    "environment.asterra-oak-wide": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/oakwide.png",
+      "frameSize": [256, 230],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas."
+    },
+    "environment.asterra-pine": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/pine.png",
+      "frameSize": [101, 200],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas."
+    },
+    "environment.asterra-shrub": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/shrub.png",
+      "frameSize": [200, 143],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas."
+    },
+    "environment.asterra-rocks": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/rocks.png",
+      "frameSize": [200, 172],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas."
+    },
+    "environment.asterra-mountain": {
+      "domain": "environment",
+      "kind": "sprite",
+      "source": "data/assets/environment/asterra-v4/mountain.png",
+      "frameSize": [256, 160],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Âncora e licença não informadas. Elemento visual não representa elevação simulada."
+    },
+    "environment.asterra-river-curve": {
+      "domain": "environment",
+      "kind": "reference",
+      "source": "data/assets/environment/asterra-v4/rivercurve.png",
+      "frameSize": [253, 256],
+      "anchor": null,
+      "status": "reviewed",
+      "license": null,
+      "author": null,
+      "notes": "Pacote fornecido pelo usuário; origem indicada como 'Criado para Asterra'. Curva estática de referência, não representa o fluxo hídrico simulado."
     }
   }
 }

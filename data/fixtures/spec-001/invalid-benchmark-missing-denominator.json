@@ -1,0 +1,33 @@
+{
+  "format": "spectators-of-life-benchmark",
+  "benchmarkSchemaVersion": 1,
+  "runId": "fixture:invalid",
+  "simulationVersion": "0.1.0",
+  "seed": "0123456789abcdef",
+  "scenario": {
+    "id": "fixture:known-food-window",
+    "version": "1.0.0",
+    "environmentConfig": {},
+    "content": [],
+    "cadences": [],
+    "initialPopulation": []
+  },
+  "learningCondition": {
+    "controllerMode": "heuristic",
+    "weightsInherited": false,
+    "conditionId": "fixture:baseline",
+    "parameters": {}
+  },
+  "durationTicks": 3,
+  "metrics": [
+    {
+      "metricId": "food.intake-per-1000-animal-ticks",
+      "scope": "ecological",
+      "unit": "g_dry_matter_per_1000_animal_ticks",
+      "window": { "fromTickExclusive": 0, "toTickInclusive": 3 },
+      "populationFilter": { "speciesId": "fixture:herbivore", "lifeStageId": "adult" }
+    }
+  ],
+  "buildRevision": "fixture",
+  "performanceEquipment": null
+}

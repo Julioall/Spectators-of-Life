@@ -1,0 +1,1581 @@
+{
+  "package_name": "Asterra - Arvores Pixel Art",
+  "version": "1.0",
+  "source_ref": "Referência visual enviada pelo usuário + sprites gerados",
+  "source_sha256": "404b842d658ae4421eb57514ecea4f6db0524ea5d748e53f54caf47c7485cd23",
+  "pixel_format": "RGBA 8-bit com canal alpha; transparencia binaria",
+  "species": [
+    {
+      "id": "carvalho",
+      "name": "Carvalho"
+    },
+    {
+      "id": "pinheiro",
+      "name": "Pinheiro"
+    },
+    {
+      "id": "bétula",
+      "name": "Bétula"
+    },
+    {
+      "id": "outonal",
+      "name": "Árvore outonal"
+    },
+    {
+      "id": "salgueiro",
+      "name": "Salgueiro"
+    }
+  ],
+  "canvas": [
+    192,
+    192
+  ],
+  "atlas_columns": [
+    "crescimento_01",
+    "crescimento_02",
+    "crescimento_03",
+    "crescimento_04",
+    "crescimento_05",
+    "crescimento_06",
+    "crescimento_07",
+    "crescimento_08",
+    "seca",
+    "toco",
+    "tronco",
+    "caida"
+  ],
+  "atlas_rows": [
+    "carvalho",
+    "pinheiro",
+    "bétula",
+    "outonal",
+    "salgueiro"
+  ],
+  "states": [
+    "crescimento_01",
+    "crescimento_02",
+    "crescimento_03",
+    "crescimento_04",
+    "crescimento_05",
+    "crescimento_06",
+    "crescimento_07",
+    "crescimento_08",
+    "seca",
+    "toco",
+    "tronco",
+    "caida"
+  ],
+  "entries": [
+    {
+      "id": "carvalho_crescimento_01",
+      "species": "carvalho",
+      "state": "crescimento_01",
+      "path_192": "PNG_192px/carvalho_crescimento_01.png",
+      "path_128": "PNG_128px/carvalho_crescimento_01.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        84,
+        153,
+        24,
+        31
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_02",
+      "species": "carvalho",
+      "state": "crescimento_02",
+      "path_192": "PNG_192px/carvalho_crescimento_02.png",
+      "path_128": "PNG_128px/carvalho_crescimento_02.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        77,
+        136,
+        37,
+        48
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_03",
+      "species": "carvalho",
+      "state": "crescimento_03",
+      "path_192": "PNG_192px/carvalho_crescimento_03.png",
+      "path_128": "PNG_128px/carvalho_crescimento_03.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        68,
+        99,
+        56,
+        85
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_04",
+      "species": "carvalho",
+      "state": "crescimento_04",
+      "path_192": "PNG_192px/carvalho_crescimento_04.png",
+      "path_128": "PNG_128px/carvalho_crescimento_04.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        53,
+        87,
+        86,
+        97
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_05",
+      "species": "carvalho",
+      "state": "crescimento_05",
+      "path_192": "PNG_192px/carvalho_crescimento_05.png",
+      "path_128": "PNG_128px/carvalho_crescimento_05.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        36,
+        52,
+        119,
+        132
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_06",
+      "species": "carvalho",
+      "state": "crescimento_06",
+      "path_192": "PNG_192px/carvalho_crescimento_06.png",
+      "path_128": "PNG_128px/carvalho_crescimento_06.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        30,
+        35,
+        131,
+        149
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_07",
+      "species": "carvalho",
+      "state": "crescimento_07",
+      "path_192": "PNG_192px/carvalho_crescimento_07.png",
+      "path_128": "PNG_128px/carvalho_crescimento_07.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        18,
+        18,
+        156,
+        166
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_crescimento_08",
+      "species": "carvalho",
+      "state": "crescimento_08",
+      "path_192": "PNG_192px/carvalho_crescimento_08.png",
+      "path_128": "PNG_128px/carvalho_crescimento_08.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        5,
+        18,
+        181,
+        166
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_seca",
+      "species": "carvalho",
+      "state": "seca",
+      "path_192": "PNG_192px/carvalho_seca.png",
+      "path_128": "PNG_128px/carvalho_seca.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        48,
+        51,
+        96,
+        133
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_toco",
+      "species": "carvalho",
+      "state": "toco",
+      "path_192": "PNG_192px/carvalho_toco.png",
+      "path_128": "PNG_128px/carvalho_toco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        51,
+        132,
+        90,
+        52
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_tronco",
+      "species": "carvalho",
+      "state": "tronco",
+      "path_192": "PNG_192px/carvalho_tronco.png",
+      "path_128": "PNG_128px/carvalho_tronco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        62,
+        144,
+        68,
+        40
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "carvalho_caida",
+      "species": "carvalho",
+      "state": "caida",
+      "path_192": "PNG_192px/carvalho_caida.png",
+      "path_128": "PNG_128px/carvalho_caida.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        11,
+        114,
+        170,
+        70
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_01",
+      "species": "pinheiro",
+      "state": "crescimento_01",
+      "path_192": "PNG_192px/pinheiro_crescimento_01.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_01.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        79,
+        140,
+        34,
+        44
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_02",
+      "species": "pinheiro",
+      "state": "crescimento_02",
+      "path_192": "PNG_192px/pinheiro_crescimento_02.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_02.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        73,
+        116,
+        45,
+        68
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_03",
+      "species": "pinheiro",
+      "state": "crescimento_03",
+      "path_192": "PNG_192px/pinheiro_crescimento_03.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_03.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        69,
+        103,
+        53,
+        81
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_04",
+      "species": "pinheiro",
+      "state": "crescimento_04",
+      "path_192": "PNG_192px/pinheiro_crescimento_04.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_04.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        66,
+        89,
+        60,
+        95
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_05",
+      "species": "pinheiro",
+      "state": "crescimento_05",
+      "path_192": "PNG_192px/pinheiro_crescimento_05.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_05.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        51,
+        60,
+        90,
+        124
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_06",
+      "species": "pinheiro",
+      "state": "crescimento_06",
+      "path_192": "PNG_192px/pinheiro_crescimento_06.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_06.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        41,
+        44,
+        110,
+        140
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_07",
+      "species": "pinheiro",
+      "state": "crescimento_07",
+      "path_192": "PNG_192px/pinheiro_crescimento_07.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_07.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        40,
+        44,
+        112,
+        140
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_crescimento_08",
+      "species": "pinheiro",
+      "state": "crescimento_08",
+      "path_192": "PNG_192px/pinheiro_crescimento_08.png",
+      "path_128": "PNG_128px/pinheiro_crescimento_08.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        33,
+        44,
+        125,
+        140
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_seca",
+      "species": "pinheiro",
+      "state": "seca",
+      "path_192": "PNG_192px/pinheiro_seca.png",
+      "path_128": "PNG_128px/pinheiro_seca.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        54,
+        53,
+        84,
+        131
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_toco",
+      "species": "pinheiro",
+      "state": "toco",
+      "path_192": "PNG_192px/pinheiro_toco.png",
+      "path_128": "PNG_128px/pinheiro_toco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        67,
+        132,
+        58,
+        52
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_tronco",
+      "species": "pinheiro",
+      "state": "tronco",
+      "path_192": "PNG_192px/pinheiro_tronco.png",
+      "path_128": "PNG_128px/pinheiro_tronco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        39,
+        141,
+        113,
+        43
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "pinheiro_caida",
+      "species": "pinheiro",
+      "state": "caida",
+      "path_192": "PNG_192px/pinheiro_caida.png",
+      "path_128": "PNG_128px/pinheiro_caida.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        14,
+        85,
+        163,
+        99
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_01",
+      "species": "bétula",
+      "state": "crescimento_01",
+      "path_192": "PNG_192px/bétula_crescimento_01.png",
+      "path_128": "PNG_128px/bétula_crescimento_01.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        81,
+        136,
+        30,
+        48
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_02",
+      "species": "bétula",
+      "state": "crescimento_02",
+      "path_192": "PNG_192px/bétula_crescimento_02.png",
+      "path_128": "PNG_128px/bétula_crescimento_02.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        78,
+        127,
+        35,
+        57
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_03",
+      "species": "bétula",
+      "state": "crescimento_03",
+      "path_192": "PNG_192px/bétula_crescimento_03.png",
+      "path_128": "PNG_128px/bétula_crescimento_03.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        70,
+        106,
+        51,
+        78
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_04",
+      "species": "bétula",
+      "state": "crescimento_04",
+      "path_192": "PNG_192px/bétula_crescimento_04.png",
+      "path_128": "PNG_128px/bétula_crescimento_04.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        56,
+        81,
+        79,
+        103
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_05",
+      "species": "bétula",
+      "state": "crescimento_05",
+      "path_192": "PNG_192px/bétula_crescimento_05.png",
+      "path_128": "PNG_128px/bétula_crescimento_05.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        52,
+        70,
+        87,
+        114
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_06",
+      "species": "bétula",
+      "state": "crescimento_06",
+      "path_192": "PNG_192px/bétula_crescimento_06.png",
+      "path_128": "PNG_128px/bétula_crescimento_06.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        44,
+        49,
+        103,
+        135
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_07",
+      "species": "bétula",
+      "state": "crescimento_07",
+      "path_192": "PNG_192px/bétula_crescimento_07.png",
+      "path_128": "PNG_128px/bétula_crescimento_07.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        37,
+        47,
+        118,
+        137
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_crescimento_08",
+      "species": "bétula",
+      "state": "crescimento_08",
+      "path_192": "PNG_192px/bétula_crescimento_08.png",
+      "path_128": "PNG_128px/bétula_crescimento_08.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        32,
+        43,
+        127,
+        141
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_seca",
+      "species": "bétula",
+      "state": "seca",
+      "path_192": "PNG_192px/bétula_seca.png",
+      "path_128": "PNG_128px/bétula_seca.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        51,
+        48,
+        89,
+        136
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_toco",
+      "species": "bétula",
+      "state": "toco",
+      "path_192": "PNG_192px/bétula_toco.png",
+      "path_128": "PNG_128px/bétula_toco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        55,
+        130,
+        82,
+        54
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_tronco",
+      "species": "bétula",
+      "state": "tronco",
+      "path_192": "PNG_192px/bétula_tronco.png",
+      "path_128": "PNG_128px/bétula_tronco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        47,
+        129,
+        98,
+        55
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "bétula_caida",
+      "species": "bétula",
+      "state": "caida",
+      "path_192": "PNG_192px/bétula_caida.png",
+      "path_128": "PNG_128px/bétula_caida.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        10,
+        106,
+        171,
+        78
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_01",
+      "species": "outonal",
+      "state": "crescimento_01",
+      "path_192": "PNG_192px/outonal_crescimento_01.png",
+      "path_128": "PNG_128px/outonal_crescimento_01.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        81,
+        137,
+        30,
+        47
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_02",
+      "species": "outonal",
+      "state": "crescimento_02",
+      "path_192": "PNG_192px/outonal_crescimento_02.png",
+      "path_128": "PNG_128px/outonal_crescimento_02.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        73,
+        119,
+        46,
+        65
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_03",
+      "species": "outonal",
+      "state": "crescimento_03",
+      "path_192": "PNG_192px/outonal_crescimento_03.png",
+      "path_128": "PNG_128px/outonal_crescimento_03.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        60,
+        104,
+        71,
+        80
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_04",
+      "species": "outonal",
+      "state": "crescimento_04",
+      "path_192": "PNG_192px/outonal_crescimento_04.png",
+      "path_128": "PNG_128px/outonal_crescimento_04.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        48,
+        77,
+        95,
+        107
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_05",
+      "species": "outonal",
+      "state": "crescimento_05",
+      "path_192": "PNG_192px/outonal_crescimento_05.png",
+      "path_128": "PNG_128px/outonal_crescimento_05.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        38,
+        61,
+        115,
+        123
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_06",
+      "species": "outonal",
+      "state": "crescimento_06",
+      "path_192": "PNG_192px/outonal_crescimento_06.png",
+      "path_128": "PNG_128px/outonal_crescimento_06.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        44,
+        80,
+        104,
+        104
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_07",
+      "species": "outonal",
+      "state": "crescimento_07",
+      "path_192": "PNG_192px/outonal_crescimento_07.png",
+      "path_128": "PNG_128px/outonal_crescimento_07.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        39,
+        70,
+        114,
+        114
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_crescimento_08",
+      "species": "outonal",
+      "state": "crescimento_08",
+      "path_192": "PNG_192px/outonal_crescimento_08.png",
+      "path_128": "PNG_128px/outonal_crescimento_08.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        31,
+        60,
+        130,
+        124
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_seca",
+      "species": "outonal",
+      "state": "seca",
+      "path_192": "PNG_192px/outonal_seca.png",
+      "path_128": "PNG_128px/outonal_seca.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        53,
+        66,
+        86,
+        118
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_toco",
+      "species": "outonal",
+      "state": "toco",
+      "path_192": "PNG_192px/outonal_toco.png",
+      "path_128": "PNG_128px/outonal_toco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        44,
+        127,
+        103,
+        57
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_tronco",
+      "species": "outonal",
+      "state": "tronco",
+      "path_192": "PNG_192px/outonal_tronco.png",
+      "path_128": "PNG_128px/outonal_tronco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        53,
+        135,
+        86,
+        49
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "outonal_caida",
+      "species": "outonal",
+      "state": "caida",
+      "path_192": "PNG_192px/outonal_caida.png",
+      "path_128": "PNG_128px/outonal_caida.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        8,
+        91,
+        175,
+        93
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_01",
+      "species": "salgueiro",
+      "state": "crescimento_01",
+      "path_192": "PNG_192px/salgueiro_crescimento_01.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_01.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        84,
+        148,
+        23,
+        36
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_02",
+      "species": "salgueiro",
+      "state": "crescimento_02",
+      "path_192": "PNG_192px/salgueiro_crescimento_02.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_02.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        82,
+        126,
+        28,
+        58
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_03",
+      "species": "salgueiro",
+      "state": "crescimento_03",
+      "path_192": "PNG_192px/salgueiro_crescimento_03.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_03.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        68,
+        105,
+        56,
+        79
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_04",
+      "species": "salgueiro",
+      "state": "crescimento_04",
+      "path_192": "PNG_192px/salgueiro_crescimento_04.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_04.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        59,
+        95,
+        74,
+        89
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_05",
+      "species": "salgueiro",
+      "state": "crescimento_05",
+      "path_192": "PNG_192px/salgueiro_crescimento_05.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_05.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        41,
+        58,
+        109,
+        126
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_06",
+      "species": "salgueiro",
+      "state": "crescimento_06",
+      "path_192": "PNG_192px/salgueiro_crescimento_06.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_06.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        33,
+        53,
+        126,
+        131
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_07",
+      "species": "salgueiro",
+      "state": "crescimento_07",
+      "path_192": "PNG_192px/salgueiro_crescimento_07.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_07.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        19,
+        51,
+        154,
+        133
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_crescimento_08",
+      "species": "salgueiro",
+      "state": "crescimento_08",
+      "path_192": "PNG_192px/salgueiro_crescimento_08.png",
+      "path_128": "PNG_128px/salgueiro_crescimento_08.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        10,
+        52,
+        171,
+        132
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_seca",
+      "species": "salgueiro",
+      "state": "seca",
+      "path_192": "PNG_192px/salgueiro_seca.png",
+      "path_128": "PNG_128px/salgueiro_seca.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        43,
+        56,
+        105,
+        128
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_toco",
+      "species": "salgueiro",
+      "state": "toco",
+      "path_192": "PNG_192px/salgueiro_toco.png",
+      "path_128": "PNG_128px/salgueiro_toco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        56,
+        129,
+        80,
+        55
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_tronco",
+      "species": "salgueiro",
+      "state": "tronco",
+      "path_192": "PNG_192px/salgueiro_tronco.png",
+      "path_128": "PNG_128px/salgueiro_tronco.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        37,
+        134,
+        117,
+        50
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    },
+    {
+      "id": "salgueiro_caida",
+      "species": "salgueiro",
+      "state": "caida",
+      "path_192": "PNG_192px/salgueiro_caida.png",
+      "path_128": "PNG_128px/salgueiro_caida.png",
+      "canvas_px": [
+        192,
+        192
+      ],
+      "bounds_192": [
+        9,
+        100,
+        174,
+        84
+      ],
+      "pivot_192": [
+        96,
+        184
+      ],
+      "pivot_128": [
+        64,
+        123
+      ]
+    }
+  ],
+  "anchors": {
+    "192": {
+      "x": 96,
+      "y": 184
+    },
+    "128": {
+      "x": 64,
+      "y": 123
+    }
+  },
+  "note": "Os estados sao estaticos. Crescimento pode ser representado pela troca sequencial dos sprites 01..08. Todos os sprites compartilham ancora de base por tamanho. Os estados seca, toco, tronco e caida sao substituicoes visuais, nao frames de animacao de corte."
+}

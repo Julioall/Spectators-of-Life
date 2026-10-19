@@ -1,0 +1,3123 @@
+{
+  "schema_version": "1.0.0",
+  "generator": "PixelPackager 0.1.0",
+  "package_id": "asterra-rochas-minerios-v1",
+  "name": "ASTERRA / ROCHAS E MINÉRIOS",
+  "source_sha256": "e76c2f46a46df1934892c752e20a391ea2d62d7cfefa17a07dab91c510451e87",
+  "source_dimensions": [
+    1672,
+    780
+  ],
+  "species": [
+    {
+      "id": "pedra",
+      "name": "Pedra comum"
+    },
+    {
+      "id": "cobre",
+      "name": "Minério de cobre"
+    },
+    {
+      "id": "ferro",
+      "name": "Minério de ferro"
+    },
+    {
+      "id": "prata",
+      "name": "Minério de prata"
+    },
+    {
+      "id": "ouro",
+      "name": "Minério de ouro"
+    }
+  ],
+  "states": [
+    "cascalho",
+    "seixo_pequeno",
+    "seixo_medio",
+    "fragmentos",
+    "blocos_duplos",
+    "rocha_angular",
+    "rochedo_grande",
+    "monte_pedras",
+    "lajes_agrupadas",
+    "picos_medios",
+    "picos_altos",
+    "monolito",
+    "escarpa_grande"
+  ],
+  "sizes": [
+    192,
+    128,
+    64
+  ],
+  "primary_size": 192,
+  "atlas_columns": [
+    "cascalho",
+    "seixo_pequeno",
+    "seixo_medio",
+    "fragmentos",
+    "blocos_duplos",
+    "rocha_angular",
+    "rochedo_grande",
+    "monte_pedras",
+    "lajes_agrupadas",
+    "picos_medios",
+    "picos_altos",
+    "monolito",
+    "escarpa_grande"
+  ],
+  "atlas_rows": [
+    "pedra",
+    "cobre",
+    "ferro",
+    "prata",
+    "ouro"
+  ],
+  "alpha_mode": "preserved",
+  "entries": [
+    {
+      "id": "pedra_cascalho",
+      "species": "pedra",
+      "state": "cascalho",
+      "files": {
+        "192": "PNG_192px/pedra_cascalho.png",
+        "128": "PNG_128px/pedra_cascalho.png",
+        "64": "PNG_64px/pedra_cascalho.png"
+      },
+      "source_rect": [
+        0,
+        0,
+        111,
+        175
+      ],
+      "actual_crop_rect": [
+        0,
+        0,
+        111,
+        175
+      ],
+      "content_box_primary": [
+        51,
+        144,
+        89,
+        39
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_seixo_pequeno",
+      "species": "pedra",
+      "state": "seixo_pequeno",
+      "files": {
+        "192": "PNG_192px/pedra_seixo_pequeno.png",
+        "128": "PNG_128px/pedra_seixo_pequeno.png",
+        "64": "PNG_64px/pedra_seixo_pequeno.png"
+      },
+      "source_rect": [
+        111,
+        0,
+        184,
+        175
+      ],
+      "actual_crop_rect": [
+        111,
+        0,
+        184,
+        175
+      ],
+      "content_box_primary": [
+        64,
+        142,
+        63,
+        41
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_seixo_medio",
+      "species": "pedra",
+      "state": "seixo_medio",
+      "files": {
+        "192": "PNG_192px/pedra_seixo_medio.png",
+        "128": "PNG_128px/pedra_seixo_medio.png",
+        "64": "PNG_64px/pedra_seixo_medio.png"
+      },
+      "source_rect": [
+        184,
+        0,
+        271,
+        175
+      ],
+      "actual_crop_rect": [
+        184,
+        0,
+        271,
+        175
+      ],
+      "content_box_primary": [
+        57,
+        128,
+        78,
+        55
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_fragmentos",
+      "species": "pedra",
+      "state": "fragmentos",
+      "files": {
+        "192": "PNG_192px/pedra_fragmentos.png",
+        "128": "PNG_128px/pedra_fragmentos.png",
+        "64": "PNG_64px/pedra_fragmentos.png"
+      },
+      "source_rect": [
+        271,
+        0,
+        366,
+        175
+      ],
+      "actual_crop_rect": [
+        271,
+        0,
+        366,
+        175
+      ],
+      "content_box_primary": [
+        53,
+        109,
+        86,
+        74
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_blocos_duplos",
+      "species": "pedra",
+      "state": "blocos_duplos",
+      "files": {
+        "192": "PNG_192px/pedra_blocos_duplos.png",
+        "128": "PNG_128px/pedra_blocos_duplos.png",
+        "64": "PNG_64px/pedra_blocos_duplos.png"
+      },
+      "source_rect": [
+        366,
+        0,
+        503,
+        175
+      ],
+      "actual_crop_rect": [
+        366,
+        0,
+        503,
+        175
+      ],
+      "content_box_primary": [
+        32,
+        90,
+        128,
+        93
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_rocha_angular",
+      "species": "pedra",
+      "state": "rocha_angular",
+      "files": {
+        "192": "PNG_192px/pedra_rocha_angular.png",
+        "128": "PNG_128px/pedra_rocha_angular.png",
+        "64": "PNG_64px/pedra_rocha_angular.png"
+      },
+      "source_rect": [
+        503,
+        0,
+        605,
+        175
+      ],
+      "actual_crop_rect": [
+        503,
+        0,
+        605,
+        175
+      ],
+      "content_box_primary": [
+        47,
+        81,
+        97,
+        102
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_rochedo_grande",
+      "species": "pedra",
+      "state": "rochedo_grande",
+      "files": {
+        "192": "PNG_192px/pedra_rochedo_grande.png",
+        "128": "PNG_128px/pedra_rochedo_grande.png",
+        "64": "PNG_64px/pedra_rochedo_grande.png"
+      },
+      "source_rect": [
+        605,
+        0,
+        766,
+        175
+      ],
+      "actual_crop_rect": [
+        605,
+        0,
+        766,
+        175
+      ],
+      "content_box_primary": [
+        20,
+        55,
+        151,
+        128
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_monte_pedras",
+      "species": "pedra",
+      "state": "monte_pedras",
+      "files": {
+        "192": "PNG_192px/pedra_monte_pedras.png",
+        "128": "PNG_128px/pedra_monte_pedras.png",
+        "64": "PNG_64px/pedra_monte_pedras.png"
+      },
+      "source_rect": [
+        766,
+        0,
+        933,
+        175
+      ],
+      "actual_crop_rect": [
+        766,
+        0,
+        933,
+        175
+      ],
+      "content_box_primary": [
+        15,
+        78,
+        161,
+        105
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_lajes_agrupadas",
+      "species": "pedra",
+      "state": "lajes_agrupadas",
+      "files": {
+        "192": "PNG_192px/pedra_lajes_agrupadas.png",
+        "128": "PNG_128px/pedra_lajes_agrupadas.png",
+        "64": "PNG_64px/pedra_lajes_agrupadas.png"
+      },
+      "source_rect": [
+        933,
+        0,
+        1226,
+        175
+      ],
+      "actual_crop_rect": [
+        933,
+        0,
+        1226,
+        175
+      ],
+      "content_box_primary": [
+        3,
+        112,
+        186,
+        71
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_picos_medios",
+      "species": "pedra",
+      "state": "picos_medios",
+      "files": {
+        "192": "PNG_192px/pedra_picos_medios.png",
+        "128": "PNG_128px/pedra_picos_medios.png",
+        "64": "PNG_64px/pedra_picos_medios.png"
+      },
+      "source_rect": [
+        1226,
+        0,
+        1338,
+        175
+      ],
+      "actual_crop_rect": [
+        1226,
+        0,
+        1338,
+        175
+      ],
+      "content_box_primary": [
+        42,
+        52,
+        107,
+        131
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_picos_altos",
+      "species": "pedra",
+      "state": "picos_altos",
+      "files": {
+        "192": "PNG_192px/pedra_picos_altos.png",
+        "128": "PNG_128px/pedra_picos_altos.png",
+        "64": "PNG_64px/pedra_picos_altos.png"
+      },
+      "source_rect": [
+        1338,
+        0,
+        1457,
+        175
+      ],
+      "actual_crop_rect": [
+        1338,
+        0,
+        1457,
+        175
+      ],
+      "content_box_primary": [
+        36,
+        45,
+        119,
+        138
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_monolito",
+      "species": "pedra",
+      "state": "monolito",
+      "files": {
+        "192": "PNG_192px/pedra_monolito.png",
+        "128": "PNG_128px/pedra_monolito.png",
+        "64": "PNG_64px/pedra_monolito.png"
+      },
+      "source_rect": [
+        1457,
+        0,
+        1512,
+        175
+      ],
+      "actual_crop_rect": [
+        1457,
+        0,
+        1512,
+        175
+      ],
+      "content_box_primary": [
+        70,
+        102,
+        51,
+        81
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "pedra_escarpa_grande",
+      "species": "pedra",
+      "state": "escarpa_grande",
+      "files": {
+        "192": "PNG_192px/pedra_escarpa_grande.png",
+        "128": "PNG_128px/pedra_escarpa_grande.png",
+        "64": "PNG_64px/pedra_escarpa_grande.png"
+      },
+      "source_rect": [
+        1512,
+        0,
+        1672,
+        175
+      ],
+      "actual_crop_rect": [
+        1512,
+        0,
+        1672,
+        175
+      ],
+      "content_box_primary": [
+        25,
+        26,
+        141,
+        157
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_cascalho",
+      "species": "cobre",
+      "state": "cascalho",
+      "files": {
+        "192": "PNG_192px/cobre_cascalho.png",
+        "128": "PNG_128px/cobre_cascalho.png",
+        "64": "PNG_64px/cobre_cascalho.png"
+      },
+      "source_rect": [
+        0,
+        175,
+        111,
+        331
+      ],
+      "actual_crop_rect": [
+        0,
+        175,
+        111,
+        331
+      ],
+      "content_box_primary": [
+        52,
+        143,
+        88,
+        40
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_seixo_pequeno",
+      "species": "cobre",
+      "state": "seixo_pequeno",
+      "files": {
+        "192": "PNG_192px/cobre_seixo_pequeno.png",
+        "128": "PNG_128px/cobre_seixo_pequeno.png",
+        "64": "PNG_64px/cobre_seixo_pequeno.png"
+      },
+      "source_rect": [
+        111,
+        175,
+        184,
+        331
+      ],
+      "actual_crop_rect": [
+        111,
+        175,
+        184,
+        331
+      ],
+      "content_box_primary": [
+        65,
+        140,
+        62,
+        43
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_seixo_medio",
+      "species": "cobre",
+      "state": "seixo_medio",
+      "files": {
+        "192": "PNG_192px/cobre_seixo_medio.png",
+        "128": "PNG_128px/cobre_seixo_medio.png",
+        "64": "PNG_64px/cobre_seixo_medio.png"
+      },
+      "source_rect": [
+        184,
+        175,
+        271,
+        331
+      ],
+      "actual_crop_rect": [
+        184,
+        175,
+        271,
+        331
+      ],
+      "content_box_primary": [
+        57,
+        125,
+        77,
+        58
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_fragmentos",
+      "species": "cobre",
+      "state": "fragmentos",
+      "files": {
+        "192": "PNG_192px/cobre_fragmentos.png",
+        "128": "PNG_128px/cobre_fragmentos.png",
+        "64": "PNG_64px/cobre_fragmentos.png"
+      },
+      "source_rect": [
+        271,
+        175,
+        366,
+        331
+      ],
+      "actual_crop_rect": [
+        271,
+        175,
+        366,
+        331
+      ],
+      "content_box_primary": [
+        53,
+        108,
+        85,
+        75
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_blocos_duplos",
+      "species": "cobre",
+      "state": "blocos_duplos",
+      "files": {
+        "192": "PNG_192px/cobre_blocos_duplos.png",
+        "128": "PNG_128px/cobre_blocos_duplos.png",
+        "64": "PNG_64px/cobre_blocos_duplos.png"
+      },
+      "source_rect": [
+        366,
+        175,
+        503,
+        331
+      ],
+      "actual_crop_rect": [
+        366,
+        175,
+        503,
+        331
+      ],
+      "content_box_primary": [
+        35,
+        89,
+        122,
+        94
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_rocha_angular",
+      "species": "cobre",
+      "state": "rocha_angular",
+      "files": {
+        "192": "PNG_192px/cobre_rocha_angular.png",
+        "128": "PNG_128px/cobre_rocha_angular.png",
+        "64": "PNG_64px/cobre_rocha_angular.png"
+      },
+      "source_rect": [
+        503,
+        175,
+        605,
+        331
+      ],
+      "actual_crop_rect": [
+        503,
+        175,
+        605,
+        331
+      ],
+      "content_box_primary": [
+        47,
+        76,
+        98,
+        107
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_rochedo_grande",
+      "species": "cobre",
+      "state": "rochedo_grande",
+      "files": {
+        "192": "PNG_192px/cobre_rochedo_grande.png",
+        "128": "PNG_128px/cobre_rochedo_grande.png",
+        "64": "PNG_64px/cobre_rochedo_grande.png"
+      },
+      "source_rect": [
+        605,
+        175,
+        766,
+        331
+      ],
+      "actual_crop_rect": [
+        605,
+        175,
+        766,
+        331
+      ],
+      "content_box_primary": [
+        19,
+        47,
+        154,
+        136
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_monte_pedras",
+      "species": "cobre",
+      "state": "monte_pedras",
+      "files": {
+        "192": "PNG_192px/cobre_monte_pedras.png",
+        "128": "PNG_128px/cobre_monte_pedras.png",
+        "64": "PNG_64px/cobre_monte_pedras.png"
+      },
+      "source_rect": [
+        766,
+        175,
+        933,
+        331
+      ],
+      "actual_crop_rect": [
+        766,
+        175,
+        933,
+        331
+      ],
+      "content_box_primary": [
+        15,
+        76,
+        162,
+        107
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_lajes_agrupadas",
+      "species": "cobre",
+      "state": "lajes_agrupadas",
+      "files": {
+        "192": "PNG_192px/cobre_lajes_agrupadas.png",
+        "128": "PNG_128px/cobre_lajes_agrupadas.png",
+        "64": "PNG_64px/cobre_lajes_agrupadas.png"
+      },
+      "source_rect": [
+        933,
+        175,
+        1226,
+        331
+      ],
+      "actual_crop_rect": [
+        933,
+        175,
+        1226,
+        331
+      ],
+      "content_box_primary": [
+        3,
+        113,
+        186,
+        70
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_picos_medios",
+      "species": "cobre",
+      "state": "picos_medios",
+      "files": {
+        "192": "PNG_192px/cobre_picos_medios.png",
+        "128": "PNG_128px/cobre_picos_medios.png",
+        "64": "PNG_64px/cobre_picos_medios.png"
+      },
+      "source_rect": [
+        1226,
+        175,
+        1338,
+        331
+      ],
+      "actual_crop_rect": [
+        1226,
+        175,
+        1338,
+        331
+      ],
+      "content_box_primary": [
+        41,
+        52,
+        110,
+        131
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_picos_altos",
+      "species": "cobre",
+      "state": "picos_altos",
+      "files": {
+        "192": "PNG_192px/cobre_picos_altos.png",
+        "128": "PNG_128px/cobre_picos_altos.png",
+        "64": "PNG_64px/cobre_picos_altos.png"
+      },
+      "source_rect": [
+        1338,
+        175,
+        1457,
+        331
+      ],
+      "actual_crop_rect": [
+        1338,
+        175,
+        1457,
+        331
+      ],
+      "content_box_primary": [
+        37,
+        45,
+        117,
+        138
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_monolito",
+      "species": "cobre",
+      "state": "monolito",
+      "files": {
+        "192": "PNG_192px/cobre_monolito.png",
+        "128": "PNG_128px/cobre_monolito.png",
+        "64": "PNG_64px/cobre_monolito.png"
+      },
+      "source_rect": [
+        1457,
+        175,
+        1512,
+        331
+      ],
+      "actual_crop_rect": [
+        1457,
+        175,
+        1512,
+        331
+      ],
+      "content_box_primary": [
+        70,
+        92,
+        52,
+        91
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "cobre_escarpa_grande",
+      "species": "cobre",
+      "state": "escarpa_grande",
+      "files": {
+        "192": "PNG_192px/cobre_escarpa_grande.png",
+        "128": "PNG_128px/cobre_escarpa_grande.png",
+        "64": "PNG_64px/cobre_escarpa_grande.png"
+      },
+      "source_rect": [
+        1512,
+        175,
+        1672,
+        331
+      ],
+      "actual_crop_rect": [
+        1512,
+        175,
+        1672,
+        331
+      ],
+      "content_box_primary": [
+        25,
+        30,
+        141,
+        153
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_cascalho",
+      "species": "ferro",
+      "state": "cascalho",
+      "files": {
+        "192": "PNG_192px/ferro_cascalho.png",
+        "128": "PNG_128px/ferro_cascalho.png",
+        "64": "PNG_64px/ferro_cascalho.png"
+      },
+      "source_rect": [
+        0,
+        331,
+        111,
+        488
+      ],
+      "actual_crop_rect": [
+        0,
+        331,
+        111,
+        488
+      ],
+      "content_box_primary": [
+        53,
+        143,
+        86,
+        40
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_seixo_pequeno",
+      "species": "ferro",
+      "state": "seixo_pequeno",
+      "files": {
+        "192": "PNG_192px/ferro_seixo_pequeno.png",
+        "128": "PNG_128px/ferro_seixo_pequeno.png",
+        "64": "PNG_64px/ferro_seixo_pequeno.png"
+      },
+      "source_rect": [
+        111,
+        331,
+        184,
+        488
+      ],
+      "actual_crop_rect": [
+        111,
+        331,
+        184,
+        488
+      ],
+      "content_box_primary": [
+        66,
+        137,
+        59,
+        46
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_seixo_medio",
+      "species": "ferro",
+      "state": "seixo_medio",
+      "files": {
+        "192": "PNG_192px/ferro_seixo_medio.png",
+        "128": "PNG_128px/ferro_seixo_medio.png",
+        "64": "PNG_64px/ferro_seixo_medio.png"
+      },
+      "source_rect": [
+        184,
+        331,
+        271,
+        488
+      ],
+      "actual_crop_rect": [
+        184,
+        331,
+        271,
+        488
+      ],
+      "content_box_primary": [
+        57,
+        123,
+        77,
+        60
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_fragmentos",
+      "species": "ferro",
+      "state": "fragmentos",
+      "files": {
+        "192": "PNG_192px/ferro_fragmentos.png",
+        "128": "PNG_128px/ferro_fragmentos.png",
+        "64": "PNG_64px/ferro_fragmentos.png"
+      },
+      "source_rect": [
+        271,
+        331,
+        366,
+        488
+      ],
+      "actual_crop_rect": [
+        271,
+        331,
+        366,
+        488
+      ],
+      "content_box_primary": [
+        53,
+        110,
+        85,
+        73
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_blocos_duplos",
+      "species": "ferro",
+      "state": "blocos_duplos",
+      "files": {
+        "192": "PNG_192px/ferro_blocos_duplos.png",
+        "128": "PNG_128px/ferro_blocos_duplos.png",
+        "64": "PNG_64px/ferro_blocos_duplos.png"
+      },
+      "source_rect": [
+        366,
+        331,
+        503,
+        488
+      ],
+      "actual_crop_rect": [
+        366,
+        331,
+        503,
+        488
+      ],
+      "content_box_primary": [
+        35,
+        88,
+        122,
+        95
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_rocha_angular",
+      "species": "ferro",
+      "state": "rocha_angular",
+      "files": {
+        "192": "PNG_192px/ferro_rocha_angular.png",
+        "128": "PNG_128px/ferro_rocha_angular.png",
+        "64": "PNG_64px/ferro_rocha_angular.png"
+      },
+      "source_rect": [
+        503,
+        331,
+        605,
+        488
+      ],
+      "actual_crop_rect": [
+        503,
+        331,
+        605,
+        488
+      ],
+      "content_box_primary": [
+        47,
+        79,
+        97,
+        104
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_rochedo_grande",
+      "species": "ferro",
+      "state": "rochedo_grande",
+      "files": {
+        "192": "PNG_192px/ferro_rochedo_grande.png",
+        "128": "PNG_128px/ferro_rochedo_grande.png",
+        "64": "PNG_64px/ferro_rochedo_grande.png"
+      },
+      "source_rect": [
+        605,
+        331,
+        766,
+        488
+      ],
+      "actual_crop_rect": [
+        605,
+        331,
+        766,
+        488
+      ],
+      "content_box_primary": [
+        19,
+        47,
+        154,
+        136
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_monte_pedras",
+      "species": "ferro",
+      "state": "monte_pedras",
+      "files": {
+        "192": "PNG_192px/ferro_monte_pedras.png",
+        "128": "PNG_128px/ferro_monte_pedras.png",
+        "64": "PNG_64px/ferro_monte_pedras.png"
+      },
+      "source_rect": [
+        766,
+        331,
+        933,
+        488
+      ],
+      "actual_crop_rect": [
+        766,
+        331,
+        933,
+        488
+      ],
+      "content_box_primary": [
+        16,
+        76,
+        159,
+        107
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_lajes_agrupadas",
+      "species": "ferro",
+      "state": "lajes_agrupadas",
+      "files": {
+        "192": "PNG_192px/ferro_lajes_agrupadas.png",
+        "128": "PNG_128px/ferro_lajes_agrupadas.png",
+        "64": "PNG_64px/ferro_lajes_agrupadas.png"
+      },
+      "source_rect": [
+        933,
+        331,
+        1226,
+        488
+      ],
+      "actual_crop_rect": [
+        933,
+        331,
+        1226,
+        488
+      ],
+      "content_box_primary": [
+        3,
+        111,
+        186,
+        72
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_picos_medios",
+      "species": "ferro",
+      "state": "picos_medios",
+      "files": {
+        "192": "PNG_192px/ferro_picos_medios.png",
+        "128": "PNG_128px/ferro_picos_medios.png",
+        "64": "PNG_64px/ferro_picos_medios.png"
+      },
+      "source_rect": [
+        1226,
+        331,
+        1338,
+        488
+      ],
+      "actual_crop_rect": [
+        1226,
+        331,
+        1338,
+        488
+      ],
+      "content_box_primary": [
+        42,
+        55,
+        107,
+        128
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_picos_altos",
+      "species": "ferro",
+      "state": "picos_altos",
+      "files": {
+        "192": "PNG_192px/ferro_picos_altos.png",
+        "128": "PNG_128px/ferro_picos_altos.png",
+        "64": "PNG_64px/ferro_picos_altos.png"
+      },
+      "source_rect": [
+        1338,
+        331,
+        1457,
+        488
+      ],
+      "actual_crop_rect": [
+        1338,
+        331,
+        1457,
+        488
+      ],
+      "content_box_primary": [
+        36,
+        43,
+        119,
+        140
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_monolito",
+      "species": "ferro",
+      "state": "monolito",
+      "files": {
+        "192": "PNG_192px/ferro_monolito.png",
+        "128": "PNG_128px/ferro_monolito.png",
+        "64": "PNG_64px/ferro_monolito.png"
+      },
+      "source_rect": [
+        1457,
+        331,
+        1512,
+        488
+      ],
+      "actual_crop_rect": [
+        1457,
+        331,
+        1512,
+        488
+      ],
+      "content_box_primary": [
+        70,
+        94,
+        52,
+        89
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ferro_escarpa_grande",
+      "species": "ferro",
+      "state": "escarpa_grande",
+      "files": {
+        "192": "PNG_192px/ferro_escarpa_grande.png",
+        "128": "PNG_128px/ferro_escarpa_grande.png",
+        "64": "PNG_64px/ferro_escarpa_grande.png"
+      },
+      "source_rect": [
+        1512,
+        331,
+        1672,
+        488
+      ],
+      "actual_crop_rect": [
+        1512,
+        331,
+        1672,
+        488
+      ],
+      "content_box_primary": [
+        27,
+        31,
+        137,
+        152
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_cascalho",
+      "species": "prata",
+      "state": "cascalho",
+      "files": {
+        "192": "PNG_192px/prata_cascalho.png",
+        "128": "PNG_128px/prata_cascalho.png",
+        "64": "PNG_64px/prata_cascalho.png"
+      },
+      "source_rect": [
+        0,
+        488,
+        111,
+        632
+      ],
+      "actual_crop_rect": [
+        0,
+        488,
+        111,
+        632
+      ],
+      "content_box_primary": [
+        52,
+        144,
+        88,
+        39
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_seixo_pequeno",
+      "species": "prata",
+      "state": "seixo_pequeno",
+      "files": {
+        "192": "PNG_192px/prata_seixo_pequeno.png",
+        "128": "PNG_128px/prata_seixo_pequeno.png",
+        "64": "PNG_64px/prata_seixo_pequeno.png"
+      },
+      "source_rect": [
+        111,
+        488,
+        184,
+        632
+      ],
+      "actual_crop_rect": [
+        111,
+        488,
+        184,
+        632
+      ],
+      "content_box_primary": [
+        64,
+        140,
+        63,
+        43
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_seixo_medio",
+      "species": "prata",
+      "state": "seixo_medio",
+      "files": {
+        "192": "PNG_192px/prata_seixo_medio.png",
+        "128": "PNG_128px/prata_seixo_medio.png",
+        "64": "PNG_64px/prata_seixo_medio.png"
+      },
+      "source_rect": [
+        184,
+        488,
+        271,
+        632
+      ],
+      "actual_crop_rect": [
+        184,
+        488,
+        271,
+        632
+      ],
+      "content_box_primary": [
+        57,
+        130,
+        77,
+        53
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_fragmentos",
+      "species": "prata",
+      "state": "fragmentos",
+      "files": {
+        "192": "PNG_192px/prata_fragmentos.png",
+        "128": "PNG_128px/prata_fragmentos.png",
+        "64": "PNG_64px/prata_fragmentos.png"
+      },
+      "source_rect": [
+        271,
+        488,
+        366,
+        632
+      ],
+      "actual_crop_rect": [
+        271,
+        488,
+        366,
+        632
+      ],
+      "content_box_primary": [
+        55,
+        109,
+        82,
+        74
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_blocos_duplos",
+      "species": "prata",
+      "state": "blocos_duplos",
+      "files": {
+        "192": "PNG_192px/prata_blocos_duplos.png",
+        "128": "PNG_128px/prata_blocos_duplos.png",
+        "64": "PNG_64px/prata_blocos_duplos.png"
+      },
+      "source_rect": [
+        366,
+        488,
+        503,
+        632
+      ],
+      "actual_crop_rect": [
+        366,
+        488,
+        503,
+        632
+      ],
+      "content_box_primary": [
+        32,
+        92,
+        128,
+        91
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_rocha_angular",
+      "species": "prata",
+      "state": "rocha_angular",
+      "files": {
+        "192": "PNG_192px/prata_rocha_angular.png",
+        "128": "PNG_128px/prata_rocha_angular.png",
+        "64": "PNG_64px/prata_rocha_angular.png"
+      },
+      "source_rect": [
+        503,
+        488,
+        605,
+        632
+      ],
+      "actual_crop_rect": [
+        503,
+        488,
+        605,
+        632
+      ],
+      "content_box_primary": [
+        47,
+        82,
+        98,
+        101
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_rochedo_grande",
+      "species": "prata",
+      "state": "rochedo_grande",
+      "files": {
+        "192": "PNG_192px/prata_rochedo_grande.png",
+        "128": "PNG_128px/prata_rochedo_grande.png",
+        "64": "PNG_64px/prata_rochedo_grande.png"
+      },
+      "source_rect": [
+        605,
+        488,
+        766,
+        632
+      ],
+      "actual_crop_rect": [
+        605,
+        488,
+        766,
+        632
+      ],
+      "content_box_primary": [
+        18,
+        54,
+        155,
+        129
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_monte_pedras",
+      "species": "prata",
+      "state": "monte_pedras",
+      "files": {
+        "192": "PNG_192px/prata_monte_pedras.png",
+        "128": "PNG_128px/prata_monte_pedras.png",
+        "64": "PNG_64px/prata_monte_pedras.png"
+      },
+      "source_rect": [
+        766,
+        488,
+        933,
+        632
+      ],
+      "actual_crop_rect": [
+        766,
+        488,
+        933,
+        632
+      ],
+      "content_box_primary": [
+        14,
+        82,
+        163,
+        101
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_lajes_agrupadas",
+      "species": "prata",
+      "state": "lajes_agrupadas",
+      "files": {
+        "192": "PNG_192px/prata_lajes_agrupadas.png",
+        "128": "PNG_128px/prata_lajes_agrupadas.png",
+        "64": "PNG_64px/prata_lajes_agrupadas.png"
+      },
+      "source_rect": [
+        933,
+        488,
+        1226,
+        632
+      ],
+      "actual_crop_rect": [
+        933,
+        488,
+        1226,
+        632
+      ],
+      "content_box_primary": [
+        3,
+        116,
+        186,
+        67
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_picos_medios",
+      "species": "prata",
+      "state": "picos_medios",
+      "files": {
+        "192": "PNG_192px/prata_picos_medios.png",
+        "128": "PNG_128px/prata_picos_medios.png",
+        "64": "PNG_64px/prata_picos_medios.png"
+      },
+      "source_rect": [
+        1226,
+        488,
+        1338,
+        632
+      ],
+      "actual_crop_rect": [
+        1226,
+        488,
+        1338,
+        632
+      ],
+      "content_box_primary": [
+        43,
+        53,
+        105,
+        130
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_picos_altos",
+      "species": "prata",
+      "state": "picos_altos",
+      "files": {
+        "192": "PNG_192px/prata_picos_altos.png",
+        "128": "PNG_128px/prata_picos_altos.png",
+        "64": "PNG_64px/prata_picos_altos.png"
+      },
+      "source_rect": [
+        1338,
+        488,
+        1457,
+        632
+      ],
+      "actual_crop_rect": [
+        1338,
+        488,
+        1457,
+        632
+      ],
+      "content_box_primary": [
+        37,
+        48,
+        117,
+        135
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_monolito",
+      "species": "prata",
+      "state": "monolito",
+      "files": {
+        "192": "PNG_192px/prata_monolito.png",
+        "128": "PNG_128px/prata_monolito.png",
+        "64": "PNG_64px/prata_monolito.png"
+      },
+      "source_rect": [
+        1457,
+        488,
+        1512,
+        632
+      ],
+      "actual_crop_rect": [
+        1457,
+        488,
+        1512,
+        632
+      ],
+      "content_box_primary": [
+        70,
+        95,
+        51,
+        88
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "prata_escarpa_grande",
+      "species": "prata",
+      "state": "escarpa_grande",
+      "files": {
+        "192": "PNG_192px/prata_escarpa_grande.png",
+        "128": "PNG_128px/prata_escarpa_grande.png",
+        "64": "PNG_64px/prata_escarpa_grande.png"
+      },
+      "source_rect": [
+        1512,
+        488,
+        1672,
+        632
+      ],
+      "actual_crop_rect": [
+        1512,
+        488,
+        1672,
+        632
+      ],
+      "content_box_primary": [
+        28,
+        39,
+        136,
+        144
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_cascalho",
+      "species": "ouro",
+      "state": "cascalho",
+      "files": {
+        "192": "PNG_192px/ouro_cascalho.png",
+        "128": "PNG_128px/ouro_cascalho.png",
+        "64": "PNG_64px/ouro_cascalho.png"
+      },
+      "source_rect": [
+        0,
+        632,
+        111,
+        780
+      ],
+      "actual_crop_rect": [
+        0,
+        632,
+        111,
+        780
+      ],
+      "content_box_primary": [
+        53,
+        143,
+        86,
+        40
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_seixo_pequeno",
+      "species": "ouro",
+      "state": "seixo_pequeno",
+      "files": {
+        "192": "PNG_192px/ouro_seixo_pequeno.png",
+        "128": "PNG_128px/ouro_seixo_pequeno.png",
+        "64": "PNG_64px/ouro_seixo_pequeno.png"
+      },
+      "source_rect": [
+        111,
+        632,
+        184,
+        780
+      ],
+      "actual_crop_rect": [
+        111,
+        632,
+        184,
+        780
+      ],
+      "content_box_primary": [
+        65,
+        137,
+        61,
+        46
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_seixo_medio",
+      "species": "ouro",
+      "state": "seixo_medio",
+      "files": {
+        "192": "PNG_192px/ouro_seixo_medio.png",
+        "128": "PNG_128px/ouro_seixo_medio.png",
+        "64": "PNG_64px/ouro_seixo_medio.png"
+      },
+      "source_rect": [
+        184,
+        632,
+        271,
+        780
+      ],
+      "actual_crop_rect": [
+        184,
+        632,
+        271,
+        780
+      ],
+      "content_box_primary": [
+        58,
+        126,
+        75,
+        57
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_fragmentos",
+      "species": "ouro",
+      "state": "fragmentos",
+      "files": {
+        "192": "PNG_192px/ouro_fragmentos.png",
+        "128": "PNG_128px/ouro_fragmentos.png",
+        "64": "PNG_64px/ouro_fragmentos.png"
+      },
+      "source_rect": [
+        271,
+        632,
+        366,
+        780
+      ],
+      "actual_crop_rect": [
+        271,
+        632,
+        366,
+        780
+      ],
+      "content_box_primary": [
+        52,
+        110,
+        88,
+        73
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_blocos_duplos",
+      "species": "ouro",
+      "state": "blocos_duplos",
+      "files": {
+        "192": "PNG_192px/ouro_blocos_duplos.png",
+        "128": "PNG_128px/ouro_blocos_duplos.png",
+        "64": "PNG_64px/ouro_blocos_duplos.png"
+      },
+      "source_rect": [
+        366,
+        632,
+        503,
+        780
+      ],
+      "actual_crop_rect": [
+        366,
+        632,
+        503,
+        780
+      ],
+      "content_box_primary": [
+        34,
+        88,
+        123,
+        95
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_rocha_angular",
+      "species": "ouro",
+      "state": "rocha_angular",
+      "files": {
+        "192": "PNG_192px/ouro_rocha_angular.png",
+        "128": "PNG_128px/ouro_rocha_angular.png",
+        "64": "PNG_64px/ouro_rocha_angular.png"
+      },
+      "source_rect": [
+        503,
+        632,
+        605,
+        780
+      ],
+      "actual_crop_rect": [
+        503,
+        632,
+        605,
+        780
+      ],
+      "content_box_primary": [
+        47,
+        74,
+        97,
+        109
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_rochedo_grande",
+      "species": "ouro",
+      "state": "rochedo_grande",
+      "files": {
+        "192": "PNG_192px/ouro_rochedo_grande.png",
+        "128": "PNG_128px/ouro_rochedo_grande.png",
+        "64": "PNG_64px/ouro_rochedo_grande.png"
+      },
+      "source_rect": [
+        605,
+        632,
+        766,
+        780
+      ],
+      "actual_crop_rect": [
+        605,
+        632,
+        766,
+        780
+      ],
+      "content_box_primary": [
+        18,
+        53,
+        155,
+        130
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_monte_pedras",
+      "species": "ouro",
+      "state": "monte_pedras",
+      "files": {
+        "192": "PNG_192px/ouro_monte_pedras.png",
+        "128": "PNG_128px/ouro_monte_pedras.png",
+        "64": "PNG_64px/ouro_monte_pedras.png"
+      },
+      "source_rect": [
+        766,
+        632,
+        933,
+        780
+      ],
+      "actual_crop_rect": [
+        766,
+        632,
+        933,
+        780
+      ],
+      "content_box_primary": [
+        15,
+        67,
+        162,
+        116
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_lajes_agrupadas",
+      "species": "ouro",
+      "state": "lajes_agrupadas",
+      "files": {
+        "192": "PNG_192px/ouro_lajes_agrupadas.png",
+        "128": "PNG_128px/ouro_lajes_agrupadas.png",
+        "64": "PNG_64px/ouro_lajes_agrupadas.png"
+      },
+      "source_rect": [
+        933,
+        632,
+        1226,
+        780
+      ],
+      "actual_crop_rect": [
+        933,
+        632,
+        1226,
+        780
+      ],
+      "content_box_primary": [
+        3,
+        113,
+        186,
+        70
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_picos_medios",
+      "species": "ouro",
+      "state": "picos_medios",
+      "files": {
+        "192": "PNG_192px/ouro_picos_medios.png",
+        "128": "PNG_128px/ouro_picos_medios.png",
+        "64": "PNG_64px/ouro_picos_medios.png"
+      },
+      "source_rect": [
+        1226,
+        632,
+        1338,
+        780
+      ],
+      "actual_crop_rect": [
+        1226,
+        632,
+        1338,
+        780
+      ],
+      "content_box_primary": [
+        41,
+        57,
+        109,
+        126
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_picos_altos",
+      "species": "ouro",
+      "state": "picos_altos",
+      "files": {
+        "192": "PNG_192px/ouro_picos_altos.png",
+        "128": "PNG_128px/ouro_picos_altos.png",
+        "64": "PNG_64px/ouro_picos_altos.png"
+      },
+      "source_rect": [
+        1338,
+        632,
+        1457,
+        780
+      ],
+      "actual_crop_rect": [
+        1338,
+        632,
+        1457,
+        780
+      ],
+      "content_box_primary": [
+        39,
+        50,
+        114,
+        133
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_monolito",
+      "species": "ouro",
+      "state": "monolito",
+      "files": {
+        "192": "PNG_192px/ouro_monolito.png",
+        "128": "PNG_128px/ouro_monolito.png",
+        "64": "PNG_64px/ouro_monolito.png"
+      },
+      "source_rect": [
+        1457,
+        632,
+        1512,
+        780
+      ],
+      "actual_crop_rect": [
+        1457,
+        632,
+        1512,
+        780
+      ],
+      "content_box_primary": [
+        69,
+        92,
+        53,
+        91
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    },
+    {
+      "id": "ouro_escarpa_grande",
+      "species": "ouro",
+      "state": "escarpa_grande",
+      "files": {
+        "192": "PNG_192px/ouro_escarpa_grande.png",
+        "128": "PNG_128px/ouro_escarpa_grande.png",
+        "64": "PNG_64px/ouro_escarpa_grande.png"
+      },
+      "source_rect": [
+        1512,
+        632,
+        1672,
+        780
+      ],
+      "actual_crop_rect": [
+        1512,
+        632,
+        1672,
+        780
+      ],
+      "content_box_primary": [
+        28,
+        42,
+        136,
+        141
+      ],
+      "pivots": {
+        "192": [
+          96,
+          183
+        ],
+        "128": [
+          64,
+          122
+        ],
+        "64": [
+          32,
+          61
+        ]
+      },
+      "override_used": false
+    }
+  ],
+  "notes": [
+    "Primary sprites are aligned at a common bottom-center pivot.",
+    "Growth stages are separate static images; not temporal animation frames.",
+    "Automated image processing cannot guarantee semantic crop correctness.",
+    "Os 13 estados são formatos estáticos alternativos de rochas, não fases de animação.",
+    "Nos assets de lajes_agrupadas, rochas adjacentes e sobrepostas permanecem juntas para evitar cortes.",
+    "Variante larga 384x192 para lajes: ocupar aproximadamente 2 tiles horizontais de 192 px.",
+    "Raridades em types são sugestões para jogo, não fatos da imagem."
+  ],
+  "source_original_sha256": "8aa4cfd3617e4a45380acd8b33a0768cb830811faa217753b6d28daa01528f68",
+  "removed_source_row": {
+    "label": "Pedra comum fissurada (duplicata)",
+    "region": [
+      0,
+      175,
+      1672,
+      336
+    ],
+    "description": "Omitida intencionalmente. Nenhuma linha adicional de pedra comum foi exportada."
+  },
+  "shape_names_pt": {
+    "cascalho": "Cascalho",
+    "seixo_pequeno": "Seixo pequeno",
+    "seixo_medio": "Seixo medio",
+    "fragmentos": "Fragmentos",
+    "blocos_duplos": "Blocos duplos",
+    "rocha_angular": "Rocha angular",
+    "rochedo_grande": "Rochedo grande",
+    "monte_pedras": "Monte pedras",
+    "lajes_agrupadas": "Lajes agrupadas",
+    "picos_medios": "Picos medios",
+    "picos_altos": "Picos altos",
+    "monolito": "Monolito",
+    "escarpa_grande": "Escarpa grande"
+  },
+  "types": [
+    {
+      "id": "pedra",
+      "name": "Pedra comum",
+      "rarity_suggestion": "comum"
+    },
+    {
+      "id": "cobre",
+      "name": "Minério de cobre",
+      "rarity_suggestion": "comum"
+    },
+    {
+      "id": "ferro",
+      "name": "Minério de ferro",
+      "rarity_suggestion": "comum"
+    },
+    {
+      "id": "prata",
+      "name": "Minério de prata",
+      "rarity_suggestion": "incomum"
+    },
+    {
+      "id": "ouro",
+      "name": "Minério de ouro",
+      "rarity_suggestion": "raro"
+    }
+  ],
+  "wide_extras": [
+    {
+      "id": "pedra_lajes_agrupadas_larga",
+      "material": "pedra",
+      "path": "Extras_384x192/pedra_lajes_agrupadas_larga.png",
+      "dimensions": [
+        384,
+        192
+      ],
+      "pivot_px": [
+        192,
+        183
+      ],
+      "tiles": [
+        2,
+        1
+      ],
+      "bounds": [
+        53,
+        80,
+        278,
+        103
+      ],
+      "source_rect": [
+        933,
+        0,
+        1226,
+        175
+      ],
+      "atlas_rect": [
+        0,
+        0,
+        384,
+        192
+      ]
+    },
+    {
+      "id": "cobre_lajes_agrupadas_larga",
+      "material": "cobre",
+      "path": "Extras_384x192/cobre_lajes_agrupadas_larga.png",
+      "dimensions": [
+        384,
+        192
+      ],
+      "pivot_px": [
+        192,
+        183
+      ],
+      "tiles": [
+        2,
+        1
+      ],
+      "bounds": [
+        52,
+        81,
+        280,
+        102
+      ],
+      "source_rect": [
+        933,
+        175,
+        1226,
+        331
+      ],
+      "atlas_rect": [
+        0,
+        192,
+        384,
+        192
+      ]
+    },
+    {
+      "id": "ferro_lajes_agrupadas_larga",
+      "material": "ferro",
+      "path": "Extras_384x192/ferro_lajes_agrupadas_larga.png",
+      "dimensions": [
+        384,
+        192
+      ],
+      "pivot_px": [
+        192,
+        183
+      ],
+      "tiles": [
+        2,
+        1
+      ],
+      "bounds": [
+        52,
+        79,
+        279,
+        104
+      ],
+      "source_rect": [
+        933,
+        331,
+        1226,
+        488
+      ],
+      "atlas_rect": [
+        0,
+        384,
+        384,
+        192
+      ]
+    },
+    {
+      "id": "prata_lajes_agrupadas_larga",
+      "material": "prata",
+      "path": "Extras_384x192/prata_lajes_agrupadas_larga.png",
+      "dimensions": [
+        384,
+        192
+      ],
+      "pivot_px": [
+        192,
+        183
+      ],
+      "tiles": [
+        2,
+        1
+      ],
+      "bounds": [
+        51,
+        85,
+        281,
+        98
+      ],
+      "source_rect": [
+        933,
+        488,
+        1226,
+        632
+      ],
+      "atlas_rect": [
+        0,
+        576,
+        384,
+        192
+      ]
+    },
+    {
+      "id": "ouro_lajes_agrupadas_larga",
+      "material": "ouro",
+      "path": "Extras_384x192/ouro_lajes_agrupadas_larga.png",
+      "dimensions": [
+        384,
+        192
+      ],
+      "pivot_px": [
+        192,
+        183
+      ],
+      "tiles": [
+        2,
+        1
+      ],
+      "bounds": [
+        52,
+        82,
+        279,
+        101
+      ],
+      "source_rect": [
+        933,
+        632,
+        1226,
+        780
+      ],
+      "atlas_rect": [
+        0,
+        768,
+        384,
+        192
+      ]
+    }
+  ],
+  "engine_hints": {
+    "origin": "bottom_center",
+    "pivot_normalized": [
+      0.5,
+      0.953125
+    ],
+    "rendering": "nearest-neighbor pixel-art",
+    "alpha_blend": true,
+    "tilemap_alignment": "ground level"
+  }
+}

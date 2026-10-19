@@ -8,11 +8,15 @@ import {
   MAX_SAFE_TICK,
   MAX_SCHEDULES,
   MAX_STEP_TICKS,
+  NATURAL_SCENARIO_ID,
+  SUPPORTED_NATURAL_SCENARIO_VERSIONS,
+  SAVE_SCHEMA_VERSION,
   SIMULATION_VERSION,
 } from './constants';
 import { canonicalStringify, cloneJson, utf8ByteLength } from './canonical-json';
 import { ContractError, StepFaultError } from './errors';
 import { createRandomState, validateRandomState } from './rng';
+import { isNaturalWorldEntity } from './natural/contracts';
 import type { SaveDocument, SimulationEvent, StepResult, TickSystem, WorldState } from './types';
 
 export type CreateWorldInput = {
@@ -20,6 +24,7 @@ export type CreateWorldInput = {
   scenarioVersion: string;
   seed: string;
   config: unknown;
+  systems?: readonly TickSystem[];
 };
 
 export function createEmptyWorld(input: CreateWorldInput): WorldState {
@@ -41,7 +46,7 @@ export function createEmptyWorld(input: CreateWorldInput): WorldState {
     config: {},
     activeModules: [],
     rng: createRandomState(),
-    schedules: [],
+    schedules: createSystemSchedules(input.systems ?? [], 0),
     entities: [],
     metrics: {},
   };
@@ -57,13 +62,20 @@ export function validateWorldState(value: unknown): value is WorldState {
   const expectedKeys = ['activeModules', 'config', 'entities', 'metrics', 'rng', 'scenarioId', 'scenarioVersion', 'schedules', 'seed', 'simulationVersion', 'tick'];
   if (Object.keys(world).sort().join(',') !== expectedKeys.join(',')) return false;
   if (!isJsonValue(world)) return false;
-  if (world['simulationVersion'] !== SIMULATION_VERSION || world['scenarioId'] !== EMPTY_SCENARIO_ID || world['scenarioVersion'] !== EMPTY_SCENARIO_VERSION) return false;
+  if (world['simulationVersion'] !== SIMULATION_VERSION) return false;
+  if (world['scenarioId'] === EMPTY_SCENARIO_ID) {
+    if (world['scenarioVersion'] !== EMPTY_SCENARIO_VERSION) return false;
+  } else if (world['scenarioId'] === NATURAL_SCENARIO_ID) {
+    if (!SUPPORTED_NATURAL_SCENARIO_VERSIONS.includes(world['scenarioVersion'] as typeof SUPPORTED_NATURAL_SCENARIO_VERSIONS[number])) return false;
+  } else return false;
   if (typeof world['seed'] !== 'string' || !/^[0-9a-f]{16}$/.test(world['seed'])) return false;
   if (!Number.isSafeInteger(world['tick']) || (world['tick'] as number) < 0) return false;
   if (!isEmptyObject(world['config'])) return false;
   if (!Array.isArray(world['activeModules']) || world['activeModules'].length > MAX_MODULES) return false;
   if (!Array.isArray(world['schedules']) || world['schedules'].length > MAX_SCHEDULES) return false;
   if (!Array.isArray(world['entities']) || world['entities'].length > MAX_ENTITIES) return false;
+  if (world['scenarioId'] === EMPTY_SCENARIO_ID && world['entities'].length !== 0) return false;
+  if (world['scenarioId'] === NATURAL_SCENARIO_ID && (world['entities'].length !== 1 || !isNaturalWorldEntity(world['entities'][0]) || world['entities'][0].scenarioVersion !== world['scenarioVersion'])) return false;
   if (world['metrics'] === null || typeof world['metrics'] !== 'object' || Array.isArray(world['metrics'])) return false;
   if (!isJsonValue(world['metrics'])) return false;
   if (!validateRandomState(world['rng'])) return false;
@@ -84,6 +96,51 @@ export function validateWorldState(value: unknown): value is WorldState {
 export function assertWorldState(value: unknown): asserts value is WorldState {
   if (!validateWorldState(value)) {
     throw new ContractError('INVALID_SAVE', 'O estado lógico não satisfaz os invariantes F0.');
+  }
+}
+
+/**
+ * Build the persisted schedule cursors for a scenario at its initial tick.
+ * The phase is encoded by nextTick modulo periodTicks (phase zero starts at
+ * periodTicks, so no system runs on tick zero).
+ */
+export function createSystemSchedules(systems: readonly TickSystem[], currentTick: number): WorldState['schedules'] {
+  if (!Number.isSafeInteger(currentTick) || currentTick < 0 || currentTick > MAX_SAFE_TICK) {
+    throw new ContractError('INVALID_SYSTEM_SCHEDULE', 'O tick inicial das agendas deve ser um inteiro seguro não negativo.');
+  }
+  const ordered = [...systems].sort((left, right) => left.order - right.order || compareAscii(left.id, right.id));
+  validateSystemDefinitions(ordered);
+  return ordered
+    .map((system) => {
+      const firstTick = firstScheduledTick(system.periodTicks, system.phaseOffsetTicks);
+      let nextTick = firstTick;
+      if (nextTick <= currentTick) {
+        const intervals = Math.floor((currentTick - nextTick) / system.periodTicks) + 1;
+        const candidate = nextTick + intervals * system.periodTicks;
+        nextTick = Number.isSafeInteger(candidate) && candidate <= MAX_SAFE_TICK ? candidate : 0;
+      }
+      return { systemId: system.id, periodTicks: system.periodTicks, nextTick };
+    })
+    .sort((left, right) => compareAscii(left.systemId, right.systemId));
+}
+
+/** Refuse a save whose persisted cadence no longer matches the scenario code. */
+export function assertSystemSchedules(world: WorldState, systems: readonly TickSystem[]): void {
+  const ordered = [...systems].sort((left, right) => left.order - right.order || compareAscii(left.id, right.id));
+  validateSystemDefinitions(ordered);
+  if (world.schedules.length !== ordered.length) {
+    throw new ContractError('SCHEDULE_MISMATCH', 'As agendas salvas não correspondem aos sistemas ativos.');
+  }
+  const schedules = new Map(world.schedules.map((schedule) => [schedule.systemId, schedule]));
+  for (const system of ordered) {
+    const schedule = schedules.get(system.id);
+    if (schedule === undefined || schedule.periodTicks !== system.periodTicks) {
+      throw new ContractError('SCHEDULE_MISMATCH', `A agenda de ${system.id} não corresponde ao período configurado.`);
+    }
+    if (schedule.nextTick === 0) continue;
+    if (schedule.nextTick <= world.tick || schedule.nextTick % system.periodTicks !== system.phaseOffsetTicks) {
+      throw new ContractError('SCHEDULE_MISMATCH', `O cursor da agenda de ${system.id} não corresponde à fase configurada.`);
+    }
   }
 }
 
@@ -130,11 +187,34 @@ function isStableId(value: string): boolean {
   return value.length > 0 && value.length <= 128 && /^[a-z][a-z0-9]*(?:[.:/_-][a-z0-9]+)*$/.test(value);
 }
 
+function validateSystemDefinitions(systems: readonly TickSystem[]): void {
+  if (systems.length > MAX_SCHEDULES) {
+    throw new ContractError('SCHEDULE_LIMIT_EXCEEDED', `O limite de ${MAX_SCHEDULES} agendas foi excedido.`);
+  }
+  const seenSystemIds = new Set<string>();
+  for (const system of systems) {
+    if (!isStableId(system.id) || !Number.isSafeInteger(system.order) || typeof system.run !== 'function' || seenSystemIds.has(system.id)) {
+      throw new ContractError('INVALID_SYSTEM_SCHEDULE', 'Lista de sistemas inválida ou com IDs duplicados.');
+    }
+    if (!Number.isSafeInteger(system.periodTicks) || system.periodTicks < 1) {
+      throw new ContractError('INVALID_SYSTEM_SCHEDULE', `periodTicks inválido para ${system.id}.`);
+    }
+    if (!Number.isSafeInteger(system.phaseOffsetTicks) || system.phaseOffsetTicks < 0 || system.phaseOffsetTicks >= system.periodTicks) {
+      throw new ContractError('INVALID_SYSTEM_SCHEDULE', `phaseOffsetTicks deve ficar entre zero e periodTicks - 1 para ${system.id}.`);
+    }
+    seenSystemIds.add(system.id);
+  }
+}
+
+function firstScheduledTick(periodTicks: number, phaseOffsetTicks: number): number {
+  return phaseOffsetTicks === 0 ? periodTicks : phaseOffsetTicks;
+}
+
 export function toSaveDocument(world: WorldState): SaveDocument {
   assertWorldState(world);
   return {
     format: 'spectators-of-life-save',
-    saveSchemaVersion: 1,
+    saveSchemaVersion: SAVE_SCHEMA_VERSION,
     simulationVersion: world.simulationVersion,
     scenarioId: world.scenarioId,
     scenarioVersion: world.scenarioVersion,
@@ -171,19 +251,20 @@ export type SaveValidationResult = { ok: true; save: SaveDocument } | { ok: fals
 
 export function validateSaveDocument(value: unknown): SaveValidationResult {
   if (!isRecord(value)) return { ok: false, code: 'INVALID_SAVE', message: 'O save deve ser um objeto JSON.' };
-  if (value['saveSchemaVersion'] !== 1) {
+  if (value['saveSchemaVersion'] !== SAVE_SCHEMA_VERSION) {
     return { ok: false, code: 'UNSUPPORTED_SAVE_VERSION', message: `Versão de save não suportada: ${String(value['saveSchemaVersion'])}.` };
   }
   const expectedKeys = ['activeModules', 'config', 'entities', 'format', 'metrics', 'rng', 'saveSchemaVersion', 'scenarioId', 'scenarioVersion', 'schedules', 'seed', 'simulationVersion', 'tick'];
   if (Object.keys(value).sort().join(',') !== expectedKeys.join(',')) return { ok: false, code: 'INVALID_SAVE', message: 'O save contém campos ausentes ou desconhecidos.' };
-  if (value['format'] !== 'spectators-of-life-save' || value['simulationVersion'] !== SIMULATION_VERSION) {
+  if (value['format'] !== 'spectators-of-life-save' || (value['simulationVersion'] !== SIMULATION_VERSION && value['simulationVersion'] !== '0.1.0')) {
     return { ok: false, code: 'INVALID_SAVE', message: 'Formato ou versão de simulação incompatível.' };
   }
-  if (value['scenarioId'] !== EMPTY_SCENARIO_ID || value['scenarioVersion'] !== EMPTY_SCENARIO_VERSION) {
+  const isLegacyF0Save = value['simulationVersion'] === '0.1.0';
+  if (isLegacyF0Save && (value['scenarioId'] !== EMPTY_SCENARIO_ID || value['scenarioVersion'] !== EMPTY_SCENARIO_VERSION)) {
     return { ok: false, code: 'INVALID_SAVE', message: 'Cenário do save não suportado.' };
   }
   const state: unknown = {
-    simulationVersion: value['simulationVersion'],
+    simulationVersion: SIMULATION_VERSION,
     scenarioId: value['scenarioId'],
     scenarioVersion: value['scenarioVersion'],
     seed: value['seed'],
@@ -196,7 +277,9 @@ export function validateSaveDocument(value: unknown): SaveValidationResult {
     metrics: value['metrics'],
   };
   if (!validateWorldState(state)) return { ok: false, code: 'INVALID_SAVE', message: 'O estado do save é inválido ou viola limites/invariantes.' };
-  return { ok: true, save: cloneJson(value) as SaveDocument };
+  const save = cloneJson(value) as SaveDocument;
+  save.simulationVersion = SIMULATION_VERSION;
+  return { ok: true, save };
 }
 
 export function stepWorld(initial: WorldState, ticks: number, systems: readonly TickSystem[] = []): StepResult {
@@ -208,26 +291,38 @@ export function stepWorld(initial: WorldState, ticks: number, systems: readonly 
     throw new ContractError('TICK_OVERFLOW', 'O avanço excederia o maior tick inteiro seguro.', true);
   }
   const orderedSystems = [...systems].sort((left, right) => left.order - right.order || compareAscii(left.id, right.id));
-  const seenSystemIds = new Set<string>();
-  for (const system of orderedSystems) {
-    if (!isStableId(system.id) || !Number.isSafeInteger(system.order) || seenSystemIds.has(system.id)) {
-      throw new ContractError('INVARIANT_VIOLATION', 'Lista de sistemas inválida ou com IDs duplicados.', false);
-    }
-    seenSystemIds.add(system.id);
-  }
+  assertSystemSchedules(initial, orderedSystems);
 
   let committed = initial;
   const events: SimulationEvent[] = [];
   let eventsOmitted = 0;
   for (let index = 0; index < ticks; index += 1) {
     const nextTick = committed.tick + 1;
+    const hasScheduledSystem = committed.schedules.some((schedule) => schedule.nextTick === nextTick);
+    if (!hasScheduledSystem) {
+      // Keep immutable state shared between cadence boundaries. No system can
+      // mutate it on this tick, so cloning and revalidating the full world is
+      // unnecessary; advancing the tick preserves every schedule invariant.
+      committed = { ...committed, tick: nextTick };
+      continue;
+    }
     const draft = cloneJson(committed);
     draft.tick = nextTick;
+    const draftSchedules = new Map(draft.schedules.map((schedule) => [schedule.systemId, schedule]));
     try {
       for (const system of orderedSystems) {
+        const schedule = draftSchedules.get(system.id);
+        if (schedule === undefined) throw makeSystemFault(new Error('Agenda ausente para o sistema.'), system.id);
+        if (schedule.nextTick === 0 || schedule.nextTick !== nextTick) continue;
         let produced: readonly SimulationEvent[] | void;
         try {
-          produced = system.run(draft, nextTick);
+          const firstTick = firstScheduledTick(system.periodTicks, system.phaseOffsetTicks);
+          const elapsedTicks = schedule.nextTick === firstTick ? nextTick : system.periodTicks;
+          produced = system.run(draft, nextTick, {
+            periodTicks: system.periodTicks,
+            phaseOffsetTicks: system.phaseOffsetTicks,
+            elapsedTicks,
+          });
         } catch (error) {
           throw makeSystemFault(error, system.id);
         }
@@ -243,11 +338,14 @@ export function stepWorld(initial: WorldState, ticks: number, systems: readonly 
             }
           }
         }
+        const followingTick = nextTick + system.periodTicks;
+        schedule.nextTick = Number.isSafeInteger(followingTick) && followingTick <= MAX_SAFE_TICK ? followingTick : 0;
       }
       try {
+        assertSystemSchedules(draft, orderedSystems);
         assertWorldState(draft);
         if (utf8ByteLength(canonicalStringify(draft)) > MAX_WORLD_STATE_BYTES) {
-          throw new ContractError('INVARIANT_VIOLATION', `O estado lógico excede o limite F0 de ${MAX_WORLD_STATE_BYTES} bytes.`, false);
+          throw new ContractError('INVARIANT_VIOLATION', `O estado lógico excede o limite de ${MAX_WORLD_STATE_BYTES} bytes.`, false);
         }
       } catch (error) {
         const lastSystem = orderedSystems.at(-1);

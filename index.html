@@ -3,72 +3,121 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101916" />
-    <meta name="description" content="Fundação determinística do simulador Spectators of Life." />
-    <title>Spectators of Life — Fundação F0</title>
+    <meta name="theme-color" content="#17251b" />
+    <meta name="description" content="Observe e acompanhe um mundo natural vivo." />
+    <title>Spectators of Life</title>
   </head>
   <body>
-    <div id="app">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">SPECTATORS OF LIFE · F0</p>
-          <h1>Um mundo começa vazio</h1>
+    <div id="app" class="game-shell">
+      <header class="game-hud" aria-label="Barra de simulação">
+        <a class="brand" href="#world-canvas" aria-label="Spectators of Life — voltar ao mapa">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span class="brand-copy">
+            <small>OBSERVATÓRIO ECOLÓGICO · F1–F2</small>
+            <strong>Spectators of Life</strong>
+          </span>
+        </a>
+
+        <div class="runtime-reading">
+          <span class="runtime-lamp" aria-hidden="true"></span>
+          <output id="runtime-status" role="status" aria-live="polite">Preparando runtime…</output>
         </div>
-        <output id="runtime-status" class="status" role="status" aria-live="polite">Preparando runtime…</output>
+
+        <div class="tick-counter" aria-label="Tick lógico atual">
+          <span>Tick</span>
+          <output id="tick-value">—</output>
+        </div>
+
+        <nav class="game-controls" aria-label="Controles da simulação">
+          <div class="transport-controls" role="group" aria-label="Reprodução">
+            <button id="resume-button" class="hud-button primary-control" type="button" disabled aria-label="Retomar simulação" title="Retomar simulação">
+              <span class="control-glyph" aria-hidden="true">▶</span><span class="control-label">Retomar</span>
+            </button>
+            <button id="pause-button" class="hud-button" type="button" disabled aria-label="Pausar simulação" title="Pausar simulação">
+              <span class="control-glyph" aria-hidden="true">Ⅱ</span><span class="control-label">Pausar</span>
+            </button>
+            <button id="step-button" class="hud-button step-control" type="button" disabled aria-label="Avançar um tick" title="Avançar um tick">
+              <span class="control-glyph" aria-hidden="true">＋</span><span class="control-label">Tick</span>
+            </button>
+          </div>
+
+          <label class="speed-control" for="speed-select">
+            <span class="speed-glyph" aria-hidden="true">⌁</span>
+            <select id="speed-select" aria-label="Velocidade de apresentação" disabled>
+              <option value="1">1×</option>
+              <option value="8">8×</option>
+              <option value="32">32×</option>
+              <option value="128">128×</option>
+              <option value="1024">1.024×</option>
+            </select>
+          </label>
+
+          <div class="save-controls" role="group" aria-label="Save do mundo">
+            <button id="save-button" class="hud-button utility-control" type="button" disabled aria-label="Exportar save" title="Exportar save">
+              <span class="control-glyph" aria-hidden="true">↓</span><span class="control-label">Salvar</span>
+            </button>
+            <button id="load-button" class="hud-button utility-control" type="button" aria-label="Importar save" title="Importar save">
+              <span class="control-glyph" aria-hidden="true">↑</span><span class="control-label">Abrir</span>
+            </button>
+            <input id="load-input" type="file" accept="application/json,.json" hidden />
+          </div>
+        </nav>
       </header>
 
-      <main class="workspace">
-        <section class="world-panel" aria-label="Projeção do mundo">
-          <div id="world-canvas" class="world-canvas"></div>
-        </section>
+      <main class="world-stage" aria-label="Mapa do mundo">
+        <div id="world-canvas" class="world-canvas" role="img" aria-label="Projeção do mundo natural"></div>
 
-        <aside class="control-panel" aria-label="Controles da simulação">
-          <section class="control-section">
-            <h2>Execução</h2>
-            <label for="seed-input">Seed hexadecimal (64 bits)</label>
+        <div class="map-caption">
+          <span class="caption-mark"></span>
+          <span>MUNDO NATURAL <b>·</b> <span id="world-date">AGUARDANDO</span></span>
+        </div>
+
+        <nav class="map-layer-controls" aria-label="Camadas do mapa">
+          <span>CAMADAS</span>
+          <button type="button" data-map-layer="relief" aria-pressed="false">Relevo</button>
+          <button type="button" data-map-layer="water" aria-pressed="true">Água</button>
+          <button type="button" data-map-layer="vegetation" aria-pressed="true">Vegetação</button>
+          <button type="button" data-map-layer="minerals" aria-pressed="true">Minérios</button>
+          <button type="button" data-map-layer="geology" aria-pressed="false">Potencial mineral</button>
+        </nav>
+
+        <details id="setup-panel" class="map-panel setup-panel" open>
+          <summary>
+            <span class="panel-icon" aria-hidden="true">✧</span>
+            <span class="panel-heading"><small>CONFIGURAÇÃO</small><strong>Novo mundo</strong></span>
+            <span class="disclosure-mark" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="panel-content">
+            <label for="seed-input">Seed de 64 bits</label>
             <div class="seed-row">
               <input id="seed-input" inputmode="text" autocomplete="off" spellcheck="false" maxlength="16" aria-describedby="seed-help" />
-              <button id="new-seed-button" class="icon-button" type="button" aria-label="Gerar nova seed" title="Gerar nova seed">↻</button>
+              <button id="new-seed-button" class="reroll-button" type="button" aria-label="Gerar nova seed" title="Gerar nova seed">↻</button>
             </div>
-            <p id="seed-help" class="help-text">16 dígitos hexadecimais minúsculos.</p>
-            <button id="create-button" class="primary-button" type="button">Criar mundo vazio</button>
-            <div class="button-row">
-              <button id="resume-button" type="button" disabled>Retomar</button>
-              <button id="pause-button" type="button" disabled>Pausar</button>
-              <button id="step-button" type="button" disabled>+1 tick</button>
-            </div>
-            <label for="speed-select">Velocidade de apresentação</label>
-            <select id="speed-select" disabled>
-              <option value="1">1 tick/s</option>
-              <option value="8">8 ticks/s</option>
-              <option value="32">32 ticks/s</option>
-              <option value="128">128 ticks/s</option>
-              <option value="1024">1.024 ticks/s</option>
-            </select>
-          </section>
+            <p id="seed-help" class="help-text">Gera o terreno, o clima sazonal, os veios minerais e a vegetação inicial.</p>
+            <button id="create-button" class="create-world-button" type="button">
+              <span>Gerar vale natural</span><span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </details>
 
-          <section class="control-section">
-            <h2>Persistência</h2>
-            <div class="button-row">
-              <button id="save-button" type="button" disabled>Exportar save</button>
-              <button id="load-button" type="button">Importar save</button>
-              <input id="load-input" type="file" accept="application/json,.json" hidden />
-            </div>
-            <p class="help-text">O save contém apenas o estado lógico do mundo. Câmera, velocidade e objetos visuais não são persistidos.</p>
-          </section>
-
-          <section class="diagnostic-section" aria-label="Diagnóstico">
-            <h2>Diagnóstico</h2>
-            <dl>
-              <div><dt>Tick</dt><dd id="tick-value">—</dd></div>
+        <details id="world-details" class="map-panel world-details">
+          <summary><span class="panel-icon" aria-hidden="true">◈</span><span class="panel-heading"><small>INSPEÇÃO</small><strong>Dados do mundo</strong></span><span class="disclosure-mark" aria-hidden="true">⌄</span></summary>
+          <div class="panel-content">
+            <dl class="world-facts">
               <div><dt>Seed</dt><dd id="seed-value">—</dd></div>
               <div><dt>Versão</dt><dd id="version-value">—</dd></div>
+              <div><dt>Clima</dt><dd id="climate-reading">—</dd></div>
+              <div><dt>Água</dt><dd id="water-reading">—</dd></div>
+              <div><dt>Vegetação</dt><dd id="vegetation-reading">—</dd></div>
+              <div><dt>Minérios</dt><dd id="minerals-reading">—</dd></div>
             </dl>
-            <p id="error-output" class="error-output" role="alert" hidden></p>
-          </section>
-        </aside>
+            <p id="cell-info" class="cell-inspection">Clique no mapa para inspecionar uma célula.</p>
+            <p class="help-text">Arraste para mover o mapa · roda do mouse para aproximar.</p>
+          </div>
+        </details>
+
+        <p id="error-output" class="error-toast" role="alert" aria-live="assertive" hidden></p>
       </main>
-      <footer><span>F0 · Runtime headless + Worker</span><span>Renderização é uma projeção descartável</span></footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

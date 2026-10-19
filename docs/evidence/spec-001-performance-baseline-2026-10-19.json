@@ -1,0 +1,297 @@
+{
+  "measuredAt": "2026-10-19T05:45:18.425Z",
+  "revision": "d722ec6e31e268a94955bbfb7ffa27be422206a1",
+  "workingTree": "modified",
+  "workingTreeFingerprint": "806131e21c27b55be79390ff34619e3eda0de759095cd5b92b077e27cacbf6c1",
+  "host": {
+    "platform": "Windows_NT 10.0.26200",
+    "cpu": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+    "logicalCpus": 8,
+    "ramBytes": 17041817600,
+    "freeRamAtStartBytes": 2249363456,
+    "node": "v24.19.0",
+    "v8": "13.6.233.17-node.51",
+    "arch": "x64"
+  },
+  "methodology": "One isolated Node process per population; stepWorld(1), 3 warm-up ticks, 50/25/10 timed ticks, nearest-rank p50/p95 and maximum latency; retained heap delta after GC with both previous and next snapshots live.",
+  "benchmarkManifests": [
+    {
+      "format": "spectators-of-life-benchmark",
+      "benchmarkSchemaVersion": 1,
+      "runId": "f0:stepworld-0-20261019T054518425Z",
+      "simulationVersion": "0.1.0",
+      "seed": "0123456789abcdef",
+      "scenario": {
+        "id": "foundation:empty-world",
+        "version": "1.0.0",
+        "environmentConfig": {},
+        "content": [],
+        "cadences": [],
+        "initialPopulation": [],
+        "fixture": {
+          "id": "fixture:static-entities",
+          "entityKind": "fixture:benchmark",
+          "entityCount": 0
+        }
+      },
+      "learningCondition": {
+        "controllerMode": "heuristic",
+        "weightsInherited": false,
+        "conditionId": "f0:empty-controller",
+        "parameters": {}
+      },
+      "durationTicks": 54,
+      "metrics": [
+        {
+          "metricId": "performance.core-step-p50",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 53
+          },
+          "denominator": "50 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-p95",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 53
+          },
+          "denominator": "50 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-max",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 53
+          },
+          "denominator": "50 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        }
+      ],
+      "buildRevision": "d722ec6e31e268a94955bbfb7ffa27be422206a1+wt:806131e21c27b55be79390ff34619e3e",
+      "performanceEquipment": {
+        "platform": "Windows_NT 10.0.26200",
+        "architecture": "x64",
+        "processor": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+        "logicalProcessorCount": 8,
+        "memoryBytes": 17041817600
+      }
+    },
+    {
+      "format": "spectators-of-life-benchmark",
+      "benchmarkSchemaVersion": 1,
+      "runId": "f0:stepworld-10000-20261019T054518425Z",
+      "simulationVersion": "0.1.0",
+      "seed": "0123456789abcdef",
+      "scenario": {
+        "id": "foundation:empty-world",
+        "version": "1.0.0",
+        "environmentConfig": {},
+        "content": [],
+        "cadences": [],
+        "initialPopulation": [],
+        "fixture": {
+          "id": "fixture:static-entities",
+          "entityKind": "fixture:benchmark",
+          "entityCount": 10000
+        }
+      },
+      "learningCondition": {
+        "controllerMode": "heuristic",
+        "weightsInherited": false,
+        "conditionId": "f0:empty-controller",
+        "parameters": {}
+      },
+      "durationTicks": 29,
+      "metrics": [
+        {
+          "metricId": "performance.core-step-p50",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 28
+          },
+          "denominator": "25 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-p95",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 28
+          },
+          "denominator": "25 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-max",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 28
+          },
+          "denominator": "25 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        }
+      ],
+      "buildRevision": "d722ec6e31e268a94955bbfb7ffa27be422206a1+wt:806131e21c27b55be79390ff34619e3e",
+      "performanceEquipment": {
+        "platform": "Windows_NT 10.0.26200",
+        "architecture": "x64",
+        "processor": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+        "logicalProcessorCount": 8,
+        "memoryBytes": 17041817600
+      }
+    },
+    {
+      "format": "spectators-of-life-benchmark",
+      "benchmarkSchemaVersion": 1,
+      "runId": "f0:stepworld-50000-20261019T054518425Z",
+      "simulationVersion": "0.1.0",
+      "seed": "0123456789abcdef",
+      "scenario": {
+        "id": "foundation:empty-world",
+        "version": "1.0.0",
+        "environmentConfig": {},
+        "content": [],
+        "cadences": [],
+        "initialPopulation": [],
+        "fixture": {
+          "id": "fixture:static-entities",
+          "entityKind": "fixture:benchmark",
+          "entityCount": 50000
+        }
+      },
+      "learningCondition": {
+        "controllerMode": "heuristic",
+        "weightsInherited": false,
+        "conditionId": "f0:empty-controller",
+        "parameters": {}
+      },
+      "durationTicks": 14,
+      "metrics": [
+        {
+          "metricId": "performance.core-step-p50",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 13
+          },
+          "denominator": "10 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-p95",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 13
+          },
+          "denominator": "10 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.core-step-max",
+          "scope": "performance",
+          "unit": "ms_per_STEP_1",
+          "window": {
+            "fromTickExclusive": 3,
+            "toTickInclusive": 13
+          },
+          "denominator": "10 operações STEP(1), cada uma avançando um tick lógico",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        }
+      ],
+      "buildRevision": "d722ec6e31e268a94955bbfb7ffa27be422206a1+wt:806131e21c27b55be79390ff34619e3e",
+      "performanceEquipment": {
+        "platform": "Windows_NT 10.0.26200",
+        "architecture": "x64",
+        "processor": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+        "logicalProcessorCount": 8,
+        "memoryBytes": 17041817600
+      }
+    }
+  ],
+  "runs": [
+    {
+      "population": 0,
+      "stateBytes": 294,
+      "samples": 50,
+      "p50Ms": 0.029,
+      "p95Ms": 0.075,
+      "maxMs": 0.107,
+      "retainedSecondSnapshotHeapBytes": 0,
+      "rssBeforeCloneBytes": 112320512,
+      "rssWithTwoSnapshotsBytes": 112017408,
+      "resultingTick": 54,
+      "benchmarkRunId": "f0:stepworld-0-20261019T054518425Z"
+    },
+    {
+      "population": 10000,
+      "stateBytes": 480293,
+      "samples": 25,
+      "p50Ms": 25.467,
+      "p95Ms": 31.358,
+      "maxMs": 31.769,
+      "retainedSecondSnapshotHeapBytes": 968616,
+      "rssBeforeCloneBytes": 254611456,
+      "rssWithTwoSnapshotsBytes": 253325312,
+      "resultingTick": 29,
+      "benchmarkRunId": "f0:stepworld-10000-20261019T054518425Z"
+    },
+    {
+      "population": 50000,
+      "stateBytes": 2400293,
+      "samples": 10,
+      "p50Ms": 148.291,
+      "p95Ms": 162.554,
+      "maxMs": 162.554,
+      "retainedSecondSnapshotHeapBytes": 5804960,
+      "rssBeforeCloneBytes": 417296384,
+      "rssWithTwoSnapshotsBytes": 418144256,
+      "resultingTick": 14,
+      "benchmarkRunId": "f0:stepworld-50000-20261019T054518425Z"
+    }
+  ]
+}

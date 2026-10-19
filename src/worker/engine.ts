@@ -1,7 +1,8 @@
 import { MAX_RESPONSE_BYTES, MAX_WORLD_BYTES, PROTOCOL_VERSION, SAVE_SCHEMA_VERSION } from '../core/constants';
 import { canonicalStringify, cloneJson, utf8ByteLength } from '../core/canonical-json';
 import { ContractError, StepFaultError } from '../core/errors';
-import { createEmptyWorld, stepWorld, toSaveDocument, worldFromSave } from '../core/world';
+import { assertSystemSchedules, createEmptyWorld, stepWorld, toSaveDocument, worldFromSave } from '../core/world';
+import { createNaturalWorld, systemsForScenario } from '../core/natural/scenario';
 import type { FaultDiagnostic, SaveDocument, TickSystem, WorkerRequest, WorkerResponse, WorldState } from '../core/types';
 import { validateWorkerRequest } from './protocol';
 
@@ -18,11 +19,12 @@ export class WorkerEngine {
   private fault: FaultState = null;
   private highestRequestId = 0;
   private generatedWorldNumber = 0;
-  private readonly systems: readonly TickSystem[];
+  private readonly systemsOverride: readonly TickSystem[] | undefined;
+  private systems: readonly TickSystem[] = [];
   private readonly makeWorldId: () => string;
 
   constructor(options: EngineOptions = {}) {
-    this.systems = options.systems ?? [];
+    this.systemsOverride = options.systems;
     this.makeWorldId = options.createWorldId ?? (() => {
       this.generatedWorldNumber += 1;
       return `world-${this.generatedWorldNumber.toString(36)}`;
@@ -78,15 +80,16 @@ export class WorkerEngine {
 
   private create(request: Extract<WorkerRequest, { type: 'CREATE_WORLD' }>): WorkerResponse {
     if (this.world !== null) throw new ContractError('WORLD_ALREADY_ACTIVE', 'Já existe um mundo ativo; use LOAD para substituí-lo ou DISPOSE para liberá-lo.');
-    const world: WorldState = createEmptyWorld({
-      scenarioId: request.scenarioId,
-      scenarioVersion: request.scenarioVersion,
-      seed: request.seed,
-      config: request.config,
-    });
+    const systems = this.systemsOverride ?? systemsForScenario(request.scenarioId);
+    if (systems === null || systems === undefined) throw new ContractError('INVALID_SCENARIO', `Cenário não suportado: ${request.scenarioId}@${request.scenarioVersion}.`);
+    const world: WorldState = request.scenarioId === 'natural:temperate-valley'
+      ? createNaturalWorld(request.seed, systems)
+      : createEmptyWorld({ scenarioId: request.scenarioId, scenarioVersion: request.scenarioVersion, seed: request.seed, config: request.config, systems });
+    if (world.scenarioVersion !== request.scenarioVersion) throw new ContractError('INVALID_SCENARIO', `Versão do cenário não suportada: ${request.scenarioId}@${request.scenarioVersion}.`);
     const worldId = this.makeWorldId();
     this.world = world;
     this.worldId = worldId;
+    this.systems = systems;
     this.fault = null;
     return {
       protocolVersion: PROTOCOL_VERSION,
@@ -153,7 +156,7 @@ export class WorkerEngine {
   private save(request: Extract<WorkerRequest, { type: 'SAVE' }>): WorkerResponse {
     this.requireWorld(request.worldId);
     const save = toSaveDocument(this.world as WorldState);
-    if (encodedSize(save) > MAX_WORLD_BYTES) throw new ContractError('SAVE_TOO_LARGE', 'O save excede o limite de bytes definido para F0.');
+    if (encodedSize(save) > MAX_WORLD_BYTES) throw new ContractError('SAVE_TOO_LARGE', 'O save excede o limite de bytes definido para o mundo.');
     return {
       protocolVersion: PROTOCOL_VERSION,
       requestId: request.requestId,
@@ -167,11 +170,15 @@ export class WorkerEngine {
 
   private load(request: Extract<WorkerRequest, { type: 'LOAD' }>): WorkerResponse {
     const save = request.save as SaveDocument;
-    if (encodedSize(save) > MAX_WORLD_BYTES) throw new ContractError('INVALID_SAVE', 'O save excede o limite de bytes definido para F0.');
+    if (encodedSize(save) > MAX_WORLD_BYTES) throw new ContractError('INVALID_SAVE', 'O save excede o limite de bytes definido para o mundo.');
     const world = worldFromSave(save);
+    const systems = this.systemsOverride ?? systemsForScenario(world.scenarioId);
+    if (systems === null || systems === undefined) throw new ContractError('INVALID_SAVE', `Cenário não suportado: ${world.scenarioId}@${world.scenarioVersion}.`);
+    assertSystemSchedules(world, systems);
     const worldId = this.makeWorldId();
     this.world = world;
     this.worldId = worldId;
+    this.systems = systems;
     this.fault = null;
     return {
       protocolVersion: PROTOCOL_VERSION,
@@ -192,6 +199,7 @@ export class WorkerEngine {
     this.world = null;
     this.worldId = null;
     this.fault = null;
+    this.systems = [];
     return { protocolVersion: PROTOCOL_VERSION, requestId: request.requestId, type: 'DISPOSED', worldId };
   }
 
@@ -241,7 +249,7 @@ export class WorkerEngine {
       }
       if (encodedSize(candidate) <= MAX_RESPONSE_BYTES) return candidate;
     }
-    return this.error(request.requestId, request.protocolVersion, 'RESPONSE_TOO_LARGE', 'A resposta excede o limite de bytes definido para F0.', false, this.world?.tick ?? null, this.worldId ?? undefined);
+    return this.error(request.requestId, request.protocolVersion, 'RESPONSE_TOO_LARGE', 'A resposta excede o limite de bytes definido para o protocolo.', false, this.world?.tick ?? null, this.worldId ?? undefined);
   }
 }
 

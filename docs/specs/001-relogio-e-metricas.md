@@ -1,7 +1,7 @@
 # SPEC-001 — Relógio lógico e comparação de métricas
 
 **Fases:** F0–F4  
-**Estado:** proposta revisada; unidades/cenários por fase ainda pendentes
+**Estado:** contratos comuns implementados para F0; produtores biológicos e parâmetros de F1–F4 aguardam as respectivas specs
 **Motivação:** separar velocidade visual, tempo ecológico e cadência de decisão para que benchmarks de alimentação/sobrevivência possam ser comparados.
 
 ## 1. Cinco tempos diferentes
@@ -74,3 +74,19 @@ Usar janela de transições `(t0, t1]`: para cada tick contar animais elegíveis
 Denominador zero retorna `null` com motivo “sem exposição”, nunca NaN/Infinity ou zero que pareça desempenho. Sucesso alimentar usa tentativas concluídas e elegíveis na janela, incluindo falhas; ações ainda pendentes são informadas separadamente. Ausência de tentativas também retorna null.
 
 Contadores acumulados necessários às métricas e continuidade são persistidos. Eventos detalhados de inspeção têm buffer limitado e política declarada; descarte de telemetria não altera estado, reward, RNG ou contadores. Relatórios registram perdas/agregações de telemetria. Histórico completo e replay não são prometidos pelo buffer de inspeção.
+
+## 7. Implementação comum disponível em F0
+
+Os contratos transversais que não dependem de calendário ou organismos já possuem implementação executável:
+
+- Cada `TickSystem` declara `periodTicks` e `phaseOffsetTicks`. Fase zero executa primeiro em `periodTicks`; outra fase executa primeiro no tick indicado e, depois, a cada `periodTicks`. O callback recebe o `elapsedTicks` real desde sua atualização anterior, incluindo a primeira janela parcial. Sistemas integrados usam esse intervalo, sem simular que rodaram a cada tick.
+- O estado persiste `periodTicks` e `nextTick`. O resto `nextTick % periodTicks` preserva a fase; `nextTick: 0` indica que não há próxima ocorrência representável dentro do limite de tick seguro. O Worker recusa carregar ou avançar um estado cuja agenda não corresponda aos sistemas/configuração ativos. `STEP(N)` mantém o mesmo cursor e os mesmos eventos que passos particionados.
+- A velocidade de apresentação continua exclusivamente no `StepDriver`; o core não recebe velocidade ou `deltaTime`. O teste usa o mesmo mundo, seed e sistemas até quatro ticks lógicos em 1 tick/s e 8 ticks/s, comparando estado e eventos.
+- `data/schemas/benchmark.v1.schema.json` define um manifesto por execução: versão/build, seed, cenário, conteúdo com checksums, cadências, população inicial, condição de aprendizado (modo, ID versionado e parâmetros), duração, unidade, janela, denominador e filtro. Equipamento é obrigatório para métricas de desempenho e fica separado dos resultados ecológicos. Validadores de comparação exigem condições iguais em replicações e seeds pareadas quando muda apenas o aprendizado. O ensaio sintético atual está em [spec-001-performance-baseline-2026-10-19.json](../evidence/spec-001-performance-baseline-2026-10-19.json).
+- `src/core/food-metrics.ts` implementa a janela `(t0,t1]`, exposição por censo vivo no início do tick, ingestão em g de matéria seca, tentativas elegíveis concluídas, pendências e retorno `null` com motivo quando o denominador é zero. O resumo por trajetória conserva a distribuição individual; o agregador mantém distribuição individual por seed, distribuição agregada entre indivíduos e distribuição entre seeds. Quantis usam Type 7 com interpolação linear. Contadores agregados cumulativos são gravados no mapa lógico `metrics` e, portanto, seguem no save/load.
+- O benchmark discreto legado tem unidade própria em eventos por 100 ticks e não se combina com biomassa ou energia. Energia, sobrevivência, reprodução e causas de mortalidade continuam métricas independentes, a serem produzidas pelas fases biológicas.
+- `eventsOmitted` informa perdas por resposta quando o limite de telemetria é excedido. Um ensaio com eventos omitidos compara estado lógico e confirma que perda de telemetria não muda estado, contadores ou RNG. Não há buffer histórico completo nem replay prometido.
+
+Os testes cobrem agendas de fase/período, intervalo decorrido, equivalência de partições, continuação após save/load, invalidação de cadência divergente, taxa de ingestão em uma trajetória conhecida, população variável, recém-nascido, denominador zero, tentativas pendentes, contadores persistidos, pareamento de seeds e invariância entre velocidade de apresentação. A suíte valida as funções e contratos; ainda não existe uma fauna que produza essas métricas.
+
+F1 deve acrescentar `ticksPerDay`, estações e cadências ambientais ao cenário versionado. F3/F4 devem conectar as métricas ao estado de cada organismo e declarar as cadências biológicas e de aprendizado. Não atribuir segundos a ticks nem tratar o manifesto-fixture como calibração ecológica.

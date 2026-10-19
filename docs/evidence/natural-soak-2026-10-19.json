@@ -1,0 +1,244 @@
+{
+  "scenarioId": "natural:temperate-valley",
+  "scenarioVersion": "1.6.0",
+  "daysPerSeed": 120,
+  "maximumStateBytesAllowed": 8387584,
+  "waterBalanceToleranceM3PerDay": 2,
+  "cumulativeWaterBalanceToleranceM3": 20,
+  "relativeMineralMassTolerance": 1e-7,
+  "relativeNitrogenTolerance": 0.000001,
+  "units": {
+    "water": "m3 over the complete map; daily depths are multiplied by cell area and converted from mm to m",
+    "mineral": "kg over the complete map; terrain elevation is used as an equivalent mineral column at configured bulk density, plus mobile sediment",
+    "nitrogen": "g over the complete map; all soil and plant nitrogen pools are multiplied by cell area"
+  },
+  "runtime": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "seeds": [
+    {
+      "seed": "0000000000000003",
+      "finalTick": 480,
+      "maximumStateBytes": 7715263,
+      "waterBudgetM3": {
+        "initialStored": 191701705.1874992,
+        "precipitation": 140148435.50625002,
+        "evaporation": 26189528.47499999,
+        "transpiration": 2071718.381250009,
+        "boundaryOutflow": 0,
+        "finalStored": 303588902.5312504
+      },
+      "maximumDailyWaterBalanceResidualM3": 0.556249481276609,
+      "maximumCumulativeWaterBalanceResidualM3": 8.693751198659044,
+      "maximumRelativeMineralMassResidual": 2.519179878499599e-9,
+      "maximumRelativeNitrogenResidual": 6.17015807085963e-8,
+      "mineralBudgetKg": {
+        "initialStock": 169136890000000,
+        "finalStock": 169136890426086.25,
+        "maximumAbsoluteResidual": 426086.25,
+        "maximumRelativeResidual": 2.519179878499599e-9
+      },
+      "nitrogenBudgetG": {
+        "initialStock": 11535361400.000006,
+        "finalStock": 11535360688.249973,
+        "maximumAbsoluteResidual": 711.7500324249268,
+        "maximumRelativeResidual": 6.17015807085963e-8
+      },
+      "finalMetrics": {
+        "vegetationBiomassGPerM2": 278.256,
+        "soilMineralNitrogenGPerM2": 6.5632,
+        "soilOrganicMatterGPerM2": 991.786,
+        "sedimentStoredKg": 21023886.25,
+        "permanentRiverCells": 103,
+        "annualDecomposedMatterG": 11581664274.130993,
+        "annualDecompositionRespirationG": 8338798277.377954,
+        "annualMineralErosionKg": 777002616.740747,
+        "annualMineralDepositionKg": 755977934.47221
+      },
+      "seasons": {
+        "spring": {
+          "days": 30,
+          "maximumStateBytes": 7666383,
+          "maximumSaveBytes": 7449029,
+          "precipitationM3": 47168037.412499994,
+          "evaporationM3": 5049528.781250003,
+          "transpirationM3": 405061.91875000205
+        },
+        "summer": {
+          "days": 30,
+          "maximumStateBytes": 7705227,
+          "maximumSaveBytes": 7703094,
+          "precipitationM3": 30245303.675000004,
+          "evaporationM3": 16537644.774999999,
+          "transpirationM3": 1319524.637500003
+        },
+        "autumn": {
+          "days": 30,
+          "maximumStateBytes": 7715263,
+          "maximumSaveBytes": 7574511,
+          "precipitationM3": 42663777.30000001,
+          "evaporationM3": 4343030.749999997,
+          "transpirationM3": 340453.1250000043
+        },
+        "winter": {
+          "days": 30,
+          "maximumStateBytes": 7461582,
+          "maximumSaveBytes": 7318920,
+          "precipitationM3": 20071317.118750006,
+          "evaporationM3": 259324.1687499999,
+          "transpirationM3": 6678.700000000014
+        }
+      }
+    },
+    {
+      "seed": "0000000000000006",
+      "finalTick": 480,
+      "maximumStateBytes": 7850777,
+      "waterBudgetM3": {
+        "initialStored": 178665509.87499994,
+        "precipitation": 119869576.68749997,
+        "evaporation": 27469203.94375,
+        "transpiration": 2408384.931250016,
+        "boundaryOutflow": 0,
+        "finalStored": 268657503.52500033
+      },
+      "maximumDailyWaterBalanceResidualM3": 0.3562498330920789,
+      "maximumCumulativeWaterBalanceResidualM3": 5.875000017974855,
+      "maximumRelativeMineralMassResidual": 2.9517756179122344e-9,
+      "maximumRelativeNitrogenResidual": 6.283102404591945e-8,
+      "mineralBudgetKg": {
+        "initialStock": 140059130000000,
+        "finalStock": 140059130411143.12,
+        "maximumAbsoluteResidual": 413423.125,
+        "maximumRelativeResidual": 2.9517756179122344e-9
+      },
+      "nitrogenBudgetG": {
+        "initialStock": 11728878917.499983,
+        "finalStock": 11728878192.37505,
+        "maximumAbsoluteResidual": 736.9374732971191,
+        "maximumRelativeResidual": 6.283102404591945e-8
+      },
+      "finalMetrics": {
+        "vegetationBiomassGPerM2": 320.777,
+        "soilMineralNitrogenGPerM2": 6.651,
+        "soilOrganicMatterGPerM2": 989.139,
+        "sedimentStoredKg": 22653843.125,
+        "permanentRiverCells": 67,
+        "annualDecomposedMatterG": 11907386910.767996,
+        "annualDecompositionRespirationG": 8573318575.754601,
+        "annualMineralErosionKg": 736644339.607208,
+        "annualMineralDepositionKg": 713990044.443471
+      },
+      "seasons": {
+        "spring": {
+          "days": 30,
+          "maximumStateBytes": 7801459,
+          "maximumSaveBytes": 7590294,
+          "precipitationM3": 37458983.262499996,
+          "evaporationM3": 5117999.424999999,
+          "transpirationM3": 515400.78750000335
+        },
+        "summer": {
+          "days": 30,
+          "maximumStateBytes": 7834991,
+          "maximumSaveBytes": 7829389,
+          "precipitationM3": 29069308.46249999,
+          "evaporationM3": 17370350.45000001,
+          "transpirationM3": 1484037.6625000045
+        },
+        "autumn": {
+          "days": 30,
+          "maximumStateBytes": 7850777,
+          "maximumSaveBytes": 7845354,
+          "precipitationM3": 37109252.99375002,
+          "evaporationM3": 4655357.749999999,
+          "transpirationM3": 397936.27500000683
+        },
+        "winter": {
+          "days": 30,
+          "maximumStateBytes": 7622829,
+          "maximumSaveBytes": 7488490,
+          "precipitationM3": 16232031.968749989,
+          "evaporationM3": 325496.3187500002,
+          "transpirationM3": 11010.206250000007
+        }
+      }
+    },
+    {
+      "seed": "000000000000000b",
+      "finalTick": 480,
+      "maximumStateBytes": 7687355,
+      "waterBudgetM3": {
+        "initialStored": 192969372.56250012,
+        "precipitation": 137840477.53125,
+        "evaporation": 26318005.08750001,
+        "transpiration": 2188708.9562500105,
+        "boundaryOutflow": 0,
+        "finalStored": 302303142.42500013
+      },
+      "maximumDailyWaterBalanceResidualM3": 0.38125051895622164,
+      "maximumCumulativeWaterBalanceResidualM3": 6.375000032131084,
+      "maximumRelativeMineralMassResidual": 3.0498034398136176e-9,
+      "maximumRelativeNitrogenResidual": 9.817216556322313e-8,
+      "mineralBudgetKg": {
+        "initialStock": 144846220000000,
+        "finalStock": 144846220427613.12,
+        "maximumAbsoluteResidual": 441752.5,
+        "maximumRelativeResidual": 3.0498034398136176e-9
+      },
+      "nitrogenBudgetG": {
+        "initialStock": 11575328022.500002,
+        "finalStock": 11575326941.937496,
+        "maximumAbsoluteResidual": 1136.3750190734863,
+        "maximumRelativeResidual": 9.817216556322313e-8
+      },
+      "finalMetrics": {
+        "vegetationBiomassGPerM2": 290.035,
+        "soilMineralNitrogenGPerM2": 6.4022,
+        "soilOrganicMatterGPerM2": 993.154,
+        "sedimentStoredKg": 27345313.125,
+        "permanentRiverCells": 103,
+        "annualDecomposedMatterG": 11974897889.965004,
+        "annualDecompositionRespirationG": 8621926480.776491,
+        "annualMineralErosionKg": 819713118.759582,
+        "annualMineralDepositionKg": 792366505.108095
+      },
+      "seasons": {
+        "spring": {
+          "days": 30,
+          "maximumStateBytes": 7621167,
+          "maximumSaveBytes": 7621224,
+          "precipitationM3": 50034853.1125,
+          "evaporationM3": 5302471.812500003,
+          "transpirationM3": 428460.50000000175
+        },
+        "summer": {
+          "days": 30,
+          "maximumStateBytes": 7650965,
+          "maximumSaveBytes": 7623090,
+          "precipitationM3": 23009904.57499999,
+          "evaporationM3": 16254550.018750004,
+          "transpirationM3": 1393170.3937500035
+        },
+        "autumn": {
+          "days": 30,
+          "maximumStateBytes": 7687355,
+          "maximumSaveBytes": 7687412,
+          "precipitationM3": 44925808.625000015,
+          "evaporationM3": 4457861.34375,
+          "transpirationM3": 358676.18125000503
+        },
+        "winter": {
+          "days": 30,
+          "maximumStateBytes": 7496375,
+          "maximumSaveBytes": 7464215,
+          "precipitationM3": 19869911.218749993,
+          "evaporationM3": 303121.91250000003,
+          "transpirationM3": 8401.881250000011
+        }
+      }
+    }
+  ]
+}

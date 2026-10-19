@@ -1,17 +1,20 @@
 export const PROTOCOL_VERSION = 1 as const;
 export const SAVE_FORMAT = 'spectators-of-life-save' as const;
 export const SAVE_SCHEMA_VERSION = 1 as const;
-export const SIMULATION_VERSION = '0.1.0' as const;
+export const SIMULATION_VERSION = '0.2.0' as const;
 export const EMPTY_SCENARIO_ID = 'foundation:empty-world' as const;
 export const EMPTY_SCENARIO_VERSION = '1.0.0' as const;
+export const NATURAL_SCENARIO_ID = 'natural:temperate-valley' as const;
+export const NATURAL_SCENARIO_VERSION = '1.6.0' as const;
+export const SUPPORTED_NATURAL_SCENARIO_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', NATURAL_SCENARIO_VERSION] as const;
 
 export const RNG_ALGORITHM = 'xoshiro128**-1.1' as const;
 export const RNG_SEED_DERIVATION = 'fnv1a64-xor-splitmix64-v1' as const;
 
 export const MAX_STEP_TICKS = 256;
-export const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
-export const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
-export const MAX_WORLD_BYTES = 3 * 1024 * 1024;
+export const MAX_REQUEST_BYTES = 9 * 1024 * 1024;
+export const MAX_RESPONSE_BYTES = 9 * 1024 * 1024;
+export const MAX_WORLD_BYTES = 8 * 1024 * 1024;
 export const MAX_WORLD_STATE_BYTES = MAX_WORLD_BYTES - 1024;
 export const MAX_EVENTS_PER_RESPONSE = 4096;
 export const MAX_RNG_STREAMS = 256;

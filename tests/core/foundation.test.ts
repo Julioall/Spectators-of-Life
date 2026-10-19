@@ -4,9 +4,10 @@ import { ContractError, StepFaultError } from '../../src/core/errors';
 import { drawFromSystem, nextUint32, deriveStreamState, splitMix64Outputs } from '../../src/core/rng';
 import { createEmptyWorld, stepWorld, toSaveDocument, validateSaveDocument, worldFromSave } from '../../src/core/world';
 import { logicalStateString } from '../../src/core/canonical-json';
+import type { TickSystem } from '../../src/core/types';
 
-function emptyWorld(seed = '0000000000000000') {
-  return createEmptyWorld({ scenarioId: 'foundation:empty-world', scenarioVersion: '1.0.0', seed, config: {} });
+function emptyWorld(seed = '0000000000000000', systems: readonly TickSystem[] = []) {
+  return createEmptyWorld({ scenarioId: 'foundation:empty-world', scenarioVersion: '1.0.0', seed, config: {}, systems });
 }
 
 describe('SPEC-000 · core headless', () => {
@@ -22,13 +23,15 @@ describe('SPEC-000 · core headless', () => {
     const systems = [{
       id: 'core:fixture-counter',
       order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
       run: (draft: ReturnType<typeof emptyWorld>, tick: number) => {
         draft.metrics['counter'] = (draft.metrics['counter'] ?? 0) + 1;
         return [{ tick, systemId: 'core:fixture-counter', eventType: 'fixture:tick', actorIds: [], data: { counter: draft.metrics['counter'] } }];
       },
     }];
-    const combined = stepWorld(emptyWorld(), 100, systems);
-    const first = stepWorld(emptyWorld(), 40, systems);
+    const combined = stepWorld(emptyWorld('0000000000000000', systems), 100, systems);
+    const first = stepWorld(emptyWorld('0000000000000000', systems), 40, systems);
     const second = stepWorld(first.state, 60, systems);
     expect(logicalStateString(combined.state)).toBe(logicalStateString(second.state));
     expect([...first.events, ...second.events]).toEqual(combined.events);
@@ -39,6 +42,8 @@ describe('SPEC-000 · core headless', () => {
     const systems = [{
       id: 'core:replay-fixture',
       order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
       run: (draft: ReturnType<typeof emptyWorld>, tick: number) => {
         const draw = drawFromSystem(draft.rng, draft.seed, 'core:replay-fixture');
         draft.metrics['drawTotal'] = (draft.metrics['drawTotal'] ?? 0) + draw;
@@ -46,7 +51,7 @@ describe('SPEC-000 · core headless', () => {
       },
     }];
     const replay = () => {
-      let state = emptyWorld('0123456789abcdef');
+      let state = emptyWorld('0123456789abcdef', systems);
       const events = [];
       for (const ticks of [3, 8, 1]) {
         const result = stepWorld(state, ticks, systems);
@@ -93,6 +98,8 @@ describe('SPEC-000 · core headless', () => {
     const systems = [{
       id: 'core:fault-fixture',
       order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
       run: (draft: ReturnType<typeof emptyWorld>, tick: number) => {
         draft.metrics['lastCommitted'] = tick;
         if (tick === 4) throw Object.assign(new Error('falha fixture'), { entityId: 'fixture:entity-1' });
@@ -100,7 +107,7 @@ describe('SPEC-000 · core headless', () => {
     }];
     let failure: unknown;
     try {
-      stepWorld(emptyWorld(), 8, systems);
+      stepWorld(emptyWorld('0000000000000000', systems), 8, systems);
     } catch (error) {
       failure = error;
     }

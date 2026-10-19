@@ -21,6 +21,8 @@ function runWithPresentation(profile: PresentationProfile): {
     systems: [{
       id: 'core:presentation-fixture',
       order: 1,
+      periodTicks: 1,
+      phaseOffsetTicks: 0,
       run: (world, tick) => {
         const draw = drawFromSystem(world.rng, world.seed, 'core:presentation-fixture');
         world.metrics['drawSum'] = (world.metrics['drawSum'] ?? 0) + draw;

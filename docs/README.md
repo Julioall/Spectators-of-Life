@@ -1,6 +1,6 @@
 # Documentação de Spectators-of-Life
 
-Estado: F0 em implementação inicial. A base vazia possui runtime; conteúdo especificado não significa funcionalidade implementada nem gate aprovado.
+Estado: F0 validado localmente; protótipo F1–F2 em revisão. Implementação parcial não significa gate de fase aprovado nem calibração ecológica.
 
 ## Ordem de leitura
 
@@ -24,13 +24,13 @@ Estado: F0 em implementação inicial. A base vazia possui runtime; conteúdo es
 
 ## Specs de implementação
 
-O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. SPEC-000 possui implementação inicial; SPEC-001 e as specs naturais continuam contratos em elaboração.
+O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. SPEC-000 está validada localmente, SPEC-001 implementa contratos comuns e SPEC-100/200 têm implementação inicial ligada ao cenário de referência.
 
 [AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos, [ADR 0006](adr/0006-prng-f0.md) fecha os geradores determinísticos de F0 e [ADR 0007](adr/0007-ui-contextual-tela-unica.md) define a tela única com inspeção contextual.
 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
 
-[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures; schemas naturais posteriores ainda são planejados. [Manifesto de assets](../data/assets/manifest.json) contém exemplos planned, com fontes ainda inexistentes.
+[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer usa os atlases de cinco espécies de árvores e de rochas/minérios; as referências de autotiling em `data/assets/environment/` continuam fora do runtime.
 
 ## Revisão documental
 

@@ -1,4 +1,11 @@
-import { MAX_PENDING_CLIENT_REQUESTS, PROTOCOL_VERSION } from '../core/constants';
+import {
+  EMPTY_SCENARIO_ID,
+  EMPTY_SCENARIO_VERSION,
+  MAX_PENDING_CLIENT_REQUESTS,
+  NATURAL_SCENARIO_ID,
+  NATURAL_SCENARIO_VERSION,
+  PROTOCOL_VERSION,
+} from '../core/constants';
 import type { WorkerRequest, WorkerResponse } from '../core/types';
 
 export interface WorkerPort {
@@ -88,12 +95,16 @@ export class SimulationClient {
     this.transport = new WorkerTransport(worker);
   }
 
-  createWorld(seed: string): Promise<Extract<WorkerResponse, { type: 'READY' }>> {
+  createWorld(
+    seed: string,
+    scenarioId: typeof EMPTY_SCENARIO_ID | typeof NATURAL_SCENARIO_ID = EMPTY_SCENARIO_ID,
+    scenarioVersion: typeof EMPTY_SCENARIO_VERSION | typeof NATURAL_SCENARIO_VERSION = EMPTY_SCENARIO_VERSION,
+  ): Promise<Extract<WorkerResponse, { type: 'READY' }>> {
     return this.enqueue(async () => {
       const response = await this.transport.send({
         type: 'CREATE_WORLD',
-        scenarioId: 'foundation:empty-world',
-        scenarioVersion: '1.0.0',
+        scenarioId,
+        scenarioVersion,
         seed,
         config: {},
       });

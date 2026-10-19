@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "checked_sprites": 195,
+  "checked_atlases": 3,
+  "errors": [],
+  "limitations": [
+    "Pixel-level checks cannot confirm correct semantic labels or uncropped branches.",
+    "Visual inspection of each asset remains necessary."
+  ],
+  "atlas_pixel_comparisons": 195,
+  "removed_duplicate_row": true,
+  "wide_sprite_count": 5,
+  "extra_errors": []
+}

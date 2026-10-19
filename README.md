@@ -12,7 +12,7 @@ Essa é a ordem de implementação. Dentro do mundo, sociedades podem coexistir 
 
 ## Estado do projeto
 
-F0 validado localmente em 19/10/2026: runtime headless, Worker, protocolo v1, seed/tick, save/load, projeção Phaser do mundo vazio e CI configurada. O marco não inclui terreno, clima, ecologia, fauna ou sociedade. Humanos dependem da aprovação dos critérios ecológicos de F1–F4.
+F0 foi validado localmente em 19/10/2026. F1–F2 têm agora uma implementação inicial em revisão: vale procedural determinístico, clima sazonal, água e solo, minerais e vegetação agregada com renderização/inspeção no jogo. O protótipo ainda não representa calibração ecológica, fauna ou sociedade; os gates naturais continuam abertos antes de F5.
 
 - [Índice da documentação](docs/README.md)
 - [Roadmap e critérios de avanço](docs/09-roadmap.md)
@@ -30,4 +30,4 @@ npm ci
 npm run dev
 ```
 
-`npm run check` executa typecheck, testes determinísticos, validação da fronteira headless e build de produção. `npm run benchmark:f0` repete as medições do núcleo. A especificação está em [SPEC-000](docs/specs/000-fundacao-runtime.md); evidências e limites estão no [relatório F0](docs/12-validacao-documental.md) e no [baseline de desempenho](docs/evidence/f0-performance-baseline-2026-10-19.json).
+`npm run check` executa typecheck, testes determinísticos, validação da fronteira headless e build de produção. `npm run benchmark:f0` repete as medições do núcleo e gera manifestos conforme a [SPEC-001](docs/specs/001-relogio-e-metricas.md). O resultado F0 histórico está no [baseline original](docs/evidence/f0-performance-baseline-2026-10-19.json); a medição com manifestos está no [baseline SPEC-001](docs/evidence/spec-001-performance-baseline-2026-10-19.json).
