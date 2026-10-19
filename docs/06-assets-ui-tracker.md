@@ -10,13 +10,16 @@ Pixel art usa paleta limitada, silhueta forte e âncora consistente. Construçõ
 
 ## Interface
 
-O mapa fica no canvas; texto denso fica no DOM/CSS. HUD mínimo mostra tempo, velocidade, estação e clima. Ferramentas são discretas. Seleção abre painel contextual; genealogia, cérebro, relações, economia e replay ficam em painéis profundos.
+A experiência usa uma única tela de jogo, com o mapa como superfície dominante. Não usar dashboards externos nem painéis laterais permanentes como estrutura principal da observação.
 
-Desktop prioriza mapa e painel lateral. Janelas estreitas usam gavetas. O centro do mapa permanece livre. Modal suspende input de câmera. Respeitar teclado, foco, contraste, texto escalável, reduced-motion e não depender só de cor.
+O mapa é desenhado no canvas; HUD, menus e textos densos usam DOM/CSS acessível. O HUD persistente é compacto e mostra tempo, velocidade e, quando disponíveis na fase ativa, estação e clima. Controles globais ficam em uma barra discreta ou em menus flutuantes dentro da tela do jogo.
 
+Selecionar uma célula ou entidade abre uma ficha contextual sobre o jogo, próxima à seleção ou em uma área de canto. A ficha pode ser expandida para detalhes e fechada sem sair da tela principal. Ela apresenta apenas dados que a entidade e os módulos ativos realmente fornecem. Nas fases naturais atuais, a inspeção cobre terreno, água, solo, habitat, plantas e, quando habilitada, fauna. Informações de aldeias, cidades, reinos, profissões ou política só aparecem quando esses sistemas forem implementados e o objeto correspondente for selecionado.
+
+As sobreposições devem preservar a leitura do mapa e evitar cobrir o alvo ou o centro da área visível. Em telas estreitas, a ficha contextual pode virar uma gaveta inferior, mantendo o mapa visível. Pausar, fechar com Escape, foco, contraste, ampliação de texto e redução de movimento devem funcionar corretamente. A entrada de seleção, câmera e controles é coordenada para que clicar em um controle não mova o mapa nem selecione uma entidade por engano.
 ## Inspeção
 
-Indivíduo mostra necessidades, ação, percepção, recompensa decomposta, memória, relações, linhagem, genoma, cérebro e causa de morte. Evento aponta atores, local, tick, causa e consequências.
+A ficha contextual do indivíduo pode expandir ou abrir seções para necessidades, ação, percepção, recompensa decomposta, memória, relações, linhagem, genoma, cérebro e causa de morte, conforme a fase e os dados existentes. Evento aponta atores, local, tick, causa e consequências.
 
 ## Tracker
 
