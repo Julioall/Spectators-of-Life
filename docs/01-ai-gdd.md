@@ -32,4 +32,4 @@ Cada possibilidade exige recursos, conhecimento, custos e regras implementadas. 
 
 ## Interface e estética
 
-Mapa pixel art desenhado em código como base de produção, com escala e âncoras consistentes. Painéis contextuais integrados à tela, ícones e menus flutuantes. A interface inicial prioriza clima, água, solo, plantas, fauna e linhagens; módulos sociais só exibem dados quando habilitados.
+Mapa pixel art desenhado em código como base de produção, com escala e âncoras consistentes. A experiência ocorre em uma única tela de jogo, com o mapa como foco, HUD compacto e menus integrados ou flutuantes. Selecionar uma célula, organismo ou região abre uma ficha contextual expansível dentro da tela; não há painel lateral permanente como estrutura principal. A ficha mostra dados compatíveis com a fase: primeiro clima, água, solo, plantas e fluxos ecológicos; depois fauna, necessidades e linhagens. Informações de aldeias, cidades, reinos, profissões ou política só aparecem quando os respectivos módulos forem implementados e o objeto for selecionado.
