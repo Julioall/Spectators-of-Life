@@ -19,7 +19,7 @@ Cada célula acompanha:
 - atividade decompositora agregada em faixa 0–1;
 - por espécie e estágio: biomassa viva em g de matéria seca/m², cobertura, sementes/m², idade/estágio agregado e reservas quando modeladas.
 
-Cada perfil vegetal declara unidade e limites de seus parâmetros: janelas mínima/ótima/máxima de temperatura, água e luz; tolerância a substrato; demanda de N por biomassa; taxa máxima de crescimento por dia; estágio/maturação; investimento em sementes; janela de germinação; dispersão e palatabilidade/toxicidade quando representadas.
+Cada perfil vegetal declara unidade e limites de seus parâmetros: janelas mínima/ótima/máxima de temperatura, água e luz; tolerância a substrato; demanda de N por biomassa e fração de N em tecido/semente; taxa máxima de crescimento por dia; estágio/maturação; investimento em sementes; janela de germinação; dispersão e palatabilidade/toxicidade quando representadas.
 
 O calendário e unidades vêm da SPEC-100. Estoques não podem ser negativos. Valores de parâmetros são de cenário/perfil com versão e fonte; não são constantes universais para todo o reino vegetal.
 
@@ -29,7 +29,7 @@ Uma atualização vegetal em período definido no cenário determina fatores lim
 
 Consumo de água e N é agregado por célula antes de aplicar deltas. Competidores não podem usar duas vezes o mesmo recurso. Cobertura/luz disponível considera a estrutura vegetal declarada; não permitir crescimento ilimitado por ordem de iteração.
 
-A morte, queda de folhas e produção de sementes transferem matéria entre estoques. Biomassa vegetal produzida por fotossíntese tem fonte de carbono atmosférico e entrada de energia solar registradas como fluxos de fronteira do modelo; minerais absorvidos saem do reservatório de solo. Sementes usam parte da produção alocada, não surgem sem custo de biomassa.
+A morte, queda de folhas e produção de sementes transferem matéria entre estoques. Biomassa vegetal produzida por fotossíntese tem fonte de carbono atmosférico e entrada de energia solar registradas como fluxos de fronteira do modelo; minerais absorvidos saem do reservatório de solo. A fração de N da biomassa/coorte determina o N transferido a sementes, detritos e solo mineralizado. Sementes usam parte da produção alocada, não surgem sem custo de biomassa.
 
 ## 4. Germinação, dispersão e sucessão
 
