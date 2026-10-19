@@ -20,6 +20,11 @@ Estado: fundação documental. O marco atual é F0; conteúdo especificado não 
 | [09 — Roadmap](09-roadmap.md) | Única fonte de fases F0–F9 e gates |
 | [10 — Ecologia e biologia](10-ecologia-e-biologia.md) | Escopo natural obrigatório e abstrações |
 | [11 — Skills de agentes](11-agent-skills.md) | Roteamento de skills focadas para tarefas de desenvolvimento por IA |
+| [Specs de implementação](specs/README.md) | Contratos verificáveis para F0–F4, tempo lógico, métricas e critérios de aceite |
+
+## Specs de implementação
+
+O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. As primeiras propostas detalham a fundação do runtime e a comparação correta de tempo e métricas; são especificações para revisão, não funcionalidades implementadas.
 
 [AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos.
 
