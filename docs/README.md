@@ -20,6 +20,8 @@ Estado: F0 validado localmente; protótipo F1–F2 em revisão. Implementação 
 | [09 — Roadmap](09-roadmap.md) | Única fonte de fases F0–F9 e gates |
 | [10 — Ecologia e biologia](10-ecologia-e-biologia.md) | Escopo natural obrigatório e abstrações |
 | [11 — Skills de agentes](11-agent-skills.md) | Roteamento de skills focadas para tarefas de desenvolvimento por IA |
+| [12 — Validação documental](12-validacao-documental.md) | Cobertura, evidências e pendências de validação |
+| [13 — Motores procedurais de rochas](13-motores-procedurais-de-rochas.md) | ASTERRA v2.3, adaptador de distribuição, grupos, paleta, água e validação |
 | [Specs de implementação](specs/README.md) | Contratos verificáveis para F0–F4, tempo lógico, métricas e critérios de aceite |
 
 ## Specs de implementação
