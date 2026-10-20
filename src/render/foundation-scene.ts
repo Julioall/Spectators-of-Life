@@ -26,6 +26,7 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
+import { buildWaterRibbon } from './water-mesh';
 
 const CELL_SIZE = 40;
 const MIN_ZOOM = 0.38;
@@ -1509,38 +1510,40 @@ function drawSmoothedRiverPath(
     const flowWidth = clamp(6.5 + Math.sqrt(Math.max(1, catchmentAt(progress))) * 0.42, 7, 30);
     return clamp(flowWidth * widthScaleAt(progress), 6, 35);
   };
-  const stroke = (bank: boolean): void => {
-    for (let index = 0; index < points.length - 1; index += 1) {
-      const start = points[index]!;
-      const end = points[index + 1]!;
-      const progress = (start.progress + end.progress) * 0.5;
-      const surfaceMm = surfaceAt(progress);
-      const width = widthAt(progress) + (bank ? 1.4 : 0);
-      const centerX = (start.x + end.x) * 0.5;
-      const centerY = (start.y + end.y) * 0.5;
-      const color = shadeWaterColor(bank ? 0x52675e : waterDepthColor(surfaceMm), sampleLightingAtWorldPoint(world, lightingFactors, centerX, centerY));
-      const alpha = bank ? 0.14 : 0.9;
-      graphics.lineStyle(width, color, alpha);
-      graphics.lineBetween(start.x, start.y, end.x, end.y);
-      graphics.fillStyle(color, alpha);
-      graphics.fillCircle(start.x, start.y, width * 0.5);
-    }
-    if (points.length === 1) {
-      const surfaceMm = path[0]!.surfaceMm;
-      const width = widthAt(0) + (bank ? 1.4 : 0);
-      const color = shadeWaterColor(bank ? 0x52675e : waterDepthColor(surfaceMm), sampleLightingAtWorldPoint(world, lightingFactors, points[0]!.x, points[0]!.y));
-      graphics.fillStyle(color, bank ? 0.14 : 0.9);
-      graphics.fillCircle(points[0]!.x, points[0]!.y, width * 0.5);
-    } else {
-      const last = points[points.length - 1]!;
-      const width = widthAt(last.progress) + (bank ? 1.4 : 0);
-      const color = shadeWaterColor(bank ? 0x52675e : waterDepthColor(surfaceAt(last.progress)), sampleLightingAtWorldPoint(world, lightingFactors, last.x, last.y));
-      graphics.fillStyle(color, bank ? 0.14 : 0.9);
-      graphics.fillCircle(last.x, last.y, width * 0.5);
-    }
-  };
-  stroke(true);
-  stroke(false);
+  const ribbonPoints = points.map((point) => ({ x: point.x, y: point.y, width: widthAt(point.progress) }));
+  const bankMesh = buildWaterRibbon(ribbonPoints, 1.5);
+  if (bankMesh.length >= 3) {
+    const bankColor = shadeWaterColor(0x52675e, sampleLightingAtWorldPoint(
+      world,
+      lightingFactors,
+      ribbonPoints[Math.floor(ribbonPoints.length / 2)]!.x,
+      ribbonPoints[Math.floor(ribbonPoints.length / 2)]!.y,
+    ));
+    graphics.fillStyle(bankColor, 0.15);
+    graphics.fillPoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
+  }
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]!;
+    const end = points[index + 1]!;
+    const midpointX = (start.x + end.x) * 0.5;
+    const midpointY = (start.y + end.y) * 0.5;
+    const surfaceMm = surfaceAt((start.progress + end.progress) * 0.5);
+    const color = shadeWaterColor(
+      waterDepthColor(surfaceMm),
+      sampleLightingAtWorldPoint(world, lightingFactors, midpointX, midpointY),
+    );
+    const mesh = buildWaterRibbon([ribbonPoints[index]!, ribbonPoints[index + 1]!]);
+    if (mesh.length < 3) continue;
+    graphics.fillStyle(color, 0.9);
+    graphics.fillPoints(mesh as unknown as Phaser.Math.Vector2[], true);
+  }
+  if (points.length === 1) {
+    const point = ribbonPoints[0]!;
+    const color = shadeWaterColor(waterDepthColor(path[0]!.surfaceMm), sampleLightingAtWorldPoint(world, lightingFactors, point.x, point.y));
+    const mesh = buildWaterRibbon([point]);
+    graphics.fillStyle(color, 0.9);
+    graphics.fillPoints(mesh as unknown as Phaser.Math.Vector2[], true);
+  }
 }
 
 function drawRiverConfluencePools(

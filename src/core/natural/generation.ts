@@ -2,6 +2,7 @@ import { drawFromSystem } from '../rng';
 import type { RandomState } from '../types';
 import { NATURAL_SCENARIO, validateNaturalScenarioParameters, type MineralVeinProfile, type SoilProfile } from './parameters';
 import { buildLandformElevationField } from './topography';
+import { adaptiveChannelThreshold, buildMultipleFlowContributingCells } from './flow-routing';
 import type { BedrockId, NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, PlantSpeciesId, SoilTypeId, TreeSpeciesId, WaterBodyId } from './types';
 
 const NEIGHBORS = [
@@ -66,8 +67,18 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     rainfallFactors, geologyField, soilField, moistureField, terrain.minimumElevationM, terrain.maximumElevationM, totalCells,
   );
   let runoff = buildRunoffAccumulation(flowTo, elevations, rainfallFactors, soilTypes, slopes);
+  let multipleFlowContribution = buildMultipleFlowContributingCells(world.width, world.height, elevations, rainfallFactors);
   const riverNetwork: RiverNetworkPlan = {
-    cells: findPersistentRiverCells(flowTo, runoff.contributingCells, runoff.runoffPotential, new Set(), terrain.riverRunoffThreshold),
+    cells: findPersistentRiverCells(
+      flowTo,
+      runoff.contributingCells,
+      runoff.runoffPotential,
+      rainfallFactors,
+      slopes,
+      world.cellSizeM,
+      new Set(),
+      terrain.riverRunoffThreshold,
+    ),
     downstream: new Map(),
   };
   const lakeCandidates = [...basinSizes.entries()]
@@ -116,6 +127,7 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
       rainfallFactors, geologyField, soilField, moistureField, terrain.minimumElevationM, terrain.maximumElevationM, totalCells,
     ));
     runoff = buildRunoffAccumulation(flowTo, elevations, rainfallFactors, soilTypes, slopes);
+    multipleFlowContribution = buildMultipleFlowContributingCells(world.width, world.height, elevations, rainfallFactors);
   }
   const waterBodies = new Array<WaterBodyId>(totalCells).fill('none');
   for (const index of lakeCells) waterBodies[index] = 'lake';
@@ -123,10 +135,21 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     flowTo,
     runoff.contributingCells,
     runoff.runoffPotential,
+    rainfallFactors,
+    slopes,
+    world.cellSizeM,
     lakeCells,
     terrain.riverRunoffThreshold,
   );
-  const widenedRiverCells = widenRiverChannels(world.width, world.height, flowTo, runoff.contributingCells, persistentRiverCells, lakeCells);
+  const widenedRiverCells = widenRiverChannels(
+    world.width,
+    world.height,
+    flowTo,
+    runoff.contributingCells,
+    multipleFlowContribution,
+    persistentRiverCells,
+    lakeCells,
+  );
   for (let index = 0; index < totalCells; index += 1) {
     if (waterBodies[index] !== 'lake' && widenedRiverCells.has(index)) waterBodies[index] = 'river';
   }
@@ -427,12 +450,21 @@ function findPersistentRiverCells(
   flowTo: number[],
   contributingCells: number[],
   runoffPotential: number[],
+  rainfallFactors: number[],
+  slopes: number[],
+  cellSizeM: number,
   lakeCells: Set<number>,
   runoffThreshold: number,
 ): Set<number> {
   const persistent = new Set<number>();
   for (let source = 0; source < flowTo.length; source += 1) {
-    if (lakeCells.has(source) || (contributingCells[source] as number) < 32 || (runoffPotential[source] as number) < runoffThreshold) continue;
+    const localThreshold = adaptiveChannelThreshold(
+      runoffThreshold,
+      rainfallFactors[source] as number,
+      slopes[source] as number,
+      cellSizeM,
+    );
+    if (lakeCells.has(source) || (contributingCells[source] as number) < 32 || (runoffPotential[source] as number) < localThreshold) continue;
     let cursor = source;
     const visited = new Set<number>();
     while (cursor >= 0 && cursor < flowTo.length && !lakeCells.has(cursor) && !visited.has(cursor)) {
@@ -450,6 +482,7 @@ function widenRiverChannels(
   height: number,
   flowTo: number[],
   contributingCells: number[],
+  multipleFlowContribution: number[],
   centerline: Set<number>,
   lakeCells: Set<number>,
 ): Set<number> {
@@ -485,7 +518,12 @@ function widenRiverChannels(
     candidates.sort((left, right) => left.distance - right.distance || left.cell - right.cell);
     for (const candidate of candidates) {
       const downstream = flowTo[candidate.cell] as number;
-      if (riverCells.has(downstream)) riverCells.add(candidate.cell);
+      const lateralSupport = multipleFlowContribution[candidate.cell] as number;
+      if (riverCells.has(downstream)
+        && ((contributingCells[candidate.cell] as number) >= minimumBankCatchment
+          || lateralSupport >= minimumBankCatchment * 0.82)) {
+        riverCells.add(candidate.cell);
+      }
     }
   }
   return riverCells;

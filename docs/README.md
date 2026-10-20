@@ -22,6 +22,7 @@ Estado: F0 validado localmente; protótipo F1–F2 em revisão. Implementação 
 | [11 — Skills de agentes](11-agent-skills.md) | Roteamento de skills focadas para tarefas de desenvolvimento por IA |
 | [12 — Validação documental](12-validacao-documental.md) | Cobertura, evidências e pendências de validação |
 | [13 — Motores procedurais de rochas](13-motores-procedurais-de-rochas.md) | ASTERRA v2.3, adaptador de distribuição, grupos, paleta, água e validação |
+| [Pesquisa — Hidrologia e malha de água](research/2026-10-20-hidrologia-malha-agua-consensus.md) | Síntese SciSpace/Consensus sobre roteamento, depressões, canais e visualização |
 | [Specs de implementação](specs/README.md) | Contratos verificáveis para F0–F4, tempo lógico, métricas e critérios de aceite |
 
 ## Specs de implementação
@@ -31,6 +32,8 @@ O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. 
 [AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos, [ADR 0006](adr/0006-prng-f0.md) fecha os geradores determinísticos de F0, [ADR 0007](adr/0007-ui-contextual-tela-unica.md) define a tela única com inspeção contextual, [ADR 0010](adr/0010-snapshot-and-render-performance.md) registra os limites de cópia dos snapshots e atualização visual, [ADR 0012](adr/0012-alargamento-e-confluencia-fluvial.md) registra largura fluvial e integração visual com lagos e [ADR 0013](adr/0013-iluminacao-topografica-procedural.md) registra a iluminação topográfica configurável no renderer.
 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
+
+A decisão vigente de roteamento híbrido e malha visual está na [ADR 0015](adr/0015-roteamento-hibrido-e-malha-de-agua.md).
 
 [Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer usa o atlas das cinco espécies de árvores e gera rochas/minérios em runtime; as referências de autotiling em `data/assets/environment/` continuam fora do runtime.
 
