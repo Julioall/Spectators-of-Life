@@ -1010,9 +1010,13 @@ function treeHabitatAffinity(speciesId: PlantSpeciesId, cell: NaturalWorldCellSt
 }
 
 function treeRockAffinity(speciesId: TreeSpeciesId, cell: NaturalWorldCellState): number {
+  // Exposed rock is a hard ecological boundary for tree establishment. The
+  // renderer also blocks large formations, but this keeps the simulation and
+  // its projections consistent for new worlds.
+  if (cell.terrain.exposedRock) return 0;
   const speciesTolerance = speciesId === 'pine' ? 0.72 : speciesId === 'birch' ? 0.5 : 0.28;
   const substrateFactor = cell.terrain.soilType === 'rock' ? speciesTolerance : 1;
-  return cell.terrain.exposedRock ? substrateFactor * 0.48 : substrateFactor;
+  return substrateFactor;
 }
 
 function initialTemperatureSuitability(value: number, minimum: number, optimum: number, maximum: number): number {

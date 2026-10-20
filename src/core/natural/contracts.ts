@@ -22,7 +22,8 @@ export function isNaturalWorldEntity(value: unknown): value is NaturalWorldEntit
       ? { width: 64, height: 48, cellSizeM: 250 }
       : { width: NATURAL_SCENARIO.world.width, height: NATURAL_SCENARIO.world.height, cellSizeM: NATURAL_SCENARIO.world.cellSizeM };
   const { width: expectedWidth, height: expectedHeight, cellSizeM: expectedCellSizeM } = scenarioDimensions;
-  if (value['width'] !== expectedWidth || value['height'] !== expectedHeight || value['cellSizeM'] !== expectedCellSizeM || value['boundary'] !== 'closed') return false;
+  const expectedBoundary = value['scenarioVersion'] === NATURAL_SCENARIO.scenarioVersion ? NATURAL_SCENARIO.world.boundary : 'closed';
+  if (value['width'] !== expectedWidth || value['height'] !== expectedHeight || value['cellSizeM'] !== expectedCellSizeM || value['boundary'] !== expectedBoundary) return false;
   if (value['ticksPerDay'] !== NATURAL_SCENARIO.world.ticksPerDay || value['daysPerSeason'] !== NATURAL_SCENARIO.world.daysPerSeason || value['yearLengthDays'] !== NATURAL_SCENARIO.world.daysPerSeason * 4) return false;
   if (!isIntegerIn(value['dayOfYear'], 0, value['yearLengthDays'] - 1) || !isIntegerIn(value['seasonDay'], 0, value['daysPerSeason'] - 1)) return false;
   if (!isFiniteNonNegative(value['daysSimulated']) || !SEASON_IDS.has(String(value['seasonId']))) return false;
@@ -37,9 +38,9 @@ function isNaturalCell(value: unknown, index: number, cells: unknown[], width: n
   if (value['index'] !== index || value['x'] !== x || value['y'] !== y) return false;
 
   const terrain = value['terrain'];
-  const hasMineralFields = ['1.3.0', '1.4.0', '1.5.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
-  const hasWaterBody = ['1.5.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
-  const hasGeomorphology = scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+  const hasMineralFields = ['1.3.0', '1.4.0', '1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
+  const hasWaterBody = ['1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
+  const hasGeomorphology = ['1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
   const terrainKeys = hasGeomorphology
     ? ['elevationM', 'slope', 'flowTo', 'basinId', 'bedrock', 'soilType', 'habitat', 'exposedRock', 'mineralPotential', 'waterBody']
     : hasWaterBody
@@ -69,7 +70,7 @@ function isNaturalCell(value: unknown, index: number, cells: unknown[], width: n
 
   const climate = value['climate'];
   if (!isRecord(climate)) return false;
-  const hasRainfallFactor = ['1.2.0', '1.3.0', '1.4.0', '1.5.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
+  const hasRainfallFactor = ['1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
   const climateKeys = hasRainfallFactor
     ? ['temperatureC', 'relativeHumidity', 'solarMjPerM2Day', 'precipitationMm', 'rainfallFactor']
     : ['temperatureC', 'relativeHumidity', 'solarMjPerM2Day', 'precipitationMm'];
@@ -81,7 +82,7 @@ function isNaturalCell(value: unknown, index: number, cells: unknown[], width: n
     && (!isFiniteNumber(climate['rainfallFactor']) || climate['rainfallFactor'] < 0.15 || climate['rainfallFactor'] > 1.95)) return false;
 
   const water = value['water'];
-  const hasDynamicFlowField = ['1.4.0', '1.5.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
+  const hasDynamicFlowField = ['1.4.0', '1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(scenarioVersion);
   const waterKeys = hasDynamicFlowField
     ? ['surfaceMm', 'soilMm', 'capacityMm', 'infiltrationMmPerDay', 'lastFlowTo', 'lastFlows']
     : ['surfaceMm', 'soilMm', 'capacityMm', 'infiltrationMmPerDay', 'lastFlows'];

@@ -60,10 +60,22 @@
       "source": "data/assets/rocks/Spritesheets/atlas_128.png",
       "frameSize": [128, 128],
       "anchor": [64, 122],
-      "status": "integrated",
+      "status": "deprecated",
       "license": null,
       "author": null,
-      "notes": "Atlas 13x5 com pedra, cobre, ferro, prata e ouro; overlay renderiza afloramentos expostos pela camada Minérios. Pivot documentado; autoria/licença ainda não confirmadas."
+      "notes": "Atlas 13x5 mantido como referência arquivada; não é mais carregado no runtime. Autoria/licença ainda não confirmadas."
+    },
+    "environment.procedural-rocks": {
+      "domain": "environment",
+      "kind": "procedural",
+      "source": "src/render/asterra/engine.js",
+      "adapter": "src/render/procedural-rocks.ts",
+      "nativeCellSize": 16,
+      "provenance": "src/render/asterra/provenance.json",
+      "status": "integrated",
+      "license": "Integração autorizada pelo autor nesta tarefa; licença pública não especificada.",
+      "author": "Autor do motor ASTERRA v2.3, fornecido pelo usuário.",
+      "notes": "Código original extraído literalmente do HTML arquivado, com SHA-256 e parâmetros padrão originais. Canvas e âncora variáveis calculados pelo adaptador; proporção nativa de 16 px por célula preservada no Phaser. Runtime usa drawOutcrop, rockSprite e pixelFinish originais; exclui apenas UI de demonstração e comparação de bitmaps legados. A cadência usa manchas conectadas, âncoras compactas, acompanhantes pequenos/médios, pedregulhos pequenos espalhados e afinidade de cascalho por rios, escoamento, sedimento, incisão e erosão. Famílias pontiagudas ficam em biomas e habitats secos. Em terreno cinza, o adaptador ambienta a base sem alterar as cores características dos veios; em floresta, aumenta o parâmetro original de musgo. A escala reduzida é visual e não altera a pegada nem o estado físico. Raridades são perfis visuais, sem efeito nas reservas físicas."
     },
     "environment.asterra-terrain-reference": {
       "domain": "environment",

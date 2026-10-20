@@ -270,6 +270,37 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 
 .map-layer-controls button:hover { filter: brightness(1.08); }
 
+.performance-panel {
+  position: absolute;
+  z-index: 7;
+  right: 17px;
+  bottom: 14px;
+  width: min(230px, calc(100vw - 24px));
+  max-height: min(70vh, 390px);
+  overflow: auto;
+  padding: 10px 11px 9px;
+  border: 1px solid rgb(216 195 148 / 62%);
+  border-radius: 5px;
+  background: rgb(27 42 29 / 89%);
+  color: #e8ddc2;
+  box-shadow: 0 6px 20px rgb(9 18 11 / 38%);
+  backdrop-filter: blur(8px);
+}
+
+.performance-panel h2 {
+  margin: 0 0 7px;
+  color: #d8c48f;
+  font: 9px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.performance-facts { display: grid; gap: 4px; margin: 0; }
+.performance-facts div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding-bottom: 3px; border-bottom: 1px solid rgb(216 195 148 / 18%); }
+.performance-facts dt { color: #b9ad8d; font-size: 9px; }
+.performance-facts dd { margin: 0; color: #f2e8cf; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.performance-note { margin: 7px 0 0; color: #9e967f; font-size: 8px; line-height: 1.35; }
+
 .map-panel {
   position: absolute;
   z-index: 5;
@@ -413,6 +444,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .world-stage { min-height: 0; }
   .map-caption { top: 10px; right: 10px; }
   .map-layer-controls { top: 43px; right: 10px; }
+  .performance-panel { right: 10px; bottom: 10px; }
   .setup-panel { top: 10px; left: 10px; }
   .world-details { bottom: 10px; left: 10px; }
   .error-toast { bottom: 10px; }
@@ -441,6 +473,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .utility-control .control-label { display: none; }
   .map-caption { top: auto; right: 9px; bottom: 12px; padding: 5px 7px; font-size: 7px; }
   .map-layer-controls { top: 9px; right: 8px; gap: 2px; padding: 3px; }
+  .performance-panel { right: 8px; bottom: 44px; width: min(208px, calc(100vw - 16px)); padding: 8px 9px; }
   .map-layer-controls > span { display: none; }
   .map-layer-controls button { min-height: 25px; padding-inline: 6px; font-size: 8px; }
   .setup-panel { top: 8px; left: 8px; }

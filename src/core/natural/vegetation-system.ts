@@ -44,7 +44,7 @@ function updateVegetation(world: WorldState, tick: number, context: TickSystemCo
   let deathCells = 0;
   let activeCells = 0;
   let meanLimitation = 0;
-  const exposesChannelSeedbank = natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+  const exposesChannelSeedbank = natural.scenarioVersion === '1.6.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
 
   for (const cell of natural.cells) {
     const cellResult = updateCellPlants(cell, elapsedDays, neighborhoodShade(natural, cell, treeCanopies), exposesChannelSeedbank);
@@ -178,7 +178,7 @@ function updateCellPlants(cell: NaturalWorldCellState, elapsedDays: number, surr
     const soilPreferenceFactor = profile.soilPreference.includes(cell.terrain.soilType) ? 1 : 0.58;
     const rockTolerance = cohort.speciesId === 'pine' ? 0.78 : cohort.speciesId === 'birch' ? 0.56 : 0.32;
     const rockFactor = isTree(cohort.speciesId)
-      ? (cell.terrain.soilType === 'rock' ? rockTolerance : 1) * (cell.terrain.exposedRock ? 0.48 : 1)
+      ? cell.terrain.exposedRock ? 0 : (cell.terrain.soilType === 'rock' ? rockTolerance : 1)
       : 1;
     const soilFactor = soilPreferenceFactor * rockFactor;
     const habitatFactor = profile.habitatPreference.includes(cell.terrain.habitat) ? 1 : 0.62;

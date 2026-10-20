@@ -120,6 +120,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
     soilEvaporation: number;
     remainingSurface: number;
     runoffOut: number;
+    boundaryOutflow: number;
     flowTo: number;
     precipitation: number;
   }> = [];
@@ -128,6 +129,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   let surfaceEvaporationTotal = 0;
   let soilEvaporationTotal = 0;
   let runoffTotal = 0;
+  let boundaryOutflowTotal = 0;
 
   for (const cell of natural.cells) {
     const precipitation = cell.climate.precipitationMm;
@@ -154,6 +156,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
       soilEvaporation,
       remainingSurface,
       runoffOut: 0,
+      boundaryOutflow: 0,
       flowTo: -1,
       precipitation,
     });
@@ -164,7 +167,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   }
 
   const hydraulicHeads = proposals.map(({ cell, remainingSurface }) => cell.terrain.elevationM + remainingSurface / 1000);
-  const useDynamicHydraulicHead = natural.scenarioVersion === '1.4.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+  const useDynamicHydraulicHead = ['1.4.0', '1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(natural.scenarioVersion);
   for (const proposal of proposals) {
     const { cell, remainingSurface } = proposal;
     const downstream = useDynamicHydraulicHead
@@ -177,11 +180,16 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
         : cell.terrain.slope;
     const soilProfile = SOIL_PROFILES.get(cell.terrain.soilType) as SoilProfile;
     const runoffFraction = downstream < 0 ? 0 : clamp(soilProfile.runoffFraction + hydraulicSlope * 1.55, 0, 0.82);
+    const boundaryOutlet = isOpenBoundaryOutlet(natural, cell, downstream);
     proposal.flowTo = downstream;
     proposal.runoffOut = remainingSurface * runoffFraction;
+    proposal.boundaryOutflow = boundaryOutlet
+      ? remainingSurface * (cell.terrain.waterBody === 'river' ? 0.82 : 0.36)
+      : 0;
     outgoing[cell.index] = proposal.runoffOut;
     if (downstream >= 0) incoming[downstream] = (incoming[downstream] as number) + proposal.runoffOut;
     runoffTotal += proposal.runoffOut;
+    boundaryOutflowTotal += proposal.boundaryOutflow;
   }
 
   let surfaceTotal = 0;
@@ -189,9 +197,9 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   for (const proposal of proposals) {
     const { cell } = proposal;
     const runoffIn = incoming[cell.index] as number;
-    if (natural.scenarioVersion === '1.4.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion) cell.water.lastFlowTo = proposal.flowTo;
+    if (useDynamicHydraulicHead) cell.water.lastFlowTo = proposal.flowTo;
     const surfaceAfterRain = cell.water.surfaceMm + proposal.precipitation;
-    const surfaceRemaining = surfaceAfterRain - proposal.infiltration - proposal.surfaceEvaporation - proposal.runoffOut;
+    const surfaceRemaining = surfaceAfterRain - proposal.infiltration - proposal.surfaceEvaporation - proposal.runoffOut - proposal.boundaryOutflow;
     cell.water.surfaceMm = round4(Math.max(0, surfaceRemaining + runoffIn));
     cell.water.soilMm = round4(Math.max(0, Math.min(cell.water.capacityMm, proposal.soilAfter)));
     cell.water.lastFlows = nonZeroFlows({
@@ -202,13 +210,13 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
       surfaceEvaporationMm: round4(proposal.surfaceEvaporation),
       soilEvaporationMm: round4(proposal.soilEvaporation),
       transpirationMm: 0,
-      boundaryOutflowMm: 0,
+      boundaryOutflowMm: round4(proposal.boundaryOutflow),
     });
     surfaceTotal += cell.water.surfaceMm;
     soilTotal += cell.water.soilMm;
   }
 
-  const bankSeepageTotal = natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion
+  const bankSeepageTotal = hasGeomorphology(natural)
     ? transferBankSeepage(natural, elapsedDays)
     : 0;
   surfaceTotal -= bankSeepageTotal;
@@ -216,6 +224,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
 
   natural.totals.surfaceEvaporationMmM2 = round6(natural.totals.surfaceEvaporationMmM2 + surfaceEvaporationTotal * cellAreaM2);
   natural.totals.soilEvaporationMmM2 = round6(natural.totals.soilEvaporationMmM2 + soilEvaporationTotal * cellAreaM2);
+  natural.totals.runoffBoundaryMmM2 = round6(natural.totals.runoffBoundaryMmM2 + boundaryOutflowTotal * cellAreaM2);
   world.metrics['hydrology.surfaceWaterMmM2'] = round3(surfaceTotal * cellAreaM2);
   world.metrics['hydrology.soilWaterMmM2'] = round3(soilTotal * cellAreaM2);
   world.metrics['hydrology.meanSurfaceWaterMm'] = round4(surfaceTotal / natural.cells.length);
@@ -223,13 +232,14 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   world.metrics['hydrology.meanInfiltrationMm'] = round4(infiltrationTotal / natural.cells.length);
   world.metrics['hydrology.meanRunoffMm'] = round4(runoffTotal / natural.cells.length);
   world.metrics['hydrology.runoffTransfersMmM2'] = round3(runoffTotal * cellAreaM2);
-  if (natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion) {
+  world.metrics['hydrology.boundaryOutflowMmM2'] = round3(boundaryOutflowTotal * cellAreaM2);
+  if (hasGeomorphology(natural)) {
     world.metrics['hydrology.bankSeepageMmM2'] = round3(bankSeepageTotal * cellAreaM2);
     world.metrics['hydrology.meanBankSeepageMm'] = round4(bankSeepageTotal / natural.cells.length);
   }
 
   const events: SimulationEvent[] = [];
-  if (runoffTotal > 0.01 || infiltrationTotal > 0.01) {
+  if (runoffTotal > 0.01 || infiltrationTotal > 0.01 || boundaryOutflowTotal > 0.01) {
     events.push({
       tick,
       systemId: 'hydrology:surface-and-soil-water',
@@ -241,7 +251,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
         surfaceEvaporationMmM2: round3(surfaceEvaporationTotal * cellAreaM2),
         soilEvaporationMmM2: round3(soilEvaporationTotal * cellAreaM2),
         cellsWithRunoff: outgoing.filter((amount) => amount > 0.01).length,
-        closedBoundaryOutflowMmM2: 0,
+        boundaryOutflowMmM2: round3(boundaryOutflowTotal * cellAreaM2),
       },
     });
   }
@@ -255,6 +265,15 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
     });
   }
   return events;
+}
+
+function isOpenBoundaryOutlet(natural: NaturalWorldEntity, cell: NaturalWorldCellState, downstream: number): boolean {
+  if (natural.boundary !== 'open' || downstream >= 0 || cell.terrain.waterBody === undefined || cell.terrain.waterBody === 'none') return false;
+  return cell.x === 0 || cell.y === 0 || cell.x === natural.width - 1 || cell.y === natural.height - 1;
+}
+
+function hasGeomorphology(natural: NaturalWorldEntity): boolean {
+  return natural.scenarioVersion === '1.6.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
 }
 
 function transferBankSeepage(natural: NaturalWorldEntity, elapsedDays: number): number {
@@ -381,14 +400,14 @@ function updateSoil(world: WorldState, tick: number, context: TickSystemContext)
     cell.soil.organicNitrogenGPerM2 = round5(Math.max(0, cell.soil.organicNitrogenGPerM2 - erodedNitrogen));
     cell.soil.lastErosionGPerM2 = round4(erodedMatter);
     cell.soil.lastDepositionGPerM2 = 0;
-    const sedimentDestination = natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion
+    const sedimentDestination = hasGeomorphology(natural)
       ? cell.water.lastFlowTo ?? cell.terrain.flowTo
       : cell.terrain.flowTo;
     if (sedimentDestination >= 0) {
       const destinationIndex = sedimentDestination;
       erosionMatter[destinationIndex] = (erosionMatter[destinationIndex] as number) + erodedMatter;
       erosionNitrogen[destinationIndex] = (erosionNitrogen[destinationIndex] as number) + erodedNitrogen;
-    } else if (natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion) {
+    } else if (hasGeomorphology(natural)) {
       erosionMatter[cell.index] = (erosionMatter[cell.index] as number) + erodedMatter;
       erosionNitrogen[cell.index] = (erosionNitrogen[cell.index] as number) + erodedNitrogen;
     }
@@ -406,13 +425,13 @@ function updateSoil(world: WorldState, tick: number, context: TickSystemContext)
     }
   }
 
-  const geomorphology = natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion
+  const geomorphology = hasGeomorphology(natural)
     ? updateGeomorphology(world, natural, elapsedDays)
     : { erodedKg: 0, depositedKg: 0, storedKg: 0, newRiverCells: 0, drownedPlantMatterG: 0 };
 
   natural.totals.erosionG = round6(natural.totals.erosionG + erosionTotal);
   natural.totals.depositionG = round6(natural.totals.depositionG + depositionTotal);
-  if (natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion) {
+  if (hasGeomorphology(natural)) {
     natural.totals.mineralErosionKg = round6((natural.totals.mineralErosionKg ?? 0) + geomorphology.erodedKg);
     natural.totals.mineralDepositionKg = round6((natural.totals.mineralDepositionKg ?? 0) + geomorphology.depositedKg);
   }
@@ -424,7 +443,7 @@ function updateSoil(world: WorldState, tick: number, context: TickSystemContext)
   world.metrics['soil.decompositionG'] = round3(decompositionTotal);
   world.metrics['soil.erosionG'] = round3(erosionTotal);
   world.metrics['soil.depositionG'] = round3(depositionTotal);
-  if (natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion) {
+  if (hasGeomorphology(natural)) {
     world.metrics['geology.mineralErosionKg'] = round3(geomorphology.erodedKg);
     world.metrics['geology.mineralDepositionKg'] = round3(geomorphology.depositedKg);
     world.metrics['geology.sedimentStoredKg'] = round3(geomorphology.storedKg);
@@ -452,7 +471,7 @@ function updateSoil(world: WorldState, tick: number, context: TickSystemContext)
       data: {
         erodedG: round3(erosionTotal),
         depositedG: round3(depositionTotal),
-        netBoundaryLossG: natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion ? 0 : round3(erosionTotal - depositionTotal),
+        netBoundaryLossG: hasGeomorphology(natural) ? 0 : round3(erosionTotal - depositionTotal),
       },
     });
   }

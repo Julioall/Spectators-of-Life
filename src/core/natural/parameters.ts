@@ -1,4 +1,4 @@
-import scenarioJson from '../../../data/scenarios/natural-temperate-valley.v1.6.json';
+import scenarioJson from '../../../data/scenarios/natural-temperate-valley.v1.7.json';
 import { NATURAL_SCENARIO_VERSION } from '../constants';
 import type { BedrockId, HabitatId, PlantSpeciesId, SeasonId, SoilTypeId } from './types';
 
@@ -66,7 +66,7 @@ export type NaturalScenarioParameters = {
     width: number;
     height: number;
     cellSizeM: number;
-    boundary: 'closed';
+    boundary: 'open' | 'closed';
     ticksPerDay: number;
     daysPerSeason: number;
   };
@@ -118,7 +118,7 @@ export function validateNaturalScenarioParameters(parameters: NaturalScenarioPar
   if (parameters.scenarioId !== 'natural:temperate-valley' || parameters.scenarioVersion !== NATURAL_SCENARIO_VERSION) throw new Error('ID/versão do cenário natural incompatível.');
   if (!Number.isInteger(world.width) || world.width < 8 || !Number.isInteger(world.height) || world.height < 8 || world.width * world.height > 8192) throw new Error('Dimensões do cenário natural inválidas.');
   if (!(world.cellSizeM > 0) || !Number.isInteger(world.ticksPerDay) || world.ticksPerDay < 1 || !Number.isInteger(world.daysPerSeason) || world.daysPerSeason < 1) throw new Error('Escala espacial ou calendário do cenário inválido.');
-  if (world.boundary !== 'closed' || !(terrain.maximumElevationM > terrain.minimumElevationM)) throw new Error('Condição de borda ou faixa de elevação inválida.');
+  if (world.boundary !== 'open' || !(terrain.maximumElevationM > terrain.minimumElevationM)) throw new Error('Condição de borda ou faixa de elevação inválida.');
   if (!(terrain.lakeSurfaceWaterMm > 0) || !(terrain.riverSurfaceWaterMm > 0) || !(terrain.riverRunoffThreshold > 0) || !(terrain.lakeRunoffThreshold > 0)) throw new Error('Parâmetros de retenção e formação de corpos d\'água inválidos.');
   if (!Number.isInteger(terrain.riverFormationMinimumCatchmentCells) || terrain.riverFormationMinimumCatchmentCells < 2 || !(terrain.riverFormationMinimumIncisionM > 0)) throw new Error('Critérios de formação fluvial inválidos.');
   if (!(climate.rainProbability > 0 && climate.rainProbability <= 1) || climate.seasonalForcing.length !== 4) throw new Error('Forçantes climáticas inválidas.');

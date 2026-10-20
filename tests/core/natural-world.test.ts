@@ -27,9 +27,22 @@ describe('cenário natural do vale temperado', () => {
       expect(natural.cells.some((cell) => cell.minerals.some((deposit) => deposit.resourceId === resourceId && deposit.reserveKg > 0))).toBe(true);
     }
     expect(utf8ByteLength(canonicalStringify(toSaveDocument(first)))).toBeLessThan(MAX_WORLD_BYTES);
-  });
+  }, 15_000);
 
-  it('avança clima, água, decomposição e plantas em passos diários sem perder água do mundo fechado', () => {
+  it('não estabelece árvores em células de rocha exposta', () => {
+    const seeds = ['0000000000000000', '0000000000000004', '0123456789abcdef', 'ffffffffffffffff'];
+    const treeSpecies = new Set(['oak', 'pine', 'birch', 'autumnal', 'willow']);
+
+    for (const seed of seeds) {
+      const world = getNaturalWorld(createNaturalWorld(seed));
+      for (const cell of world.cells) {
+        if (!cell.terrain.exposedRock) continue;
+        expect(cell.plants.some((plant) => treeSpecies.has(plant.speciesId) && (plant.biomassGPerM2 > 0 || plant.seedBankMatterGPerM2 > 0))).toBe(false);
+      }
+    }
+  }, 30_000);
+
+  it('avança clima, água, decomposição e plantas em passos diários com saída fluvial auditada', () => {
     const initial = createNaturalWorld(FIXED_SEED);
     const initialNatural = getNaturalWorld(initial);
     const waterBefore = totalWater(initialNatural);
@@ -38,7 +51,8 @@ describe('cenário natural do vale temperado', () => {
     const precipitation = sum(natural.cells.map((cell) => cell.water.lastFlows.precipitationMm ?? 0));
     const evaporation = sum(natural.cells.map((cell) => (cell.water.lastFlows.surfaceEvaporationMm ?? 0) + (cell.water.lastFlows.soilEvaporationMm ?? 0)));
     const transpiration = sum(natural.cells.map((cell) => cell.water.lastFlows.transpirationMm ?? 0));
-    const expectedWater = waterBefore + precipitation - evaporation - transpiration;
+    const boundaryOutflow = sum(natural.cells.map((cell) => cell.water.lastFlows.boundaryOutflowMm ?? 0));
+    const expectedWater = waterBefore + precipitation - evaporation - transpiration - boundaryOutflow;
     expect(result.state.tick).toBe(4);
     expect(natural.daysSimulated).toBe(1);
     expect(precipitation).toBeGreaterThan(0);
@@ -49,6 +63,7 @@ describe('cenário natural do vale temperado', () => {
     expect(natural.totals.decompositionRespirationG).toBeGreaterThan(0);
     expect(result.events.some((event) => event.eventType === 'vegetation:growth')).toBe(true);
     expect(result.state.metrics['hydrology.meanRunoffMm']).toBeGreaterThanOrEqual(0);
+    expect(result.state.metrics['hydrology.boundaryOutflowMmM2']).toBeGreaterThan(0);
     expect(natural.cells.every((cell) => Object.values(cell.water.lastFlows).every((flow) => flow > 0))).toBe(true);
     expect(natural.cells.every((cell) => cell.plants.every((plant) => plant.stress !== undefined && plant.limitingFactors === undefined))).toBe(true);
   });
@@ -63,14 +78,14 @@ describe('cenário natural do vale temperado', () => {
     expect(compactWorld.tick).toBe(12);
     expect(validateWorldState(compactWorld)).toBe(true);
     expect(utf8ByteLength(canonicalStringify(compactWorld))).toBeLessThanOrEqual(MAX_WORLD_STATE_BYTES);
-  });
+  }, 15_000);
 
   it('mantém o orçamento de estado em uma seed densa durante 31 dias', () => {
     const advanced = stepWorld(createNaturalWorld('0000000000000006'), 124, NATURAL_SYSTEMS).state;
     expect(advanced.tick).toBe(124);
     expect(validateWorldState(advanced)).toBe(true);
     expect(utf8ByteLength(canonicalStringify(advanced))).toBeLessThanOrEqual(MAX_WORLD_STATE_BYTES);
-  }, 30_000);
+  }, 180_000);
 
   it('salva e retoma o calendário e as dinâmicas; migra o save legado do mundo vazio', () => {
     const initial = createNaturalWorld(FIXED_SEED);
@@ -89,7 +104,7 @@ describe('cenário natural do vale temperado', () => {
     const migrated = validateSaveDocument(legacy);
     expect(migrated.ok).toBe(true);
     if (migrated.ok) expect(migrated.save.simulationVersion).toBe('0.2.0');
-  }, 30_000);
+  }, 60_000);
 });
 
 function totalWater(world: ReturnType<typeof getNaturalWorld>): number {

@@ -1,0 +1,6 @@
+{
+  "source": "data/assets/rocks/asterra/ASTERRA_Gerador_Rochas_v2.3.html",
+  "sourceSha256": "a1faf76ec44cb6ea9e48bd180c09a4a2ec579a58c37f188e32631e01c73a3704",
+  "engineSha256": "10bf0b027ad22c9277811a02fb0c81f02cf09a3f808837aecfc530f4ea7e31d2",
+  "extraction": "Verbatim core sections; excluded demo controls, exports and embedded legacy bitmap comparison. ES module exports appended."
+}

@@ -61,6 +61,10 @@
             </button>
             <input id="load-input" type="file" accept="application/json,.json" hidden />
           </div>
+
+          <button id="performance-toggle" class="hud-button utility-control" type="button" aria-pressed="false" aria-label="Mostrar métricas de desempenho" title="Mostrar métricas de desempenho">
+            <span class="control-glyph" aria-hidden="true">⌁</span><span class="control-label">Desempenho</span>
+          </button>
         </nav>
       </header>
 
@@ -80,6 +84,25 @@
           <button type="button" data-map-layer="minerals" aria-pressed="true">Minérios</button>
           <button type="button" data-map-layer="geology" aria-pressed="false">Potencial mineral</button>
         </nav>
+
+        <aside id="performance-panel" class="performance-panel" hidden aria-labelledby="performance-title">
+          <h2 id="performance-title">Métricas de desempenho</h2>
+          <dl class="performance-facts">
+            <div><dt>FPS navegador</dt><dd id="performance-fps">—</dd></div>
+            <div><dt>FPS Phaser</dt><dd id="performance-phaser-fps">—</dd></div>
+            <div><dt>Frame navegador</dt><dd id="performance-frame">—</dd></div>
+            <div><dt>Render Phaser (último)</dt><dd id="performance-render">—</dd></div>
+            <div><dt>Camadas (último)</dt><dd id="performance-layers">—</dd></div>
+            <div><dt>Água (último)</dt><dd id="performance-water-motion">—</dd></div>
+            <div><dt>Worker ida/volta (último)</dt><dd id="performance-worker">—</dd></div>
+            <div><dt>Ticks por lote</dt><dd id="performance-ticks">—</dd></div>
+            <div><dt>Células</dt><dd id="performance-cells">—</dd></div>
+            <div><dt>Heap usado</dt><dd id="performance-memory">—</dd></div>
+            <div><dt>Heap total</dt><dd id="performance-memory-total">—</dd></div>
+            <div><dt>Limite do heap</dt><dd id="performance-memory-limit">—</dd></div>
+          </dl>
+          <p class="performance-note">FPS e frame são médias móveis; os demais tempos mostram a última operação. Memória depende do suporte do navegador.</p>
+        </aside>
 
         <details id="setup-panel" class="map-panel setup-panel" open>
           <summary>

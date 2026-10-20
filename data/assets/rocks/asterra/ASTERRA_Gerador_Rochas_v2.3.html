@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASTERRA — Motor de Rochas Pixel Art v2.3</title>
+<style>
+:root{--bg:#121a16;--surface:#1d2922;--surface2:#24322a;--stroke:#3a4937;--text:#eee9d7;--muted:#bbc4aa;--accent:#e8c47e;--grass:#a7b68e}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#273729 0%,#111c17 65%);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px}
+.wrap{max-width:1460px;margin:0 auto;padding:24px clamp(14px,2.3vw,36px) 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 24px;border-bottom:1px solid #435440}
+.eyebrow{font:700 11px/1.5 monospace;letter-spacing:.22em;color:var(--accent)}h1{font:600 clamp(25px,3vw,39px)/1.05 Georgia,serif;letter-spacing:.01em;margin:4px 0 6px}header p{color:var(--muted);margin:0;line-height:1.5}.pill{border:1px solid #536247;background:#30412e;border-radius:99px;padding:8px 13px;font-size:12px;color:#e6e5cb;white-space:nowrap}
+.layout{display:grid;grid-template-columns:275px minmax(0,1fr);gap:19px;margin-top:22px}.panel{background:rgba(29,41,34,.95);border:1px solid var(--stroke);border-radius:13px;box-shadow:0 12px 40px #0002;overflow:hidden}.params{padding:21px}.ptitle{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);font-weight:800;margin:0 0 20px}label{display:block;color:#e5e8da;font-size:12px;margin-bottom:7px;font-weight:600}select,input[type=number]{width:100%;background:#111c15;color:#f0eddd;border:1px solid #596a52;border-radius:7px;padding:9px 11px;font:inherit}select:focus,input:focus{outline:2px solid #b99456;outline-offset:2px}.field{margin-bottom:18px}.rangeline{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}.rangevalue{font:700 12px monospace;color:var(--accent)}input[type=range]{width:100%;accent-color:#b9975d;cursor:pointer}.tip{font:12px/1.5 system-ui;color:#a6b39f;margin-top:5px}button{border:1px solid #647255;border-radius:8px;padding:10px 12px;cursor:pointer;background:#354432;color:#eee9d7;font-size:12px;font-weight:700}button:hover{background:#4b5c3b}button.primary{background:#b79b61;color:#172319;border-color:#d1bb7c}button.primary:hover{background:#d7b575}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.params .buttons{margin-top:22px}.notes{background:#263429;border:1px solid #42533d;padding:12px;border-radius:8px;color:#bcc7ad;line-height:1.5;font-size:12px;margin-top:18px}
+.main{min-width:0}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px}.sectionhead h2{font:600 19px Georgia,serif;margin:0}.sectionhead p{margin:4px 0 0;color:#aeb7a4;font-size:12px}.scenegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:0 14px 14px}.scene{overflow:hidden;background:#a0a987;border:1px solid #718364;border-radius:9px;position:relative}.scene canvas{display:block;width:100%;height:auto;image-rendering:pixelated;cursor:crosshair}.scenetag{position:absolute;left:10px;top:10px;background:#172018e8;color:#e9e5d5;font:700 11px/1.1 monospace;letter-spacing:.04em;padding:7px 9px;border:1px solid #536348;border-radius:6px;pointer-events:none}.scenetag.after{color:#f3dca7}.scenehint{background:#1b291e;padding:12px 14px;color:#b5c5b0;font-size:12px;line-height:1.4;border-top:1px solid #43533d}.smallrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.stats{display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 16px}.stat{font:12px monospace;color:#d7dfc8;background:#18221c;border:1px solid #354738;border-radius:6px;padding:8px 10px}.stat b{color:var(--accent)}.gallery{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start;gap:10px;padding:0 14px 15px}.sample{border:1px solid #3d4d3d;border-radius:9px;background:#26342a;text-align:center;padding:7px;min-width:0}.sample{cursor:pointer;transition:border-color .12s}.sample:hover,.sample.selected{border-color:#d9ba78;box-shadow:inset 0 0 0 1px #d9ba78}.sample canvas{width:100%;max-width:160px;aspect-ratio:1;image-rendering:pixelated;background:linear-gradient(#8a9879,#788663);border-radius:6px}.sample h3{margin:5px 0 2px;font-size:12px;font-weight:700}.sample p{margin:0 0 3px;font-size:11px;color:#a9b9aa}.sample b{display:block;font:700 10px/1.1 monospace;color:#e5d3a0;margin-top:2px}.bottom{padding:18px;margin-top:17px;line-height:1.55;background:#1c2921}.bottom h2{margin:0 0 7px;font-size:17px;font-family:Georgia,serif}.bottom p{color:#b9c3ae;margin:0 0 9px}.bottom code{font:12px monospace;background:#101a14;padding:2px 4px;border-radius:3px;color:#ebd49d}footer{font-size:12px;color:#b0baa5;margin-top:18px}.legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:#b3c5b0}.key{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}.print{color:#e9d59d}.focusline{padding:4px 16px 15px;color:#cdd3b9;font-size:12px;min-height:26px}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.params{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.params>.ptitle,.params>.buttons,.params>.notes{grid-column:1/-1}}
+@media(max-width:660px){header{align-items:flex-start;flex-direction:column}.scenegrid{grid-template-columns:1fr}.gallery{grid-template-columns:repeat(3,1fr)}.params{display:block}.wrap{padding-top:12px}}
+
+/* ASTERRA v0.7: pixel art inspecionável e sem suavização */
+.sample.selected{border:2px solid #d7c27c;box-shadow:inset 0 0 0 1px #d7c27c66}
+.pixel-inspector{display:grid;grid-template-columns:minmax(180px,260px) minmax(0,1fr);gap:18px;padding:0 17px 17px;align-items:center}
+.pixel-preview-wrap{width:100%;aspect-ratio:1;border:1px solid #647057;border-radius:8px;overflow:hidden;background-color:#78826a;background-image:linear-gradient(45deg,#66745e 25%,transparent 25%),linear-gradient(-45deg,#66745e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#66745e 75%),linear-gradient(-45deg,transparent 75%,#66745e 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0}
+#pixelPreview{width:100%;height:100%;display:block;image-rendering:pixelated}
+.pixel-inspector-text{color:#c3ccbd;font-size:13px;line-height:1.65}
+.pixel-inspector-text b{color:#e4d19f;font-size:15px}
+.pixel-inspector-text p{margin:8px 0}
+@media(max-width:660px){.pixel-inspector{grid-template-columns:1fr}.pixel-preview-wrap{max-width:270px}}
+
+.check-inline{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;cursor:pointer}
+.check-inline input{accent-color:#d6bc75;width:15px;height:15px}
+.tile-panel{display:grid;grid-template-columns:180px minmax(0,1fr);gap:18px;padding:0 16px 17px;align-items:start;color:#d2d8c8;font-size:12px;line-height:1.6}
+.tile-panel b{color:#ead5a5}.tile-panel p{margin:8px 0}
+.tile-preview{padding:8px;background:#5e685c;border:1px solid #647457;border-radius:7px}
+#tileAtlas{display:block;width:100%;height:auto;image-rendering:pixelated}
+@media(max-width:660px){.tile-panel{grid-template-columns:1fr}.tile-preview{max-width:180px}}
+.palette-preview{display:flex;gap:3px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:8px;border:1px solid #586145;border-radius:7px;background:#172219}.palette-color{width:20%;height:23px;border:1px solid #ffffff2a;border-radius:3px;flex:1;min-width:24px}.palette-preview small{width:100%;font-size:11px;color:#d7c8a5;margin-top:4px}
+</style>
+</head>
+<body><div class="wrap">
+<header><div><div class="eyebrow">ASTERRA / LABORATÓRIO DE RECURSOS</div><h1>Gerador procedural de rochas e recursos</h1><p>Geração 2.5D determinística · Biomas, autotiles naturais e footprints multi-célula</p></div><div class="pill">MOTOR ROCHAS v2.3</div></header>
+<div class="layout">
+<aside class="panel params">
+<h2 class="ptitle">01 — Parâmetros do mundo</h2>
+<div class="field"><label for="material">Material</label><select id="material"><option value="mixed">Depósitos mistos</option><option value="pedra">Pedra comum (sem minério)</option><option value="cobre" selected>Cobre</option><option value="ferro">Ferro</option><option value="prata">Prata</option><option value="ouro">Ouro</option><option value="quartzo">Quartzo variado</option><option value="quartzo_leitoso">Quartzo leitoso</option><option value="quartzo_fume">Quartzo fumê</option><option value="quartzo_roseo">Quartzo róseo</option><option value="quartzo_hialino">Quartzo hialino</option><option value="carvao">Carvão</option><option value="enxofre">Enxofre</option><option value="gemas">Gemas variadas</option><option value="rubi">Rubi</option><option value="safira">Safira</option><option value="esmeralda">Esmeralda</option><option value="ametista">Ametista</option></select></div>
+<div class="field"><label for="rarity">Raridade do depósito</label><select id="rarity"><option value="mixed" selected>Distribuição natural (normal / raro / épico)</option><option value="normal">Normal</option><option value="rare">Raro</option><option value="epic">Épico</option></select><p class="tip">Em distribuição natural: 80% normais, 17% raros e 3% épicos (pesos configuráveis no código). Muda teor, volume, exposição e cristais.</p></div>
+<div class="field"><label for="paletteMode">Paleta das rochas</label><select id="paletteMode"><option value="reference" selected>ASTERRA · cores reais dos PNGs enviados</option><option value="v14">Comparar · paleta clara v1.4</option></select><p class="tip">As cores do modo ASTERRA são baseadas nos arquivos do seu ZIP. Apenas o painel procedural muda; o painel com os sprites originais permanece intacto.</p><div id="palettePreview" class="palette-preview" aria-live="polite"></div></div>
+<div class="field"><label for="forma">Família estrutural</label><select id="forma"><option value="mixed">Variação natural</option><option value="round">Rocha baixa arredondada</option><option value="block">Bloco angular</option><option value="wedge">Lasca inclinada</option><option value="plate">Placa quebrada</option><option value="column">Coluna / pilar</option><option value="shard">Espigão estreito</option><option value="cluster">Agrupamento</option><option value="vein">Veio superficial</option></select></div>
+<div class="field"><label for="biome">Bioma</label><select id="biome"><option value="temperate" selected>Pradaria temperada</option><option value="desert">Deserto e cânions</option><option value="alpine">Montanhas alpinas</option><option value="volcanic">Terreno vulcânico</option><option value="coastal">Costa rochosa</option></select></div>
+<div class="field"><label for="geology">Tipo de rocha</label><select id="geology"><option value="mixed" selected>Geologia variada</option><option value="granite">Granito terroso</option><option value="sandstone">Arenito claro</option><option value="basalt">Basalto escuro</option><option value="slate">Ardósia neutra</option><option value="limestone">Calcário</option><option value="tuff">Tufo vulcânico</option></select></div>
+<div class="field"><label for="terrain">Tipo de solo</label><select id="terrain"><option value="auto" selected>Automático por bioma</option><option value="grass">Pradaria musgosa</option><option value="dry">Solo seco</option><option value="mountain">Encosta pedregosa</option><option value="volcanic">Solo vulcânico</option><option value="coast">Costa arenosa</option></select></div>
+
+<div class="field"><div class="rangeline"><label for="burial">Enterramento</label><span class="rangevalue" id="burialVal">42%</span></div><input id="burial" type="range" min="0" max="95" value="42" step="1"><p class="tip">Esconde parte inferior e mistura minerais ao chão.</p></div>
+<div class="field"><div class="rangeline"><label for="density">Densidade de ocorrências</label><span class="rangevalue" id="densityVal">45%</span></div><input id="density" type="range" min="10" max="95" value="45" step="5"></div>
+<div class="field"><div class="rangeline"><label for="fractures">Fraturas estruturais</label><span class="rangevalue" id="fracturesVal">45%</span></div><input id="fractures" type="range" min="0" max="100" value="45" step="5"></div>
+<div class="field"><div class="rangeline"><label for="moss">Musgo natural</label><span class="rangevalue" id="mossVal">25%</span></div><input id="moss" type="range" min="0" max="100" value="25" step="5"></div>
+<div class="field"><div class="rangeline"><label for="mineralization">Mineralização visível</label><span class="rangevalue" id="mineralizationVal">60%</span></div><input id="mineralization" type="range" min="0" max="100" value="60" step="5"></div>
+<div class="field"><div class="rangeline"><label for="macroRate">Frequência de macro-assets</label><span class="rangevalue" id="macroRateVal">40%</span></div><input id="macroRate" type="range" min="0" max="100" value="40" step="5"></div>
+<div class="field"><label for="pixelStyle">Acabamento pixel art</label><select id="pixelStyle"><option value="realistic" selected>Pixel art realista (reforçado)</option><option value="pixel">Pixel art natural</option><option value="detailed">Pixel art detalhado</option><option value="retro">Pixel art retrô</option><option value="original">Comparar: geometria sem tratamento</option></select><p class="tip">Preserva os pixels, organiza clusters e reforça planos de luz para um aspecto mais realista e estrutural.</p></div>
+<div class="field"><label for="pixelSize">Tamanho do pixel nativo</label><select id="pixelSize"><option value="fine">Fino · mais detalhes</option><option value="normal" selected>Médio · boa leitura no mapa</option><option value="coarse">Largo · estética retrô</option></select></div>
+<div class="field"><div class="rangeline"><label for="surfaceDetail">Detalhamento das superfícies</label><span class="rangevalue" id="surfaceDetailVal">42%</span></div><input id="surfaceDetail" type="range" min="0" max="100" value="42" step="5"><p class="tip">Lascas, hachuras e grãos agrupados, sem ruído uniforme.</p></div>
+<div class="field"><div class="rangeline"><label for="erosion">Erosão</label><span class="rangevalue" id="erosionVal">35%</span></div><input id="erosion" type="range" min="0" max="100" value="35" step="5"><p class="tip">Arredonda bordas, desgasta volumes e adiciona pó/sedimento superficial.</p></div>
+<div class="field"><div class="rangeline"><label for="weathering">Desgaste / intemperismo</label><span class="rangevalue" id="weatheringVal">40%</span></div><input id="weathering" type="range" min="0" max="100" value="40" step="5"><p class="tip">Aumenta trincas, manchas minerais, oxidação e marcas do tempo.</p></div>
+<div class="field"><div class="rangeline"><label for="geologicalAge">Idade geológica</label><span class="rangevalue" id="geologicalAgeVal">55%</span></div><input id="geologicalAge" type="range" min="0" max="100" value="55" step="5"><p class="tip">Mistura maturidade da formação, estabilização da massa e acúmulo de microdetalhes.</p></div>
+<div class="field"><div class="rangeline"><label for="coalPurity">Pureza do carvão</label><span class="rangevalue" id="coalPurityVal">55%</span></div><input id="coalPurity" type="range" min="0" max="100" value="55" step="5"><p class="tip">Mais pureza deixa o carvão mais homogêneo, escuro e denso.</p></div>
+<div class="field"><div class="rangeline"><label for="coalDepth">Profundidade do carvão</label><span class="rangevalue" id="coalDepthVal">45%</span></div><input id="coalDepth" type="range" min="0" max="100" value="45" step="5"><p class="tip">Maior profundidade tende a escurecer, compactar e reduzir impurezas superficiais.</p></div>
+<div class="field"><label class="check-inline"><input type="checkbox" id="autoTile" checked> Solo com autotiling de 16 máscaras</label></div>
+<div class="field"><label class="check-inline"><input type="checkbox" id="showGrid"> Exibir células ocupadas no mapa</label></div>
+<div class="field"><label for="seed">Seed do mundo</label><input id="seed" type="number" min="1" max="2147483647" value="1947"></div>
+<div class="buttons"><button id="regen" class="primary">↻ Gerar mundo</button><button id="newseed">Nova seed</button><button id="png">Exportar mapa PNG</button><button id="json">Exportar JSON</button><button id="sprite">Sprite 512 PNG</button><button id="native">Sprite nativo PNG</button><button id="tilePNG">Tileset 16 máscaras PNG</button></div>
+<div class="notes"><b class="print">O que estamos validando?</b><p style="margin:7px 0 0">Se o volume, as cores limitadas e os detalhes em pixels mantêm a leitura da rocha no tamanho real. As malhas geológicas e os macro-assets continuam determinísticos. Os dois painéis usam as <b>mesmas posições</b>.</p></div>
+</aside>
+<main class="main"><section class="panel">
+<div class="sectionhead"><div><h2>02 — Comparação no terreno</h2><p>A mesma geologia vista com duas renderizações</p></div><div class="legend"><span><span class="key" style="background:#7b6c55"></span>Rocha</span><span><span class="key" style="background:#b27b46"></span>Veio</span><span><span class="key" style="background:#71844e"></span>Solo</span></div></div>
+<div class="scenegrid"><div class="scene"><div class="scenetag">ANTES · SPRITES ESTÁTICOS</div><canvas id="before" width="320" height="224"></canvas><div class="scenehint">Sprites originais preservados para comparação; a paleta não altera este painel.</div></div><div class="scene"><div class="scenetag after">DEPOIS · PALETA ASTERRA PROCEDURAL</div><canvas id="after" width="320" height="224"></canvas><div class="scenehint">Rochas geradas com a paleta selecionada, volumes estruturais, controles geológicos, musgo orgânico e minérios conectados às fraturas.</div></div></div>
+<div class="stats"><span class="stat">Ocorrências <b id="cnt">—</b></span><span class="stat">Seed <b id="seedout">—</b></span><span class="stat">Ocupadas <b id="usedCells">—</b></span><span class="stat">Multi-tile <b id="multiCount">—</b></span><span class="stat">Raros <b id="rareCount">—</b></span><span class="stat">Épicos <b id="epicCount">—</b></span><span class="stat">Gerador <b>determinístico</b></span></div><div class="focusline" id="focusline">Clique em um depósito no painel direito para inspecioná-lo.</div></section>
+<section class="panel" style="margin-top:15px"><div class="sectionhead"><div><h2>03 — Autotiling e grade multi-célula</h2><p>Máscaras cardinais de 4 bits (N=1, L=2, S=4, O=8). Cada ocorrência reserva as células físicas de seu footprint.</p></div></div>
+<div class="tile-panel"><div class="tile-preview"><canvas id="tileAtlas" width="64" height="64"></canvas></div><div><b>Atlas de 16 máscaras · autotiles naturais de 16×16</b><p>O terreno usa transições ligadas aos vizinhos, com detalhes mais naturais de solo, pedrinhas e vegetação. O JSON contém a grade de colisões, as células reservadas, as máscaras e os metadados do bioma.</p><p id="gridStats" class="tip">Aguardando geração.</p><p class="tip">O tileset PNG é um atlas de exemplo utilizável em um sistema de autotile cardinal; não é um plugin pronto de um motor específico.</p></div></div></section>
+<section class="panel" style="margin-top:15px"><div class="sectionhead"><div><h2>04 — Famílias de rocha</h2><p>Cada família possui 5 variações geométricas. A distribuição e as paletas variam por bioma. Clique numa rocha do mapa ou da galeria para exportá-la isoladamente em 512 px.</p></div></div><div class="gallery" id="samples"></div></section>
+<section class="panel" style="margin-top:15px"><div class="sectionhead"><div><h2>05 — Inspeção de pixel art</h2><p>Veja os pixels nativos e compare estilos; clique em uma rocha da galeria ou no mapa.</p></div></div><div class="pixel-inspector"><div class="pixel-preview-wrap"><canvas id="pixelPreview" width="256" height="256"></canvas></div><div class="pixel-inspector-text"><b id="pixelPreviewName">Selecione uma rocha</b><p id="pixelPreviewMeta">Amostra determinística · PNG com transparência</p><p>O sprite é desenhado a partir da malha 2.5D com sobreposição de massas rochosas, rasterizado na grade escolhida e ampliado somente por nearest-neighbor. A paleta fica limitada e os detalhes respeitam a silhueta.</p></div></div></section>
+<section class="panel bottom"><h2>Como o motor v2.3 funciona</h2><p>Uma seed espacial controla cada ocorrência, independente das outras. O solo é construído por ruído contínuo; as rochas são produzidas a partir de malhas 2.5D com faces e vértices compartilhados, fraturas geológicas, musgo localizado, perfis de raridade normal, raro e épico, veios minerais para cobre, ferro, prata e ouro, composição real de blocos de apoio e cores rochosas extraídas diretamente das imagens do pacote ASTERRA (modo de referência). O <b>terreno encobre a base</b> e recebe detritos e manchas locais. É uma implementação 2D de teste inspirada no conceito de geração determinística de rochas — não uma reprodução dos shaders 3D dos vídeos.</p><p>O arquivo funciona <b>offline</b>, sem bibliotecas nem servidor. Selecione uma rocha no mapa ou na galeria para exportar PNG transparente de 512 px. A exportação PNG contém o mapa procedural ou um sprite transparente; o JSON contém coordenadas, footprints, células ocupadas e máscaras autotile, sem depender de plugins externos.</p></section></main></div>
+<footer>ASTERRA · Laboratório experimental de afloramentos geológicos · Controles ajustam ambos os painéis para uma comparação justa.</footer>
+</div>
+<script>
+'use strict';
+// SPRITES_LEGACY is embedded in build step from the user's original rock pack.
+const SPRITES_LEGACY = {"cobre":"data:image/png;base64,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","ferro":"data:image/png;base64,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","prata":"data:image/png;base64,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","ouro":"data:image/png;base64,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"};
+const TILE=16,W=320,H=224,GRID_W=W/TILE,GRID_H=H/TILE;
+const Q=id=>document.getElementById(id);
+const palettes={
+ grass:{soil:['#829469','#89996f','#8f9d72','#788d63','#9fa681'],rock:['#4a4033','#685844','#88745a','#a18d6d','#bba37f'],halo:['#70654f','#7d7158','#8c7d62']},
+ dry:{soil:['#9c9975','#a9a17d','#b5a986','#90896a','#c1ae86'],rock:['#574938','#76614b','#93785b','#ad906f','#c1a17f'],halo:['#846b52','#95795d','#a68768']},
+ mountain:{soil:['#7d806d','#8f917d','#9d9c87','#6f7362','#ada893'],rock:['#4c473f','#665f54','#80776b','#9a8f82','#b3a796'],halo:['#726b61','#80786c','#90877a']},
+ volcanic:{soil:['#463f3d','#55504d','#625b56','#393635','#7a726b'],rock:['#2f2d2d','#44403f','#5b5553','#756e6b','#9e9690'],halo:['#403a39','#4f4945','#615955']},
+ coast:{soil:['#b5ab86','#c7b895','#d8c7a4','#a09473','#ead9b7'],rock:['#6b665b','#8b8473','#aca28f','#c8bfaa','#e9dcc1'],halo:['#9a917d','#b0a68e','#c3b89f']}
+
+};
+const oreColors={
+ cobre:{dark:'#6f4a2f',base:'#b56f3a',light:'#d89658',dust:'#7b644d',accent:'#7a9a77',label:'Cobre'},
+ ferro:{dark:'#4e3d36',base:'#7a5b49',light:'#a1775e',dust:'#6d5c50',accent:'#8b4f38',label:'Ferro'},
+ prata:{dark:'#5f6368',base:'#8f98a1',light:'#c3ccd4',dust:'#707780',accent:'#d7dce1',label:'Prata'},
+ ouro:{dark:'#6c5822',base:'#b9931f',light:'#ebc94c',dust:'#8a7538',accent:'#fff0a0',label:'Ouro'},
+ quartzo:{dark:'#7d6f78',base:'#b9a7b6',light:'#eee4f1',dust:'#b9adb5',accent:'#f7f4ff',label:'Quartzo variado'},
+ quartzo_leitoso:{dark:'#857f84',base:'#cdc7cb',light:'#f7f4f7',dust:'#b4adb2',accent:'#ffffff',label:'Quartzo leitoso'},
+ quartzo_fume:{dark:'#4f474d',base:'#7e727c',light:'#b6a7b7',dust:'#665d65',accent:'#ddd2de',label:'Quartzo fumê'},
+ quartzo_roseo:{dark:'#7f6570',base:'#c89ab1',light:'#f1d2df',dust:'#a98393',accent:'#fff0f6',label:'Quartzo róseo'},
+ quartzo_hialino:{dark:'#74808b',base:'#bac8d3',light:'#eef7ff',dust:'#9eacb8',accent:'#ffffff',label:'Quartzo hialino'},
+ carvao:{dark:'#151618',base:'#2a2d31',light:'#51565c',dust:'#3a3c40',accent:'#747a82',label:'Carvão'},
+ enxofre:{dark:'#7f6a16',base:'#c8b11e',light:'#f4df51',dust:'#95873a',accent:'#fff58e',label:'Enxofre'},
+ gemas:{dark:'#204b4d',base:'#2d8f96',light:'#79e4e9',dust:'#35636b',accent:'#d0f7ff',label:'Gemas variadas'},
+ rubi:{dark:'#5a1c23',base:'#b6374b',light:'#ff6f87',dust:'#7a3a45',accent:'#ffd1d8',label:'Rubi'},
+ safira:{dark:'#162c58',base:'#2456b3',light:'#69a1ff',dust:'#33507c',accent:'#d8e8ff',label:'Safira'},
+ esmeralda:{dark:'#1b4b32',base:'#2a8b55',light:'#68db92',dust:'#355f48',accent:'#d4ffe7',label:'Esmeralda'},
+ ametista:{dark:'#4b2b63',base:'#8a54c6',light:'#ca8aff',dust:'#674c7d',accent:'#f0d9ff',label:'Ametista'}
+};
+const oreProfiles={
+ cobre:{exposure:1.08,thickness:1.15,pockets:1.25,branches:1.05,glint:.42},
+ ferro:{exposure:.95,thickness:1.05,pockets:1.10,branches:.95,glint:.22},
+ prata:{exposure:1.00,thickness:.95,pockets:1.05,branches:1.00,glint:.58},
+ ouro:{exposure:1.16,thickness:1.22,pockets:1.42,branches:1.18,glint:.76},
+ quartzo:{exposure:1.06,thickness:1.08,pockets:1.18,branches:1.02,glint:.82},
+ quartzo_leitoso:{exposure:1.02,thickness:1.10,pockets:1.16,branches:1.00,glint:.66},
+ quartzo_fume:{exposure:1.00,thickness:1.04,pockets:1.12,branches:1.00,glint:.74},
+ quartzo_roseo:{exposure:1.04,thickness:1.08,pockets:1.14,branches:1.02,glint:.78},
+ quartzo_hialino:{exposure:1.10,thickness:1.00,pockets:1.18,branches:1.04,glint:.92},
+ carvao:{exposure:.88,thickness:1.20,pockets:1.05,branches:.82,glint:.08},
+ enxofre:{exposure:1.28,thickness:1.16,pockets:1.46,branches:1.16,glint:.54},
+ gemas:{exposure:.86,thickness:.92,pockets:1.52,branches:1.24,glint:.94},
+ rubi:{exposure:.84,thickness:.92,pockets:1.42,branches:1.22,glint:.92},
+ safira:{exposure:.84,thickness:.94,pockets:1.42,branches:1.20,glint:.96},
+ esmeralda:{exposure:.84,thickness:.92,pockets:1.40,branches:1.18,glint:.93},
+ ametista:{exposure:.86,thickness:.94,pockets:1.46,branches:1.22,glint:.95}
+};
+const gemKeys=['rubi','safira','esmeralda','ametista'];
+const quartzKeys=['quartzo_leitoso','quartzo_fume','quartzo_roseo','quartzo_hialino'];
+const keys=['cobre','ferro','prata','ouro',...quartzKeys,'carvao','enxofre',...gemKeys];
+// ASTERRA v2.3: perfis de raridade determinísticos, independentes da espécie mineral.
+const rarityProfiles={
+ normal:{label:'Normal',chance:.80,grade:[.30,.78],oreMultiplier:1.0,crystalCount:0,scale:1.00,detail:1.0},
+ rare:{label:'Raro',chance:.17,grade:[.70,.93],oreMultiplier:1.55,crystalCount:3,scale:1.09,detail:1.18},
+ epic:{label:'Épico',chance:.03,grade:[.87,1.00],oreMultiplier:2.10,crystalCount:6,scale:1.20,detail:1.40}
+};
+function chooseRarity(r,setting='mixed'){
+ if(rarityProfiles[setting])return setting;
+ const roll=r();let sum=0;
+ for(const key of ['normal','rare','epic']){sum+=rarityProfiles[key].chance;if(roll<sum)return key;}
+ return 'epic';
+}
+function rarityOf(d){return rarityProfiles[d.rarity]||rarityProfiles.normal;}
+
+const crystalMaterials=['quartzo',...quartzKeys,'enxofre',...gemKeys,'gemas'];
+function resolveMaterial(mat,r){if(mat==='gemas')return gemKeys[Math.floor(r()*gemKeys.length)]; if(mat==='quartzo')return quartzKeys[Math.floor(r()*quartzKeys.length)]; return mat;}
+// Amostras extraídas dos PNGs do pacote fornecido pelo usuário (128px, pixels opacos).
+// Escala escuro -> claro por faixas de luminosidade reais, sem clareamento artificial.
+const sourceRockPalettes={
+ pedra:['#483c30','#675a48','#7b6c55','#9f8c6e','#b4a080'],
+ cobre:['#372518','#553d2f','#684d3a','#8d674a','#aa8867'],
+ ferro:['#35241c','#513e32','#644e3f','#856953','#a0886d'],
+ ouro:['#3c2d1c','#574431','#70573b','#95754d','#b29667'],
+ prata:['#352d27','#51463c','#685c4e','#8f816d','#ab9b82'],
+ quartzo:['#564b54','#7a6e78','#a89bab','#cdc0cc','#efe6f2'],
+ quartzo_leitoso:['#817b80','#aba3a9','#cac2c8','#e2dde1','#faf8fb'],
+ quartzo_fume:['#433d42','#5f5760','#7d727c','#a79aa8','#d9d0da'],
+ quartzo_roseo:['#6a5560','#917280','#be97aa','#e0bfcc','#f6e0e8'],
+ quartzo_hialino:['#68717a','#909ba5','#b8c5cf','#dbe6ef','#f7fcff'],
+ carvao:['#151618','#222529','#31363b','#484e54','#686e75'],
+ enxofre:['#5e5319','#84711c','#af9820','#d7c336','#efe06d'],
+ gemas:['#1f3d41','#265b60','#2e7b82','#43aab1','#87e5eb'],
+ rubi:['#43161b','#6f2230','#a33347','#d54d65','#ff93a5'],
+ safira:['#14274b','#1d4288','#2860c4','#5c90e8','#9dc2ff'],
+ esmeralda:['#173e2a','#206643','#2b8e5c','#57c982','#95efb4'],
+ ametista:['#3d244f','#65408b','#8f5dc0','#bb87ec','#e3c8ff']
+};
+oreColors.pedra={dark:'#483c30',base:'#675a48',light:'#9f8c6e',dust:'#675a48',accent:'#9f8c6e',label:'Pedra comum'};
+oreProfiles.pedra={exposure:0,thickness:0,pockets:0,branches:0,glint:0};
+function oreTier(g){return g<.48?'baixo':(g<.72?'medio':'alto');}
+SPRITES_LEGACY.pedra='data:image/png;base64,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';
+const oldImages={}; for(const [k,url] of Object.entries(SPRITES_LEGACY)){const i=new Image(); i.src=url; oldImages[k]=i; i.onload=()=>render(false)}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hash(a,b,c=0){let h=Math.imul(a|0,374761393)^Math.imul(b|0,668265263)^Math.imul(c|0,1442695041);h=Math.imul(h^(h>>>13),1274126177);return(h^(h>>>16))>>>0}
+function rand(a,b,c=0){return hash(a,b,c)/4294967296}
+function rng(seed){let v=seed>>>0;return()=>{v=(v+0x6d2b79f5)>>>0;let t=v;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296}}
+const smooth=t=>t*t*(3-2*t);
+function noise(x,y,seed){const xi=Math.floor(x),yi=Math.floor(y),tx=smooth(x-xi),ty=smooth(y-yi);
+ const a=rand(xi,yi,seed),b=rand(xi+1,yi,seed),c=rand(xi,yi+1,seed),d=rand(xi+1,yi+1,seed);
+ return(a+(b-a)*tx)*(1-ty)+(c+(d-c)*tx)*ty}
+function fbm(x,y,seed){return .57*noise(x,y,seed)+.28*noise(x*2.1,y*2.1,seed+19)+.15*noise(x*4.3,y*4.3,seed+47)}
+const rgb=s=>[parseInt(s.slice(1,3),16),parseInt(s.slice(3,5),16),parseInt(s.slice(5,7),16)];
+const mix=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(v*(1-t)+b[i]*t)).join(',')})`;
+const biomeProfiles={
+ temperate:{label:'Pradaria temperada',soil:'grass',geologies:[['granite',5],['slate',2],['limestone',2],['sandstone',1]],families:[['round',3],['block',4],['wedge',2],['plate',2],['column',1],['shard',1],['cluster',3],['vein',1]],moss:1.0,rockCover:.27},
+ desert:{label:'Deserto e cânions',soil:'dry',geologies:[['sandstone',7],['limestone',2],['granite',1]],families:[['plate',5],['block',4],['wedge',4],['shard',1],['cluster',2],['round',1]],moss:.18,rockCover:.18},
+ alpine:{label:'Montanhas alpinas',soil:'mountain',geologies:[['granite',5],['slate',3],['limestone',1],['basalt',1]],families:[['block',4],['column',3],['shard',4],['wedge',3],['cluster',2],['plate',1]],moss:.44,rockCover:.46},
+ volcanic:{label:'Terreno vulcânico',soil:'volcanic',geologies:[['basalt',6],['tuff',4]],families:[['column',6],['shard',3],['block',2],['cluster',4],['wedge',2]],moss:.14,rockCover:.62},
+ coastal:{label:'Costa rochosa',soil:'coast',geologies:[['limestone',5],['sandstone',3],['granite',2]],families:[['round',5],['plate',5],['block',2],['wedge',3],['cluster',3]],moss:.78,rockCover:.27}
+};
+function weightedChoice(r,items){const total=items.reduce((v,it)=>v+it[1],0);let roll=r()*total;for(const [name,weight] of items){roll-=weight;if(roll<0)return name;}return items[items.length-1][0];}
+function settings(){const biome=Q('biome').value||'temperate';const profile=biomeProfiles[biome];return{biome,material:Q('material').value,rarity:Q('rarity').value,forma:Q('forma').value,terrain:Q('terrain').value==='auto'?profile.soil:Q('terrain').value,
+ burial:+Q('burial').value/100,density:+Q('density').value/100,geology:Q('geology').value,paletteMode:Q('paletteMode').value,fractures:+Q('fractures').value/100,moss:+Q('moss').value/100*profile.moss,mineralization:+Q('mineralization').value/100,macroRate:+Q('macroRate').value/100,pixelStyle:Q('pixelStyle').value,pixelSize:Q('pixelSize').value,surfaceDetail:+Q('surfaceDetail').value/100,erosion:+Q('erosion').value/100,weathering:+Q('weathering').value/100,geologicalAge:+Q('geologicalAge').value/100,coalPurity:+Q('coalPurity').value/100,coalDepth:+Q('coalDepth').value/100,autoTile:Q('autoTile').checked,showGrid:Q('showGrid').checked,seed:(+Q('seed').value||1947)>>>0}}
+const shapeFamilies=['round','block','wedge','plate','column','shard','cluster','vein'];
+const shapeLabels={round:'Cascalho',block:'Bloco',wedge:'Bloco lascado',plate:'Laje',column:'Monólito',shard:'Espigão monolítico',cluster:'Cascalho agrupado',vein:'Afloramento mineral'};
+const familyScale={round:[1.02,.98],block:[1.18,1.06],wedge:[1.08,1.0],plate:[1.26,.80],column:[1.12,1.18],shard:[.96,1.18],cluster:[1.28,.96],vein:[1.20,.60]};
+const VARIANT_COUNT=5;
+const variantNotes={round:['baixo','compacto','rachado','encorpado','grande'],block:['quadrado','pesado','alto','robusto','duplo'],wedge:['inclinado','baixo','afiado','quebrado','grande'],plate:['larga','estratificada','dupla','inclinada','grande'],column:['base larga','duas massas','robusta','truncada','monolítica'],shard:['compacto','duplo','oblíquo','largo','alto'],cluster:['denso','espalhado','central','baixo','grande'],vein:['exposto','duplo','embutido','fragmentado','amplo']};
+function chooseFamily(r){const roll=r(); if(roll<.12)return 'round'; if(roll<.31)return 'block'; if(roll<.47)return 'wedge'; if(roll<.63)return 'plate'; if(roll<.74)return 'column'; if(roll<.82)return 'shard'; if(roll<.95)return 'cluster'; return 'vein';}
+
+// Grade de ocupação real: uma célula recebe no máximo uma ocorrência; 0 significa livre.
+function makeOccupancyGrid(){return {tileSize:TILE,width:GRID_W,height:GRID_H,owner:Array(GRID_W*GRID_H).fill(0)};}
+function footprintAt(x,y,d){const bounds=outcropSize(d);const w=Math.max(d.tilesW||1,Math.ceil((bounds.w+4)/TILE));const h=Math.max(d.tilesH||1,Math.ceil((bounds.h*.91+3)/TILE));return {x,y,w,h};}
+function cellsForRect(rect){const cells=[];for(let cy=rect.y;cy<rect.y+rect.h;cy++)for(let cx=rect.x;cx<rect.x+rect.w;cx++)cells.push({x:cx,y:cy});return cells;}
+function canOccupy(grid,rect){if(rect.x<0||rect.y<0||rect.x+rect.w>grid.width||rect.y+rect.h>grid.height)return false;return cellsForRect(rect).every(({x,y})=>grid.owner[y*grid.width+x]===0);}
+function reserve(grid,rect,id){for(const {x,y} of cellsForRect(rect))grid.owner[y*grid.width+x]=id;}
+function depositData(s){
+ const r=rng(s.seed^0x192731),deposits=[],grid=makeOccupancyGrid();let attempts=0;
+ const biome=biomeProfiles[s.biome];
+ const target=Math.round(5+s.density*15);
+ // Gera sobre múltiplas faixas geológicas e exige espaço livre em todo o footprint.
+ const trends=[{x:W*.28,y:H*.39,angle:.28},{x:W*.72,y:H*.64,angle:-.36},{x:W*.50,y:H*.51,angle:.69}];
+ while(deposits.length<target&&attempts++<4200){
+  const trend=trends[attempts%3],t=r()*2-1;
+  let xx=trend.x+t*W*.34*Math.cos(trend.angle)+(r()-.5)*W*.25;
+  let yy=trend.y+t*H*.40*Math.sin(trend.angle)+(r()-.5)*H*.23;
+  const rarity=chooseRarity(r,s.rarity),tierInfo=rarityProfiles[rarity];
+  const grade=tierInfo.grade[0]+r()*(tierInfo.grade[1]-tierInfo.grade[0]);
+  const mat=resolveMaterial(s.material==='mixed'?keys[Math.floor(r()*keys.length)]:s.material,r);
+  const type=s.forma==='mixed'?weightedChoice(r,biome.families):s.forma;
+  const scale=familyScale[type]||[1,1];
+  const variant=hash(Math.round(xx),Math.round(yy),s.seed+191)%VARIANT_COUNT;
+  const profile=sizeProfile(type,grade,variant,r,Math.min(.95,s.macroRate*(rarity==='epic'?1.55:(rarity==='rare'?1.20:1))));
+  const geology=s.geology==='mixed'?weightedChoice(r,biome.geologies):s.geology;
+  const preview={family:type,grade,rarity,tier:profile.tier,tilesW:profile.tilesW,tilesH:profile.tilesH};
+  const pre=footprintAt(0,0,preview);
+  if(pre.w>GRID_W||pre.h>GRID_H)continue;
+  const col=Math.round(xx/TILE-pre.w*.5),row=Math.round(yy/TILE-pre.h*.64);
+  const rect={x:col,y:row,w:pre.w,h:pre.h};
+  if(!canOccupy(grid,rect))continue;
+  // Âncora no centro inferior do retângulo. O sprite cresce para cima.
+  const x=Math.round((col+pre.w*.5)*TILE),y=Math.round((row+pre.h)*TILE-1);
+  const id=deposits.length+1;reserve(grid,rect,id);
+  deposits.push({id,x,y,grade:+grade.toFixed(3),rarity,rarityLabel:tierInfo.label,material:mat,geology,biome:s.biome,
+    forma:type,family:type,variant,size:Math.round((12+grade*15)*scale[0]*profile.scale),
+    seed:hash(x,y,s.seed+87),heightBias:scale[1],tier:profile.tier,
+    tilesW:rect.w,tilesH:rect.h,macro:profile.macro,large:profile.large,
+    satellites:profile.satellites,sizeMul:profile.scale,footprint:rect,cells:cellsForRect(rect),
+    anchor:{cellX:col,cellY:row,pixelX:x,pixelY:y},blocksMovement:true});
+ }
+ return {deposits:deposits.sort((a,b)=>a.y-b.y),grid,attempts,target};
+}
+// 4-bit cardinal: Norte=1, Leste=2, Sul=4, Oeste=8.
+function makeTerrainGrid(s){
+ const biome=biomeProfiles[s.biome],cover=biome.rockCover;
+ const cells=Array(GRID_W*GRID_H).fill(false);
+ for(let y=0;y<GRID_H;y++)for(let x=0;x<GRID_W;x++){
+  const n=fbm(x/4.6,y/4.6,s.seed+611),detail=fbm(x/2.4,y/2.4,s.seed+735);
+  cells[y*GRID_W+x]=n*.83+detail*.17>0.75-cover*.45;
+ }
+ // Remover fragmentos isolados, mantendo manchas geológicas conectadas.
+ const prev=cells.slice();
+ for(let y=1;y<GRID_H-1;y++)for(let x=1;x<GRID_W-1;x++){
+  const i=y*GRID_W+x,count=[i-GRID_W,i+1,i+GRID_W,i-1].filter(k=>prev[k]).length;
+  if(prev[i]&&count===0)cells[i]=false;
+  if(!prev[i]&&count>=3)cells[i]=true;
+ }
+ const masks=cells.map((rock,i)=>{
+  if(!rock)return -1;
+  const x=i%GRID_W,y=Math.floor(i/GRID_W);let mask=0;
+  if(y>0&&cells[i-GRID_W])mask|=1;
+  if(x<GRID_W-1&&cells[i+1])mask|=2;
+  if(y<GRID_H-1&&cells[i+GRID_W])mask|=4;
+  if(x>0&&cells[i-1])mask|=8;
+  return mask;
+ });
+ return {width:GRID_W,height:GRID_H,tileSize:TILE,rocky:cells,masks,maskBits:{N:1,E:2,S:4,W:8}};
+}
+function drawMaskTile(c,xx,yy,mask,s,tileSeed=0){
+ const palette=palettes[s.terrain],stone=palette.halo,soil=palette.soil;
+ c.save();c.imageSmoothingEnabled=false;
+ const r=rng(hash(mask,tileSeed,s.seed+880));
+ // Base de solo com pequenas variações naturais.
+ c.fillStyle=soil[1];c.fillRect(xx,yy,TILE,TILE);
+ for(let y=0;y<TILE;y+=2)for(let x=0;x<TILE;x+=2){
+  const n=fbm((xx+x)/9,(yy+y)/9,s.seed+tileSeed+31);
+  c.fillStyle=soil[n>.48?4:n>.18?2:n<-.28?3:0];
+  c.fillRect(xx+x,yy+y,2,2);
+ }
+ // Mancha rochosa central para indicar o tile pedregoso do autotile.
+ const core=[pt(xx+3,yy+4),pt(xx+12,yy+3),pt(xx+14,yy+7),pt(xx+13,yy+12),pt(xx+6,yy+14),pt(xx+2,yy+10)];
+ fillPoly(c,core,stone[1]);
+ c.globalAlpha=.45;fillPoly(c,[pt(xx+4,yy+5),pt(xx+11,yy+4),pt(xx+12,yy+7),pt(xx+10,yy+9),pt(xx+6,yy+10),pt(xx+4,yy+8)],stone[2]);c.globalAlpha=1;
+ // Pedrinhas/grãos orgânicos diferentes por tipo de terreno.
+ const pebbles=s.terrain==='grass'?7:s.terrain==='dry'?8:s.terrain==='coast'?9:s.terrain==='mountain'?8:s.terrain==='volcanic'?10:7;
+ for(let i=0;i<pebbles;i++){
+  const px=xx+1+Math.floor(r()*14),py=yy+1+Math.floor(r()*14),sz=r()>.76?2:1;
+  c.fillStyle=i%3===0?stone[0]:(i%3===1?stone[2]:soil[0]);
+  c.fillRect(px,py,sz,1+(sz>1&&r()>.6?1:0));
+ }
+ // Detalhes naturais por bioma/solo.
+ if(s.terrain==='grass'){
+  for(let i=0;i<4;i++){const gx=xx+2+Math.floor(r()*11),gy=yy+2+Math.floor(r()*11);c.fillStyle=soil[3];c.fillRect(gx,gy+1,1,2);if(r()>.42)c.fillRect(gx+1,gy,1,2);}
+ }else if(s.terrain==='dry'){
+  for(let i=0;i<4;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+3+Math.floor(r()*10);c.fillStyle=soil[4];c.fillRect(sx,sy,2,1);if(r()>.58)c.fillRect(sx+1,sy+1,1,1);}
+ }else if(s.terrain==='coast'){
+  for(let i=0;i<5;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+2+Math.floor(r()*12);c.fillStyle=soil[4];c.fillRect(sx,sy,1+(r()>.68?1:0),1);if(r()>.74){c.fillStyle=stone[2];c.fillRect(sx,sy+1,1,1);}}
+ }else if(s.terrain==='mountain'){
+  for(let i=0;i<4;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+2+Math.floor(r()*12);c.fillStyle=stone[0];c.fillRect(sx,sy,1,2);if(r()>.54)c.fillRect(sx+1,sy+1,1,1);}
+ }else if(s.terrain==='volcanic'){
+  for(let i=0;i<6;i++){const sx=xx+1+Math.floor(r()*13),sy=yy+1+Math.floor(r()*13);c.fillStyle=r()>.5?stone[0]:soil[4];c.fillRect(sx,sy,1,1);if(r()>.78)c.fillRect(sx+1,sy,1,1);}
+ }
+ // Bordas irregulares onde não há continuação rochosa.
+ const trim=(side)=>{
+  c.fillStyle=soil[1];
+  for(let z=0;z<16;z++){
+   const inset=1+(rand(z>>1,mask,s.seed+tileSeed+201)>.48?1:0)+(rand(z>>2,mask,s.seed+tileSeed+811)>.86?1:0);
+   if(side==='N')c.fillRect(xx+z,yy,1,inset);
+   if(side==='S')c.fillRect(xx+z,yy+16-inset,1,inset);
+   if(side==='W')c.fillRect(xx,yy+z,inset,1);
+   if(side==='E')c.fillRect(xx+16-inset,yy+z,inset,1);
+  }
+  // reforço com pixels de transição nas quinas
+  c.globalAlpha=.55;c.fillStyle=soil[0];
+  if(side==='N')for(let z=1;z<15;z+=3)c.fillRect(xx+z,yy+1,1,1);
+  if(side==='S')for(let z=2;z<15;z+=3)c.fillRect(xx+z,yy+14,1,1);
+  if(side==='W')for(let z=1;z<15;z+=3)c.fillRect(xx+1,yy+z,1,1);
+  if(side==='E')for(let z=2;z<15;z+=3)c.fillRect(xx+14,yy+z,1,1);
+  c.globalAlpha=1;
+ };
+ if(!(mask&1))trim('N');if(!(mask&2))trim('E');if(!(mask&4))trim('S');if(!(mask&8))trim('W');
+ // Pequena sombra de contato da massa pedregosa no lado inferior.
+ c.globalAlpha=.25;c.fillStyle=stone[0];c.fillRect(xx+3,yy+12,9,1);c.globalAlpha=1;
+ c.restore();
+}
+function makeTileAtlas(s){const cv=document.createElement('canvas');cv.width=4*TILE;cv.height=4*TILE;const c=cv.getContext('2d');c.imageSmoothingEnabled=false;
+ for(let mask=0;mask<16;mask++)drawMaskTile(c,(mask%4)*TILE,Math.floor(mask/4)*TILE,mask,s,mask);
+ return cv;
+}
+function drawAutoTerrain(c,tiles,s){const atlas=makeTileAtlas(s);c.save();c.imageSmoothingEnabled=false;
+ for(let y=0;y<tiles.height;y++)for(let x=0;x<tiles.width;x++){
+  const i=y*tiles.width+x,mask=tiles.masks[i];
+  if(mask>=0)c.drawImage(atlas,(mask%4)*TILE,Math.floor(mask/4)*TILE,TILE,TILE,x*TILE,y*TILE,TILE,TILE);
+ }
+ c.restore();}
+function drawOccupancyGrid(c,grid){
+ c.save();c.lineWidth=1;
+ for(let y=0;y<grid.height;y++)for(let x=0;x<grid.width;x++){
+  const id=grid.owner[y*grid.width+x];
+  c.fillStyle=id?'rgba(240,184,75,0.15)':'rgba(35,70,55,0.025)';
+  c.fillRect(x*TILE,y*TILE,TILE,TILE);
+  c.strokeStyle=id?'rgba(244,205,95,0.86)':'rgba(221,222,185,0.20)';
+  c.strokeRect(x*TILE+.5,y*TILE+.5,TILE,TILE);
+ }
+ c.restore();
+}
+function makeGround(s,ds,withGeology){const cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');const p=palettes[s.terrain];
+ const image=c.createImageData(W,H);const data=image.data;const soil=p.soil.map(rgb),halos=p.halo.map(rgb);
+ const points=withGeology?ds.map(d=>({...d,renderBounds:outcropSize(d)})):[];
+ for(let y=0;y<H;y++){for(let x=0;x<W;x++){
+  const v=fbm(x/37,y/37,s.seed+8),f=fbm(x/13,y/13,s.seed+201),grain=rand(x,y,s.seed+731);
+  let col=soil[v>.65?4:v>.54?2:v<.36?3:v<.46?0:1].slice();
+  let geology=0;
+  if(withGeology)for(const d of points){if(Math.abs(d.x-x)>Math.max(46,d.renderBounds.w*.73)||Math.abs(d.y-y)>Math.max(31,d.renderBounds.h*.69))continue;
+    const family=d.family||d.forma; const spread=family==='cluster'?1.55:family==='vein'?1.85:family==='plate'?1.75:family==='column'||family==='shard'?.95:1.25;
+    const tall=family==='column'||family==='shard'?1.22:family==='vein'?.52:family==='plate'?.70:1.0;
+    const tileX=(d.tilesW||1), tileY=(d.tilesH||1);
+    const dx=(x-d.x)/(d.size*spread*(0.82+tileX*.36)),dy=(y-d.y)/(d.size*.61*tall*(0.82+tileY*.34));
+    const ellipse=dx*dx+dy*dy; const edge=(fbm(x/11,y/11,d.seed)-.5)*.47;
+    if(ellipse<1.6+edge)geology=Math.max(geology,clamp((1.6+edge-ellipse)*.45,0,.60));}
+  if(geology){const hc=halos[v>.6?2:v<.43?0:1];col=col.map((k,i)=>Math.round(k*(1-geology)+hc[i]*geology));}
+  const speck=grain>.985?13:grain<.022?-10:0;
+  const drift=(f-.5)*13+speck;
+  let index=(y*W+x)*4;
+  for(let ch=0;ch<3;ch++)data[index+ch]=clamp(Math.round(col[ch]+drift),0,255);
+  data[index+3]=255;
+ }}c.putImageData(image,0,0);
+ const rand2=rng(s.seed+999);for(let i=0;i<185;i++){
+  let x=Math.floor(rand2()*W),y=Math.floor(rand2()*H);
+  c.fillStyle=rand2()>.5?'#778d5d':'#b1b18a';c.globalAlpha=.40+rand2()*.3;
+  c.fillRect(x,y,rand2()>.8?2:1,1);
+ }c.globalAlpha=1;
+ return cv}
+function polygonPath(c,pts){c.beginPath();pts.forEach((p,i)=>{if(i===0)c.moveTo(p[0],p[1]);else c.lineTo(p[0],p[1]);});c.closePath();}
+function bboxOf(pts){let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;for(const [x,y] of pts){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;}return{minX,maxX,minY,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};}
+function jitterPts(base,cx,by,sw,sh,r,jx=.09,jy=.11){return base.map(([x,y])=>[Math.round(cx+x*sw+(r()-.5)*sw*jx),Math.round(by+y*sh+(r()-.5)*sh*jy)]);}
+function subStone(baseType,cx,by,sw,sh,r){const bases={
+ round:[[-.96,.20],[-.88,-.16],[-.58,-.52],[-.10,-.82],[.38,-.76],[.82,-.30],[.96,.12],[.76,.56],[.28,.86],[-.34,.92],[-.80,.62]],
+ block:[[-1.0,.22],[-1.0,-.34],[-.72,-.82],[-.12,-.94],[.48,-.88],[.96,-.30],[.98,.28],[.54,.86],[-.22,.92],[-.86,.74]],
+ wedge:[[-1.0,.34],[-.82,-.08],[-.28,-.60],[.22,-.84],[.98,-.32],[.98,.08],[.24,.80],[-.56,.92]],
+ plate:[[-1.0,.28],[-.92,-.20],[-.46,-.50],[.14,-.62],[.82,-.46],[1.0,-.08],[.92,.26],[.26,.62],[-.58,.66]],
+ column:[[-1.0,.90],[-.88,.46],[-.54,-.42],[-.18,-.96],[.24,-.90],[.58,-.28],[.88,.34],[1.0,.90],[.54,.96],[-.58,.98]],
+ shard:[[-.80,.94],[-.72,.26],[-.30,-.44],[.08,-.98],[.50,-.48],[.72,.16],[.78,.92],[.08,.98]],
+ vein:[[-1.0,.34],[-.86,.02],[-.30,-.08],[.30,-.14],[.98,.02],[.86,.28],[.24,.42],[-.58,.46]]};
+ const jx=(baseType==='plate'||baseType==='vein')?0.05:0.08, jy=(baseType==='plate')?0.06:0.1;
+ return jitterPts(bases[baseType]||bases.round,cx,by,sw,sh,r,jx,jy);}
+
+function variantShape(family,variant){
+ const map={
+  round:[{scale:[.95,.88],extra:0,sub:'round'},{scale:[1.12,.90],extra:0,sub:'round'},{scale:[1.00,.98],extra:1,sub:'round'},{scale:[1.08,1.04],extra:0,sub:'block'},{scale:[1.26,1.08],extra:1,sub:'round'}],
+  block:[{scale:[1.0,.96],extra:0,sub:'block'},{scale:[1.10,1.04],extra:0,sub:'block'},{scale:[.96,1.14],extra:0,sub:'block'},{scale:[1.24,1.12],extra:0,sub:'block'},{scale:[1.18,1.00],extra:1,sub:'block'}],
+  wedge:[{scale:[1.00,.96],extra:0,sub:'wedge'},{scale:[1.12,.82],extra:0,sub:'wedge'},{scale:[.92,1.08],extra:0,sub:'shard'},{scale:[1.10,1.02],extra:1,sub:'wedge'},{scale:[1.25,1.05],extra:0,sub:'wedge'}],
+  plate:[{scale:[1.08,.70],extra:0,sub:'plate'},{scale:[1.16,.82],extra:1,sub:'plate'},{scale:[1.30,.66],extra:1,sub:'plate'},{scale:[1.18,.76],extra:0,sub:'wedge'},{scale:[1.42,.82],extra:0,sub:'plate'}],
+  column:[{scale:[1.02,1.06],extra:2,sub:'column'},{scale:[1.08,1.10],extra:2,sub:'column'},{scale:[1.16,1.18],extra:1,sub:'column'},{scale:[.98,.98],extra:2,sub:'column'},{scale:[1.24,1.26],extra:2,sub:'column'}],
+  shard:[{scale:[.92,1.04],extra:0,sub:'shard'},{scale:[1.00,1.08],extra:1,sub:'shard'},{scale:[.96,1.12],extra:0,sub:'wedge'},{scale:[1.08,.96],extra:0,sub:'shard'},{scale:[1.14,1.20],extra:1,sub:'shard'}],
+  cluster:[{scale:[1.00,.92],extra:3,sub:'cluster'},{scale:[1.12,.96],extra:4,sub:'cluster'},{scale:[1.08,.88],extra:3,sub:'cluster'},{scale:[1.18,.82],extra:4,sub:'cluster'},{scale:[1.32,.98],extra:5,sub:'cluster'}],
+  vein:[{scale:[1.00,.58],extra:0,sub:'vein'},{scale:[1.08,.54],extra:0,sub:'vein'},{scale:[1.02,.62],extra:1,sub:'vein'},{scale:[1.14,.56],extra:0,sub:'vein'},{scale:[1.24,.62],extra:1,sub:'vein'}]
+ };
+ return (map[family]||map.round)[variant%VARIANT_COUNT];
+}
+function pixelStairs(c,pts,color,alpha=1){c.fillStyle=color;c.globalAlpha=alpha;for(const [x,y,w,h] of pts)c.fillRect(x,y,w,h);c.globalAlpha=1;}
+function drawVeinPockets(c,box,ore,r,count=4){for(let i=0;i<count;i++){const x=Math.round(box.minX+2+r()*Math.max(3,box.w-4)),y=Math.round(box.minY+2+r()*Math.max(3,box.h-4));const w=1+(r()>.55?1:0),h=1+(r()>.65?1:0);c.fillStyle=r()>.72?ore.light:ore.base;c.fillRect(x,y,w,h);if(r()>.48){c.fillStyle=ore.dark;c.fillRect(x-1,y,1,1);}}}
+
+function sizeProfile(family,grade,variant,r,macroRate=.40){
+ let tier='normal';
+ if((grade>.72 && r()<(macroRate*.72)) || (grade>.91 && r()<macroRate)) tier='macro';
+ else if(grade>.58 && r()<.58+macroRate*.20) tier='large';
+ else if(grade<.40 && r()>.70) tier='small';
+ const map={
+  round:{small:[1,1,.88,0],normal:[1,1,1.0,0],large:[2,2,1.54,2],macro:[3,2,2.22,3]},
+  block:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,2,1.66,2],macro:[3,2,2.28,4]},
+  wedge:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,1,1.48,2],macro:[3,2,2.02,3]},
+  plate:{small:[1,1,.94,0],normal:[1,1,1.0,0],large:[2,1,1.74,2],macro:[3,2,2.34,4]},
+  column:{small:[1,1,.94,0],normal:[1,1,1.0,0],large:[2,2,1.62,3],macro:[3,3,2.22,5]},
+  shard:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,2,1.50,2],macro:[2,3,2.00,3]},
+  cluster:{small:[1,1,.94,0],normal:[1,1,1.0,1],large:[2,2,1.74,4],macro:[3,2,2.34,5]},
+  vein:{small:[1,1,.90,0],normal:[1,1,1.0,0],large:[2,1,1.66,2],macro:[3,1,2.26,3]}
+ };
+ const arr=(map[family]||map.round)[tier];
+ return {tier,tilesW:arr[0],tilesH:arr[1],scale:arr[2],satellites:arr[3],macro:tier==='macro',large:tier==='large'};
+}
+function sizeLabel(d){if(d.macro)return 'macro'; if(d.large)return 'grande'; return (d.tier==='small'?'pequena':'normal');}
+
+// ASTERRA v0.6 — malha geológica 2.5D. Determinística, offline e renderizada em pixel art.
+const rockGeologies={
+ granite:{label:'Granito',colors:['#4b4136','#726452','#9e8f77','#c8b79a','#e9d8b8'],moss:'#7a8451'},
+ sandstone:{label:'Arenito',colors:['#53463a','#7d6b56','#ab9678','#d1ba9a','#ecdbbb'],moss:'#8b9150'},
+ basalt:{label:'Basalto',colors:['#3b342f','#5b534a','#7f7668','#a79d8d','#cfc3af'],moss:'#6f7d50'},
+ slate:{label:'Ardósia',colors:['#433c37','#665d54','#8d8275','#b2a695','#d8cab6'],moss:'#7a8552'},
+ limestone:{label:'Calcário',colors:['#5b5347','#857a68','#afa28d','#d4c5ab','#f0e1c5'],moss:'#7f8752'},
+ tuff:{label:'Tufo vulcânico',colors:['#473f39','#6a5f56','#92857a','#b8a797','#dccab7'],moss:'#6d7a4f'}
+};
+const geologyKeys=Object.keys(rockGeologies);
+const clamp01=v=>clamp(v,0,1);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const pt=(x,y)=>[Math.round(x),Math.round(y)];
+const between=(a,b,t)=>pt(lerp(a[0],b[0],t),lerp(a[1],b[1],t));
+
+function familyArchetype(f){
+ if(f==='plate')return 'slab';
+ if(f==='column'||f==='shard')return 'monolith';
+ if(f==='round'||f==='cluster')return 'gravel';
+ if(f==='vein')return 'outcrop';
+ return 'blocky';
+}
+function comboProfile(family,geology,material='pedra'){
+ const archetype=familyArchetype(family);
+ const key=archetype+'_'+(geology||'granite');
+ const base={detail:1,chip:1,band:0,vertical:0,speckle:0,bright:0,dark:0,width:1,height:1,weight:1,oreSignature:1};
+ const map={
+  slab_sandstone:{detail:1.12,chip:.82,band:1.55,width:1.16,height:.82,bright:.04,weight:1.08},
+  slab_limestone:{detail:1.08,chip:.86,band:1.34,width:1.12,height:.84,bright:.07,weight:1.06},
+  monolith_basalt:{detail:1.22,chip:1.08,vertical:1.62,width:.84,height:1.26,dark:.08,weight:1.16},
+  monolith_slate:{detail:1.18,chip:1.04,vertical:1.28,width:.88,height:1.20,dark:.04,weight:1.10},
+  gravel_granite:{detail:1.34,chip:1.34,speckle:1.55,width:1.10,height:.84,bright:.03,weight:1.02},
+  gravel_limestone:{detail:1.20,chip:1.22,speckle:1.12,width:1.08,height:.86,bright:.05,weight:1.00},
+  blocky_limestone:{detail:1.08,chip:.96,band:.92,width:1.04,height:1.06,bright:.06,weight:1.12},
+  blocky_granite:{detail:1.16,chip:1.04,speckle:1.18,width:1.02,height:1.08,weight:1.14},
+  outcrop_sandstone:{detail:1.30,chip:1.18,band:.96,width:1.12,height:.92,bright:.04,weight:1.10,oreSignature:1.18},
+  outcrop_basalt:{detail:1.28,chip:1.16,vertical:1.18,width:1.04,height:1.04,dark:.06,weight:1.14,oreSignature:1.18},
+  outcrop_granite:{detail:1.24,chip:1.14,speckle:1.10,width:1.06,height:1.0,weight:1.10,oreSignature:1.12},
+  outcrop_limestone:{detail:1.22,chip:1.10,band:.86,width:1.08,height:.96,bright:.05,weight:1.08,oreSignature:1.10}
+ };
+ const oreSig={cobre:1.10,ferro:1.00,prata:1.06,ouro:1.16,quartzo:1.02,quartzo_leitoso:1.04,quartzo_fume:1.06,quartzo_roseo:1.08,quartzo_hialino:1.12,carvao:.92,enxofre:1.14,gemas:1.22,rubi:1.34,safira:1.36,esmeralda:1.34,ametista:1.34,pedra:1};
+ return {...base,...(map[key]||{}),oreSignature:(map[key]?.oreSignature||1)*(oreSig[material]||1),archetype};
+}
+
+function fillPoly(c,vertices,color){polygonPath(c,vertices);c.fillStyle=color;c.fill();}
+function linePoly(c,vertices,color,width=1){if(vertices.length<2)return;c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(...vertices[0]);for(let i=1;i<vertices.length;i++)c.lineTo(...vertices[i]);c.stroke();}
+function geoColor(d,s){
+ const type=d.geology&&rockGeologies[d.geology]?d.geology:(s.geology==='mixed'?'granite':s.geology);
+ const geo=rockGeologies[type]||rockGeologies.granite;
+ if(s.paletteMode==='v14')return geo;
+ const source=sourceRockPalettes[d.material]||sourceRockPalettes.pedra;
+ // Identidade geológica sutil sem perder a paleta calibrada do material.
+ // Intensidade máxima +-11 canais RGB: as faces claras continuam no intervalo dos PNGs.
+ const shift={granite:[0,0,0],sandstone:[8,5,0],basalt:[-9,-8,-7],slate:[-4,-2,0],limestone:[8,7,5],tuff:[-6,-5,-4]}[type]||[0,0,0];
+ const colors=source.map(hex=>{
+   const c=rgb(hex).map((v,i)=>clamp(v+shift[i],0,255));
+   return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+ });
+ return {label:geo.label,colors,moss:geo.moss};
+}
+function jitterPoint(p,r,dx,dy){return pt(p[0]+(r()-.5)*dx,p[1]+(r()-.5)*dy);}
+
+// Desenhamos a face superior, os lados e as fraturas a partir dos MESMOS vértices.
+// Isto evita as "facetas" aleatórias projetadas sobre caixas retangulares.
+function makeRockMesh(cx,footY,width,height,family,variant,geology,material,s,r){
+ const variants=[{lean:-.07,round:1,peak:0},{lean:.13,round:.88,peak:-.09},{lean:-.19,round:.98,peak:.13},{lean:.03,round:1.10,peak:-.20},{lean:.22,round:.90,peak:.21}];
+ const v=variants[variant%5];
+ const settingsByFamily={
+  round:{top:.50,depth:.45,front:.48},block:{top:.43,depth:.57,front:.60},
+  wedge:{top:.43,depth:.52,front:.52},plate:{top:.53,depth:.42,front:.40},
+  column:{top:.24,depth:.74,front:.72},shard:{top:.30,depth:.73,front:.68},
+  cluster:{top:.43,depth:.53,front:.55},vein:{top:.49,depth:.34,front:.28}
+ };
+ const cfg=settingsByFamily[family]||settingsByFamily.block;
+ const archetype=familyArchetype(family);
+ const combo=comboProfile(family,geology,material||'pedra');
+ const crystalLike=crystalMaterials.includes(material);
+ const sulfurLike=material==='enxofre';
+ const coalLike=material==='carvao';
+ const gemLike=gemKeys.includes(material);
+ const quartzLike=(material==='quartzo'||quartzKeys.includes(material));
+ width*=combo.width||1; height*=combo.height||1;
+ const tw=width/2,ty=footY-height*cfg.depth,topH=height*cfg.top;
+ // Posição em perspectiva: contorno traseiro + borda dianteira da tampa.
+ const coord=[[-.98,.16],[-.88,-.22],[-.49,-.73],[.11,-.87],[.76,-.56],[.96,-.12],[.73,.27],[.17,.51],[-.56,.43]];
+ if(family==='block'){coord[1]=[-.94,-.35];coord[2]=[-.62,-.74];coord[3]=[.38,-.76];coord[4]=[.89,-.42];coord[6]=[.80,.38];coord[7]=[-.08,.56];}
+ if(family==='plate'||family==='vein'){coord[2]=[-.68,-.60];coord[3]=[.37,-.61];coord[6]=[.87,.38];coord[7]=[-.04,.62];}
+ if(family==='wedge'){coord[2]=[-.28,-.65];coord[3]=[.67,-1.04];coord[4]=[.86,-.57];coord[6]=[.60,.42];}
+ if(family==='shard'){coord[2]=[-.32,-.51];coord[3]=[.08,-1.68];coord[4]=[.50,-.72];coord[5]=[.68,-.06];coord[6]=[.62,.38];}
+ if(family==='column'||geology==='basalt'){coord[2]=[-.62,-.54];coord[3]=[.20,-.62];coord[4]=[.77,-.49];}
+ if(geology==='sandstone'||geology==='limestone'){coord[3][1]+=.12;coord[4][1]+=.13;}
+ if(geology==='tuff'){coord[2][1]+=.12;coord[4][0]+=.10;}
+ if(crystalLike){
+  coord[1]=[-.72,-.08];coord[2]=[-.34,-.56];coord[3]=[.02,-1.34];coord[4]=[.40,-.66];coord[5]=[.68,-.06];coord[6]=[.58,.22];coord[7]=[.02,.46];coord[8]=[-.54,.30];
+  if(family==='cluster'||family==='vein'){coord[2]=[-.58,-.72];coord[3]=[-.18,-1.08];coord[4]=[.10,-.62];coord[5]=[.34,-1.20];coord[6]=[.74,-.38];coord[7]=[.56,.24];coord[8]=[-.22,.40];}
+ }
+ if(gemLike){
+  coord[1]=[-.60,-.12];coord[2]=[-.34,-.70];coord[3]=[-.02,-1.42];coord[4]=[.28,-.78];coord[5]=[.54,-1.12];coord[6]=[.82,-.18];coord[7]=[.54,.18];coord[8]=[-.08,.44];
+  if(family==='cluster'||family==='vein'){coord[1]=[-.70,-.04];coord[2]=[-.46,-.62];coord[3]=[-.16,-1.18];coord[4]=[.04,-.72];coord[5]=[.30,-1.08];coord[6]=[.74,-.26];coord[7]=[.60,.18];coord[8]=[-.12,.40];}
+ }
+ if(quartzLike && !gemLike){coord[2][1]-=.04;coord[3][1]-=.10;coord[5][1]-=.06;coord[6][0]+=.04;}
+ if(sulfurLike){coord[1]=[-.80,-.06];coord[2]=[-.48,-.60];coord[3]=[-.12,-1.04];coord[4]=[.10,-.68];coord[5]=[.36,-1.18];coord[6]=[.82,-.28];coord[7]=[.56,.30];coord[8]=[-.34,.38];}
+ if(coalLike){coord[1]=[-.92,-.26];coord[2]=[-.60,-.56];coord[3]=[.20,-.68];coord[4]=[.82,-.44];coord[6]=[.76,.34];coord[7]=[.02,.56];}
+ if(crystalLike&&variant%5===2){coord[3][1]-=.20;coord[5][1]-=.18;coord[6][0]+=.06;}
+ if(crystalLike&&variant%5===4){coord[2][1]-=.10;coord[4][1]-=.16;coord[5][0]+=.06;}
+ if(gemLike&&variant%5===1){coord[3][1]-=.18;coord[5][1]-=.10;coord[7][0]+=.08;}
+ if(gemLike&&variant%5===3){coord[2][0]-=.06;coord[4][0]+=.08;coord[6][1]-=.05;}
+ // Ajustes fortes por família visual.
+ if(archetype==='slab'){
+  coord[1]=[-.96,-.22];coord[2]=[-.72,-.46];coord[3]=[.26,-.50];coord[4]=[.88,-.32];coord[5]=[1.00,-.02];coord[6]=[.92,.26];coord[7]=[.08,.54];coord[8]=[-.70,.44];
+ }
+ if(archetype==='monolith'){
+  coord[1]=[-.88,-.20];coord[2]=[-.40,-.66];coord[3]=[.04,-1.38];coord[4]=[.46,-.76];coord[5]=[.70,-.10];coord[6]=[.60,.32];coord[7]=[-.02,.52];coord[8]=[-.58,.40];
+ }
+ if(archetype==='gravel'){
+  coord[1]=[-.92,-.16];coord[2]=[-.56,-.42];coord[3]=[.08,-.48];coord[4]=[.70,-.34];coord[5]=[.90,-.04];coord[6]=[.76,.20];coord[7]=[.10,.42];coord[8]=[-.66,.34];
+ }
+ if(archetype==='outcrop'){
+  coord[1]=[-.94,-.22];coord[2]=[-.60,-.54];coord[3]=[.20,-.82];coord[4]=[.84,-.48];coord[5]=[.98,-.10];coord[6]=[.82,.24];coord[7]=[.04,.52];coord[8]=[-.64,.40];
+ }
+ if(archetype==='slab' && (geology==='sandstone'||geology==='limestone')){coord[2][1]+=.08;coord[3][1]+=.14;coord[4][1]+=.10;coord[6][1]-=.05;}
+ if(archetype==='monolith' && geology==='basalt'){coord[2][0]+=.06;coord[3][1]-=.18;coord[4][0]-=.08;coord[7][0]-=.08;}
+ if(archetype==='gravel' && geology==='granite'){coord[2][0]-=.10;coord[3][1]+=.06;coord[5][0]+=.06;coord[8][0]-=.08;}
+ if(archetype==='blocky' && geology==='limestone'){coord[1][1]-=.06;coord[3][1]+=.04;coord[4][0]+=.05;coord[8][1]+=.03;}
+ if(archetype==='outcrop'){coord[3][1]-=.10*combo.oreSignature;coord[4][0]+=.05*combo.oreSignature;}
+ // Perfis predefinidos produzem mudanças topológicas perceptíveis entre as 5 variações.
+ if(variant%5===1){coord[2][1]+=.19;coord[3][1]+=.24;coord[6][0]-=.12;}
+ if(variant%5===2){coord[3][1]-=.40;coord[3][0]-=.24;coord[4][0]-=.12;}
+ if(variant%5===3){coord[1][0]-=.06;coord[2][0]+=.22;coord[3][0]+=.24;coord[7][0]+=.17;}
+ if(variant%5===4){coord[2][0]-=.18;coord[4][0]+=.12;coord[4][1]-=.17;coord[7][0]-=.15;}
+ const top=coord.map(([x,y],i)=>{
+  const shift=(v.lean*(i>=2&&i<=4?1.0:.6)+(r()-.5)*.065)*tw;
+  const yy=y+(i===3?v.peak:0)+(r()-.5)*(geology==='basalt'?.10:.16);
+  return pt(cx+x*tw*v.round+shift,ty+yy*topH);
+ });
+ const front=[5,6,7,8,0];
+ const bottoms={};
+ for(const [j,i] of front.entries()){
+  const source=top[i];
+  // Mantemos as bases de colunas largas: a largura não encolhe verticalmente.
+  const spread=(gemLike?0.72:(crystalLike?0.82:(family==='column'?1.04:family==='shard'?1.14:1.0)));
+  const targetX=cx+(source[0]-cx)*spread+(r()-.5)*width*.065;
+  const bottomY=footY+(r()-.5)*height*.065+(j===0||j===4?-height*.075:0);
+  bottoms[i]=pt(targetX,bottomY);
+ }
+ const inner=pt(cx+(r()-.5)*width*.08,ty+topH*.11);
+ const silhouette=[top[0],top[1],top[2],top[3],top[4],top[5],bottoms[5],bottoms[6],bottoms[7],bottoms[8],bottoms[0]];
+ return{top,bottoms,front,inner,silhouette,cfg,width,height,footY,cx,ty,family,archetype,geology,combo};
+}
+
+function paintRockFacet(c,mesh,colors,r,fractures){
+ const {top,bottoms,inner,silhouette,front,archetype,combo}=mesh;
+ fillPoly(c,silhouette,colors[0]);
+ const faceColors=[colors[1],colors[2],colors[1],colors[2]];
+ const quads=[];
+ for(let j=0;j<front.length-1;j++){
+  const a=front[j],b=front[j+1];
+  const face=[top[a],top[b],bottoms[b],bottoms[a]];
+  fillPoly(c,face,faceColors[j]);quads.push(face);
+  // Subplanos internos: grandes faces recebem massas quebradas secundárias.
+  if(mesh.width>16){
+   const t0=between(top[a],top[b],.18+r()*.14), t1=between(top[a],top[b],.62+r()*.10);
+   const b0=between(bottoms[a],bottoms[b],.16+r()*.12), b1=between(bottoms[a],bottoms[b],.68+r()*.08);
+   const cutA=between(t0,b0,.28+r()*.12), cutB=between(t1,b1,.34+r()*.18);
+   fillPoly(c,[t0,t1,cutB,cutA],j%2===0?colors[2]:colors[3]);
+   if(r()>.42){
+    const insetA=between(cutA,b0,.52), insetB=between(cutB,b1,.48);
+    fillPoly(c,[cutA,cutB,insetB,insetA],j%2===0?colors[0]:colors[1]);
+    linePoly(c,[cutA,cutB],colors[1]);
+   }
+  }
+  // Cada face tem subdivisão coerente: novos vértices nas arestas compartilhadas.
+  if(r() < .24+fractures*.35 && mesh.width>14){
+   const v1=between(top[a],bottoms[a],.29+r()*.21),v2=between(top[b],bottoms[b],.44+r()*.25);
+   fillPoly(c,[top[a],top[b],v2,v1],j===0?colors[2]:colors[j===3?1:3]);
+   linePoly(c,[v1,v2],colors[1]);
+  }
+ }
+ // A tampa recebe poucas faces amplas. Todas se encontram na mesma junção central.
+ fillPoly(c,top,colors[3]);
+ fillPoly(c,[top[0],top[1],top[2],inner,top[8]],colors[3]);
+ fillPoly(c,[top[2],top[3],top[4],top[5],top[6],inner],colors[4]);
+ fillPoly(c,[inner,top[6],top[7],top[8]],colors[3]);
+ linePoly(c,[top[2],inner,top[6]],colors[2]);
+ // Subplanos no topo para quebrar superfícies chapadas.
+ if(mesh.width>18){
+  const ridgeA=between(top[1],inner,.44), ridgeB=between(top[3],inner,.52), ridgeC=between(top[6],inner,.48);
+  fillPoly(c,[top[1],top[2],ridgeB,ridgeA],colors[4]);
+  fillPoly(c,[top[5],top[6],ridgeC,inner],colors[3]);
+  linePoly(c,[ridgeA,inner,ridgeC],colors[2]);
+ }
+ if((archetype==='slab' || mesh.geology==='sandstone'||mesh.geology==='limestone') && (combo.band||0)>=0){
+  // Lajes e rochas sedimentares: estratos amplos e paralelos.
+  for(const [j,face] of quads.entries()){
+   const y=.30+(j%2)*.12;
+   linePoly(c,[between(face[0],face[3],y),between(face[1],face[2],y)],colors[j%2?0:1]);
+   linePoly(c,[between(face[0],face[3],.58),between(face[1],face[2],.60)],colors[1]);
+   if(mesh.height>18)linePoly(c,[between(face[0],face[3],.78),between(face[1],face[2],.80)],colors[0]);
+  }
+ }else if(archetype==='monolith' || mesh.geology==='basalt'||mesh.geology==='tuff'){
+  for(const face of quads){
+   const ta=between(face[0],face[1],.56),ba=between(face[3],face[2],.56);
+   linePoly(c,[ta,ba],colors[1]);
+   linePoly(c,[between(face[0],face[1],.24),between(face[3],face[2],.30)],colors[0]);
+   if(r()>.42)linePoly(c,[between(face[0],face[1],.76),between(face[3],face[2],.80)],colors[2]);
+  }
+ }else if(archetype==='gravel'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.40),between(face[1],face[2],.56)],colors[1]);
+   if(r()>.48)linePoly(c,[between(face[0],face[1],.42),between(face[3],face[2],.48)],colors[0]);
+  }
+ }else if(mesh.geology==='slate'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.22),between(face[1],face[2],.52)],colors[1]);
+   if(r()>.56)linePoly(c,[between(face[0],face[3],.58),between(face[1],face[2],.84)],colors[0]);
+  }
+ }else if(archetype==='outcrop'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.18),between(face[1],face[2],.40)],colors[0]);
+   linePoly(c,[between(face[0],face[3],.62),between(face[1],face[2],.72)],colors[1]);
+  }
+ }
+ return quads;
+}
+
+function fracturePath(mesh,r,index){
+ const top=mesh.top,lower=mesh.bottoms;
+ const origins=[2,6,7,5,8,3,4];const n=origins[index%origins.length];
+ const x=top[n];
+ let target;
+ if(n>=5||n===0)target=lower[n===0?0:n]||lower[7];
+ else target=top[7];
+ const through=between(x,target,.38+r()*.26),finish=between(x,target,.68+r()*.20);
+ const jitter=(r()-.5)*mesh.width*.075;
+ through[0]+=Math.round(jitter);finish[0]+=Math.round(jitter*.43);
+ return [x,through,finish];
+}
+function paintCracksAndMinerals(c,mesh,colors,ore,r,s,d){
+ c.save();polygonPath(c,mesh.silhouette);c.clip();
+ const profile=oreProfiles[d.material]||oreProfiles.cobre;
+ const richness=clamp((d.grade-.34)/.58,0,1); // 0 = discreto, 1 = afloramento rico
+ const intensity=.45+richness*.95;
+ const age=s.geologicalAge||0, erosion=s.erosion||0, weathering=s.weathering||0;
+ const coalPurity=s.coalPurity||0, coalDepth=s.coalDepth||0;
+ const coalBias=d.material==='carvao'?(1+coalPurity*.18+coalDepth*.22):1;
+ const exposure=s.mineralization*profile.exposure*intensity*(1+weathering*.22)*coalBias*rarityOf(d).oreMultiplier;
+ const fractureCount=Math.round((mesh.family==='vein'?3:1)+(d.macro?2:(d.large?1:0))+s.fractures*3.6+weathering*2.4+age*1.2-(erosion*1.0)+(d.variant%3===2?1:0));
+ const oreWidth=Math.max(1,Math.min(3,Math.round((mesh.width>82?2:1)*(profile.thickness*(.72+richness*.95+age*.10+(d.material==='carvao'?coalPurity*.18:0))))));
+ const branchChance=Math.min(.92,.18+richness*.48+weathering*.12)*profile.branches;
+ for(let i=0;i<fractureCount;i++){
+  const crack=fracturePath(mesh,r,i+(d.variant%4));
+  linePoly(c,crack,colors[0],1);
+  if(i%3===1||((d.large||d.macro)&&r()>.46))linePoly(c,[crack[1],pt(crack[1][0]+(r()-.5)*mesh.width*.20,crack[1][1]+mesh.height*(.08+r()*.06))],colors[1]);
+  const rich=((mesh.family==='vein'?.88:.18)+d.grade*.22)*exposure;
+  if(r()<rich){
+   const start=between(crack[0],crack[1],.20-r()*.05),mid=crack[1],end=between(crack[1],crack[2],.78+r()*.10);
+   const darkW=Math.max(1,oreWidth+(richness>.68?1:0));
+   // sombra/base do veio
+   linePoly(c,[start,mid,end],ore.dark,darkW);
+   // corpo principal do minério
+   linePoly(c,[between(start,mid,.05),mid,between(mid,end,.96)],ore.base,oreWidth);
+   // linha de brilho mais longa em rochas ricas
+   linePoly(c,[between(start,mid,.18),between(mid,end,.26+richness*.30)],ore.light,1);
+   // bifurcações aumentam conforme a riqueza
+   const branches=(mesh.family==='vein'?2:1)+(d.large?1:0)+(d.macro?1:0)+(richness>.45?1:0)+(richness>.78?1:0);
+   for(let b=0;b<branches;b++){
+    if(r()>branchChance)continue;
+    const pivot=between(start,end,.22+r()*.52),dir=r()>.5?1:-1;
+    const tip=pt(pivot[0]+dir*(mesh.width*(.04+r()*(.06+richness*.07))),pivot[1]-(mesh.height*(.02+r()*(.07+richness*.07))));
+    linePoly(c,[pivot,tip],ore.base,Math.max(1,oreWidth-1));
+    if(r()<profile.glint*(.45+richness*.7)){c.fillStyle=ore.light;c.fillRect(tip[0],tip[1],1+(richness>.72&&r()>.6?1:0),1);}
+   }
+   // bolsão principal em depósitos ricos
+   if(richness>.58 && r()<.72){
+    const pocket=between(start,end,.26+r()*.44);
+    c.fillStyle=ore.dark;c.fillRect(pocket[0],pocket[1],1+(oreWidth>1?1:0),1);
+    c.fillStyle=ore.base;c.fillRect(pocket[0]+1,pocket[1],1+(richness>.80?1:0),1);
+    if(richness>.74){c.fillStyle=ore.light;c.fillRect(pocket[0]+1,pocket[1]-1,1,1);} 
+   }
+   if(r()<profile.glint*(.30+richness*.72)){
+    c.fillStyle=ore.light;
+    c.fillRect(mid[0],mid[1],1+(oreWidth>1?1:0),1);
+   }
+   if(d.material==='cobre' && richness>.55 && r()>.46){c.fillStyle=ore.accent;c.fillRect(mid[0]+1,mid[1]+1,1,1);} 
+  }
+ }
+ if(d.material==='carvao'){
+  const seams=2+Math.round(coalDepth*3+coalPurity*2);
+  for(let i=0;i<seams;i++){
+   const yBase=Math.round(mesh.ty+mesh.height*(.24+.12*i+.08*r()));
+   const x0=Math.round(mesh.cx-mesh.width*(.30+.08*r())), x1=Math.round(mesh.cx+mesh.width*(.26+.10*r()));
+   c.strokeStyle=i%2===0?ore.light:ore.dark; c.lineWidth=1; c.beginPath(); c.moveTo(x0,yBase);
+   const midX=Math.round((x0+x1)/2), curve=Math.round((r()-.5)*mesh.height*.05);
+   c.lineTo(midX,yBase+curve); c.lineTo(x1,yBase+Math.round((r()-.5)*mesh.height*.04)); c.stroke();
+   if(r()>.45){c.strokeStyle=ore.base; c.beginPath(); c.moveTo(x0,yBase+1); c.lineTo(x1-1,yBase+1); c.stroke();}
+  }
+ }
+ // Bolsões expostos crescem com a riqueza do depósito.
+ const pockets=Math.round(s.mineralization*(mesh.family==='vein'?7:3)*(.55+richness*1.55)*d.grade*profile.pockets*rarityOf(d).oreMultiplier);
+ for(let i=0;i<pockets;i++){
+  const base=mesh.top[5+Math.floor(r()*4)],x=base[0]+Math.round((r()-.5)*mesh.width*.18),y=base[1]+Math.round(r()*mesh.height*(.16+.12*richness));
+  c.fillStyle=ore.dark;c.fillRect(x,y,1,1);
+  c.fillStyle=r()<profile.glint*(.50+richness*.5)?ore.light:ore.base;
+  c.fillRect(x+(r()>.62?1:0),y,1+(richness>.72&&r()>.72?1:0),1);
+  if(richness>.66){c.fillStyle=ore.base;c.fillRect(x,y+1,1,1);} 
+  if(d.material==='ouro'&&r()>.48){c.fillStyle=ore.accent;c.fillRect(x,y-1,1,1);} 
+  if(d.material==='prata'&&r()>.58){c.fillStyle=ore.accent;c.fillRect(x+1,y,1,1);} 
+  if((d.material==='quartzo'||d.material==='quartzo_leitoso'||d.material==='quartzo_fume'||d.material==='quartzo_roseo'||d.material==='quartzo_hialino')&&r()>.46){c.fillStyle=ore.light;c.fillRect(x+1,y-1,1,1);} 
+  if(d.material==='carvao'&&r()>.62){c.fillStyle=ore.dark;c.fillRect(x,y+1,1,1);} 
+  if(d.material==='enxofre'&&r()>.54){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1);} 
+  if(d.material==='gemas'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);} 
+  if(d.material==='rubi'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);}
+  if(d.material==='safira'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x+1,y,1,1);}
+  if(d.material==='esmeralda'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);}
+  if(d.material==='ametista'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y+1,1,1);} 
+ }
+ if(d.material==='enxofre' || crystalMaterials.includes(d.material)){
+  const spikes=2+Math.round((d.grade+.2)*2)+(gemKeys.includes(d.material)?1:0);
+  for(let i=0;i<spikes;i++){
+   const base=mesh.top[2+Math.floor(r()*4)], h=Math.round(mesh.height*(.10+r()*.12)), dx=Math.round((r()-.5)*mesh.width*.10);
+   c.fillStyle=ore.base; c.fillRect(base[0]+dx,base[1]-h,1+((r()>.55||gemKeys.includes(d.material))?1:0),h);
+   c.fillStyle=ore.light; c.fillRect(base[0]+dx,base[1]-h,1,1);
+   if(gemKeys.includes(d.material) && r()>.38)c.fillRect(base[0]+dx+1,base[1]-Math.max(1,h-1),1,1);
+  }
+ }
+ c.restore();
+ linePoly(c,mesh.silhouette.concat([mesh.silhouette[0]]),colors[0]);
+ linePoly(c,[mesh.top[5],mesh.top[6],mesh.top[7],mesh.top[8],mesh.top[0]],colors[1]);
+}
+function paintMoss(c,mesh,geo,r,s){
+ if(s.moss<=0)return;
+ const top=mesh.top;
+ const mossPalettes={
+  temperate:['#2d3e1c','#466129','#5a7c34','#7ea34d','#a3c56f'],
+  coastal:['#31431e','#4b6630','#638544','#85aa5e','#aacc7c'],
+  alpine:['#334532','#4b6450','#66806a','#85a087','#abc0aa'],
+  volcanic:['#384021','#4d5d2f','#667841','#879a58','#adc173'],
+  desert:['#455020','#5a6a2a','#72853e','#8fa854','#b2c678']
+ };
+ const mp=mossPalettes[s.biome]||mossPalettes.temperate;
+ const dark=mp[1], base=mp[2], mid=mp[3], light=mp[4];
+ c.save();polygonPath(c,mesh.silhouette);c.clip();
+ const age=s.geologicalAge||0, erosion=s.erosion||0, weathering=s.weathering||0;
+ const patches=Math.max(1,Math.round(s.moss*7.2+age*2.1+weathering*.9-erosion*.35));
+ for(let j=0;j<patches;j++){
+  const ix=(j*2+Math.floor(r()*4))%5;
+  const a=between(top[ix],top[ix+1],r()*.34), b=between(top[ix],top[ix+1],.48+r()*.42);
+  const drift=Math.max(4,mesh.height*(.12+.14*r()));
+  const drop=Math.max(2,mesh.height*(.07+.10*r()));
+  const puffCount=2+Math.round(r()*3+age*2);
+  for(let p=0;p<puffCount;p++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+r()*drift*.72);
+   const rw=1+Math.round(r()*2), rh=1+Math.round(r()*2);
+   c.fillStyle=p%3===0?light:(p%2===0?mid:base);
+   c.fillRect(px-rw,py-rh,rw*2,rh*2);
+   if(r()>.42){c.fillStyle=base; c.fillRect(px-rw+1,py-rh+1,Math.max(1,rw),Math.max(1,rh));}
+  }
+  const skirt=[a,b,pt(b[0],b[1]+drop*.36),pt(lerp(a[0],b[0],.88),b[1]+drift*.34),pt(lerp(a[0],b[0],.66),a[1]+drift*.84),pt(lerp(a[0],b[0],.42),a[1]+drift),pt(lerp(a[0],b[0],.18),a[1]+drift*.62),pt(a[0],a[1]+drop*.42)];
+  fillPoly(c,skirt,base);
+  const minX=Math.round(Math.min(...skirt.map(p=>p[0]))), maxX=Math.round(Math.max(...skirt.map(p=>p[0])));
+  const minY=Math.round(Math.min(...skirt.map(p=>p[1]))), maxY=Math.round(Math.max(...skirt.map(p=>p[1])));
+  c.fillStyle=dark;
+  for(let yy=minY;yy<=maxY;yy++)for(let xx=minX;xx<=maxX;xx++) if(rand(xx,yy,mesh.cx+yy+21)<.08+.08*weathering && yy>minY && yy<maxY) c.fillRect(xx,yy,1,1);
+  c.fillStyle=mid;
+  for(let m=0;m<4+Math.round(age*4);m++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+1+r()*drift*.88);
+   c.fillRect(px,py,1+(r()>.55?1:0),1);
+  }
+  c.fillStyle=light;
+  for(let m=0;m<5+Math.round(age*4);m++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+1+r()*drift*.60);
+   if(r()>.20)c.fillRect(px,py,1,1);
+  }
+  c.fillStyle=dark;
+  const fringes=3+Math.round(r()*4+age*2);
+  for(let f=0;f<fringes;f++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.max(a[1],b[1])+drift*(.24+r()*.58));
+   c.fillRect(px,py,1,1+(r()>.35?1:0));
+  }
+ }
+ c.restore();
+}
+
+function paintBaseDebris(c,mesh,geo,r,s){
+ const foot=mesh.footY, cx=mesh.cx, archetype=mesh.archetype||familyArchetype(mesh.family);
+ c.save();
+ c.globalAlpha=.18+.16*s.surfaceDetail;
+ c.fillStyle=geo.colors[0];
+ c.beginPath();c.ellipse(cx,foot+1,Math.max(3,mesh.width*.30),Math.max(1.5,mesh.height*.045),0,0,Math.PI*2);c.fill();
+ c.globalAlpha=1;
+ const pebbles=Math.max(2,Math.round(2+s.surfaceDetail*5+(mesh.width>36?2:0)+(archetype==='gravel'?5:0)+(archetype==='outcrop'?2:0)+(s.erosion||0)*5+(s.geologicalAge||0)*2));
+ for(let i=0;i<pebbles;i++){
+  const px=Math.round(cx+(r()-.5)*mesh.width*.72), py=Math.round(foot-1+r()*3);
+  const ww=r()>.72?2:1, hh=r()>.78?2:1;
+  c.fillStyle=i%3===0?geo.colors[1]:(i%3===1?geo.colors[2]:geo.colors[0]);
+  c.fillRect(px,py,ww,hh);
+ }
+ c.restore();
+}
+
+function paintStone(c,{cx,footY,width,height,family,variant,d,s,seed}){
+ const r=rng(seed);const geo=geoColor(d,s),colors=geo.colors,ore=oreColors[d.material];
+ const mesh=makeRockMesh(cx,footY,width,height,family,variant,d.geology||s.geology,d.material,s,r);
+ // Sombra pertence ao sprite transparente e acompanha a largura da base.
+ c.save();c.fillStyle='#202321';c.globalAlpha=.23;c.beginPath();c.ellipse(cx+2,footY-1,width*.58,Math.max(2.2,height*.075),0,0,Math.PI*2);c.fill();c.globalAlpha=1;
+ paintRockFacet(c,mesh,colors,r,s.fractures);
+ paintCracksAndMinerals(c,mesh,colors,ore,r,s,d);
+ paintMoss(c,mesh,geo,r,s);
+ paintBaseDebris(c,mesh,geo,r,s);
+ c.restore();
+ return mesh;
+}
+// v2.2 - Rasterizador nativo com pixel art realista, inspirado no fluxo asset-based do index(9).html.
+// Trabalha com pixels discretos, preserva silhuetas e recorta detalhes internos.
+function makePixelCanvas(width,height){const cv=document.createElement('canvas');cv.width=width;cv.height=height;return cv;}
+function pixelFinish(source,d,s){
+ if(s.pixelStyle==='original')return source;
+ const tier=d.tier||'normal';
+ const style=s.pixelStyle||'realistic';
+ const styleCfg={
+  realistic:{base:1.22,detailBoost:1.40,edge:0.82,cluster:1.34,cleanup:2,contrast:.56},
+  pixel:{base:1.78,detailBoost:1.10,edge:0.68,cluster:1.04,cleanup:1,contrast:.42},
+  detailed:{base:1.34,detailBoost:1.58,edge:0.76,cluster:1.28,cleanup:2,contrast:.62},
+  retro:{base:2.82,detailBoost:.62,edge:1.00,cluster:.72,cleanup:0,contrast:.56}
+ }[style]||{base:2.22,detailBoost:.90,edge:0.58,cluster:.92,cleanup:1,contrast:.36};
+ const gridFactor=s.pixelSize==='fine'?.82:(s.pixelSize==='coarse'?1.24:1);
+ const factor=styleCfg.base*gridFactor;
+ const w=Math.max(24,Math.round(source.width/factor)),h=Math.max(22,Math.round(source.height/factor));
+ const mini=makePixelCanvas(w,h),cx=mini.getContext('2d',{willReadFrequently:true});
+ cx.imageSmoothingEnabled=false;cx.drawImage(source,0,0,w,h);
+ const img=cx.getImageData(0,0,w,h),data=img.data;
+ const geo=geoColor(d,s),rocks=geo.colors.map(rgb),ore=oreColors[d.material];
+ const palette=[...rocks,rgb(geo.moss),rgb(ore.dark),rgb(ore.base),rgb(ore.light)];
+ const pixCount=w*h,kinds=new Int8Array(pixCount);
+ const seed=hash(d.seed,811,31),r=rng(seed),det=s.surfaceDetail,geology=d.geology||'granite',archetype=familyArchetype(d.family||d.forma||'round');
+ const combo=comboProfile(d.family||d.forma||'round',geology,d.material||'pedra');
+ const erosion=s.erosion||0, weathering=s.weathering||0, age=s.geologicalAge||0;
+ const quartzLike=(d.material==='quartzo'||(typeof quartzKeys!=='undefined'&&quartzKeys.includes(d.material)));
+ const gemLike=(typeof gemKeys!=='undefined'&&gemKeys.includes(d.material));
+ const famDetail=( {slab:1.06,monolith:1.22,gravel:1.34,blocky:1.12,outcrop:1.38}[archetype]||1 )*(combo.detail||1)*(1+weathering*.16+age*.10)*rarityOf(d).detail;
+ const famChip=( {slab:.82,monolith:1.10,gravel:1.30,blocky:1.0,outcrop:1.22}[archetype]||1 )*(combo.chip||1)*(1+weathering*.18+erosion*.08);
+ const scaleDistance=(a,b)=>{const dr=a[0]-b[0],dg=a[1]-b[1],db=a[2]-b[2];return dr*dr*.85+dg*dg*1.08+db*db*.72;};
+ for(let i=0;i<pixCount;i++){
+  const k=i*4,a=data[k+3];
+  if(a<115){
+   if(a<26){data[k]=data[k+1]=data[k+2]=data[k+3]=0;}
+   else {data[k]=20;data[k+1]=22;data[k+2]=23;data[k+3]=Math.round(Math.min(62,Math.max(30,a)));}
+   kinds[i]=-1;continue;
+  }
+  const actual=[data[k],data[k+1],data[k+2]];
+  let target=0,best=Infinity;
+  for(let j=0;j<palette.length;j++){const dist=scaleDistance(actual,palette[j]);if(dist<best){best=dist;target=j;}}
+  kinds[i]=target;
+  const c=palette[target];data[k]=c[0];data[k+1]=c[1];data[k+2]=c[2];data[k+3]=255;
+ }
+ const idx=(x,y)=>y*w+x;
+ const inb=(x,y)=>x>=0&&y>=0&&x<w&&y<h;
+ const isRock=(x,y)=>inb(x,y)&&kinds[idx(x,y)]>=0&&kinds[idx(x,y)]<=4;
+ const inner=(x,y)=>isRock(x,y)&&isRock(x-1,y)&&isRock(x+1,y)&&isRock(x,y-1)&&isRock(x,y+1);
+ const putKind=(x,y,v)=>{x|=0;y|=0;if(!inb(x,y))return false;const p=idx(x,y);if(kinds[p]<0||kinds[p]>4)return false;v=clamp(v,0,4)|0;kinds[p]=v;const k=p*4,c=rocks[v];data[k]=c[0];data[k+1]=c[1];data[k+2]=c[2];data[k+3]=255;return true;};
+ const putEdge=(x,y,color)=>{if(!inb(x,y))return;const p=idx(x,y);if(kinds[p]<0||kinds[p]>4)return;const k=p*4;for(let q=0;q<3;q++)data[k+q]=color[q];};
+
+ const modRGB=(x,y,dr,dg,db)=>{if(!inb(x,y))return;const p=idx(x,y),v=kinds[p];if(v<0)return;const k=p*4;data[k]=clamp(data[k]+dr,0,255);data[k+1]=clamp(data[k+1]+dg,0,255);data[k+2]=clamp(data[k+2]+db,0,255);};
+ const geoTint=(x,y,intensity=1)=>{
+  const p=idx(x,y),v=kinds[p]; if(v<0||v>4)return;
+  const broad=fbm(x/9.5,y/8.5,seed+901), medium=fbm(x/4.4,y/4.1,seed+921), grain=fbm(x/1.7,y/1.9,seed+947);
+  let dr=0,dg=0,db=0;
+  if(geology==='sandstone'||geology==='limestone'){
+    dr+=(broad*7 + medium*4 + grain*2)*intensity; dg+=(broad*5 + medium*3)*intensity; db+=(broad*2 - medium*1)*intensity;
+    if(((y+Math.floor(x*.35))%7===0)&& grain>.15){dr+=5*intensity;dg+=3*intensity;}
+  }else if(geology==='granite'){
+    dr+=(broad*4 + grain*3)*intensity; dg+=(medium*3)*intensity; db+=(grain*2-broad*1)*intensity;
+    if(grain>.48){dr+=3*intensity;db+=2*intensity;} else if(grain<-.44){dg+=2*intensity;}
+  }else if(geology==='basalt'){
+    dr+=(broad*2 - medium*2)*intensity; dg+=(broad*2 - medium*2)*intensity; db+=(broad*3 + medium*1)*intensity;
+    if(grain<-.42){dr-=5*intensity;dg-=4*intensity;db-=3*intensity;}
+  }else if(geology==='slate'){
+    const band=fbm((x+y*.55)/4.4,y/7.8,seed+963);
+    dr+=(band*2 + medium*2)*intensity; dg+=(band*2 + medium*2)*intensity; db+=(band*4 + grain*2)*intensity;
+  }else{
+    dr+=(broad*4 + medium*2)*intensity; dg+=(broad*3 + grain*1)*intensity; db+=(broad*2)*intensity;
+  }
+  modRGB(x,y,Math.round(dr),Math.round(dg),Math.round(db));
+ };
+ // Iluminação por planos: sombra de canto inferior direito, luz de canto superior esquerdo.
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),col=kinds[p];if(col<0||col>4)continue;
+  if(col>4)continue;
+  const topOpen=!isRock(x,y-1), leftOpen=!isRock(x-1,y), rightOpen=!isRock(x+1,y), bottomOpen=!isRock(x,y+1);
+  const broad=fbm(x/8.4,y/7.1,seed+31),medium=fbm(x/4.6,y/4.1,seed+211),small=fbm(x/2.2,y/2.0,seed+401);
+  const slope=(broad*.72+medium*.28);
+  let target=col;
+  if(topOpen||leftOpen)target+=1;
+  if(bottomOpen||rightOpen)target-=1;
+  if(style!=='retro'){
+   if(slope>.28+styleCfg.contrast*.16)target+=1;
+   else if(slope<-.34-styleCfg.contrast*.11)target-=1;
+   if(inner(x,y) && det>.08){
+    if(small>.62 && rand(x>>1,y>>1,seed+99)<det*.12*styleCfg.detailBoost)target+=1;
+    else if(small<-.58 && rand(x>>1,y>>1,seed+149)<det*.10*styleCfg.detailBoost)target-=1;
+   }
+  }
+  putKind(x,y,target);
+ }
+
+ // Macro-subplanos e manchas minerais: quebram superfícies muito lisas.
+ if(style!=='retro' && det>.08){
+  const planeCount=Math.round((w*h)*(.0012+.0018*det)*styleCfg.detailBoost);
+  for(let i=0;i<planeCount;i++){
+   const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+   if(!inner(x,y))continue;
+   const base=kinds[idx(x,y)]; if(base<1||base>3)continue;
+   const delta=(r()>.56?1:-1), shade=clamp(base+delta,0,4);
+   const len=2+Math.floor(r()*4)+(geology==='plate'?1:0), tall=2+Math.floor(r()*3);
+   const orient=geology==='slate'?'diag':(geology==='basalt'?'vert':(geology==='sandstone'||geology==='limestone'?'hori':'blob'));
+   for(let yy=0;yy<tall;yy++)for(let xx=0;xx<len;xx++){
+    let px=x+xx, py=y+yy;
+    if(orient==='diag')py=y+yy-Math.floor(xx*.45);
+    else if(orient==='vert'){px=x+Math.floor(yy*.34);py=y+xx;}
+    else if(orient==='hori'){px=x+xx;py=y+Math.floor(yy*.5);}
+    if(!inner(px,py))continue;
+    if((orient==='blob' && (xx+yy>len+tall-2) && r()>.35))continue;
+    putKind(px,py,shade);
+    if(r()>.72 && inner(px+1,py))putKind(px+1,py,base);
+   }
+  }
+ }
+
+ // Texturas guiadas pela geologia, sempre em pequenos clusters em vez de ruído solto.
+ const density=style==='retro'?.50:(style==='detailed'?1.28:(style==='realistic'?1.18:.92));
+ const n=Math.round(w*h*det*famDetail*styleCfg.cluster*density*(geology==='sandstone'?.0074:.0060));
+ for(let j=0;j<n;j++){
+  const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+  if(!inner(x,y))continue;
+  let base=kinds[idx(x,y)];if(base<=0||base>=4)continue;
+  const ix=clamp(base+(r()>.46?1:-1),0,4);
+  if(geology==='granite'){
+   putKind(x,y,ix); if(r()>.36)putKind(x+1,y,ix); if(r()>.60)putKind(x,y+1,Math.max(0,ix-1));
+   if(r()>.82){putKind(x+1,y+1,ix); if(inner(x+2,y+1))putKind(x+2,y+1,Math.max(0,ix-1));}
+  }else if(geology==='tuff'){
+   putKind(x,y,Math.max(0,ix-1)); if(r()>.42)putKind(x+1,y,ix); if(r()>.70)putKind(x,y+1,ix);
+   if(r()>.76 && inner(x+1,y+1))putKind(x+1,y+1,Math.max(0,ix-1));
+  }else if(geology==='sandstone'||geology==='limestone'){
+   const len=3+Math.floor(r()*Math.min(9,w*.18));
+   for(let t=0;t<len;t++)putKind(x+t,y+(t>4&&r()>.74?1:0),ix);
+   if(style!=='retro'&&r()>.52)for(let t=0;t<len-1;t++)putKind(x+t,y+1,Math.max(0,ix-1));
+   if(r()>.78)for(let t=1;t<len-2;t+=2)putKind(x+t,y-1,Math.min(4,ix+1));
+  }else if(geology==='basalt'){
+   const len=3+Math.floor(r()*Math.min(9,h*.18));
+   for(let t=0;t<len;t++)putKind(x+Math.floor(t/4),y+t,Math.max(0,ix-1));
+   if(style!=='retro'&&r()>.54)for(let t=1;t<len-1;t++)putKind(x+1,y+t,ix);
+   if(r()>.74)putKind(x-1,y+Math.floor(len*.5),Math.min(4,ix+1));
+  }else if(geology==='slate'){
+   const len=3+Math.floor(r()*6);
+   for(let t=0;t<len;t++)putKind(x+t,y-Math.floor(t*.44),ix);
+   if(style!=='retro'&&r()>.58)for(let t=0;t<len-1;t++)putKind(x+t,y+1-Math.floor(t*.44),Math.max(0,ix-1));
+   if(r()>.76)for(let t=1;t<len-1;t+=2)putKind(x+t,y-Math.floor(t*.44)-1,Math.min(4,ix+1));
+  }else{
+   const len=2+Math.floor(r()*5);
+   for(let t=0;t<len;t++)putKind(x+t,y-Math.floor(t*.28),ix);
+   if(style==='realistic'&&r()>.58)for(let t=0;t<len-1;t++)putKind(x+t,y+1-Math.floor(t*.28),Math.max(0,ix-1));
+  }
+ }
+ // Microfissuras: pequenos cortes escuros integrados à superfície.
+ if(style!=='retro' && det>.14){
+  const cracks=Math.round((w+h)*.085*det*famDetail*styleCfg.detailBoost);
+  for(let i=0;i<cracks;i++){
+   const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+   if(!inner(x,y))continue;
+   const len=2+Math.floor(r()*4);
+   const dir=geology==='basalt'?'vert':(geology==='slate'?'diag':(r()>.52?'diag':'hori'));
+   for(let t=0;t<len;t++){
+    let px=x+t, py=y;
+    if(dir==='vert'){px=x+(t>2?1:0);py=y+t;}
+    else if(dir==='diag'){px=x+t;py=y-Math.floor(t*.55);}
+    if(!inner(px,py))continue;
+    const v=kinds[idx(px,py)]; if(v<0||v>4)continue;
+    putKind(px,py,Math.max(0,v-2));
+    if(r()>.68 && inner(px,py-1))putKind(px,py-1,Math.min(4,v+1));
+   }
+  }
+ }
+ // Lascas e quinas: quebra a monotonia sem perder legibilidade.
+ if(det>.10 && style!=='retro'){
+  const chips=Math.round((w+h)*.075*det*famChip*styleCfg.detailBoost);
+  for(let i=0;i<chips;i++){
+   const x=1+Math.floor(r()*(w-2)), y=1+Math.floor(r()*(h-2));
+   if(!isRock(x,y) || inner(x,y))continue;
+   const dark=!isRock(x,y+1)||!isRock(x+1,y);
+   const ref=Math.max(0,Math.min(4,(kinds[idx(x,y)]||2)+(dark?-1:1)));
+   putKind(x,y,ref);
+   if(r()>.52 && isRock(x+1,y))putKind(x+1,y,ref);
+   if(r()>.72 && isRock(x,y+1))putKind(x,y+1,Math.max(0,ref-1));
+   // pequeno lascado puxando a borda para dentro
+   if(r()>.78 && isRock(x-1,y) && !inner(x-1,y))putKind(x-1,y,Math.max(0,ref-1));
+  }
+  // Assentamento na base: reforça contato com o solo e peso da rocha.
+  for(let y=Math.floor(h*.72);y<h-1;y++)for(let x=1;x<w-1;x++){
+   if(!isRock(x,y))continue;
+   if(!isRock(x,y+1)||!isRock(x-1,y+1)||!isRock(x+1,y+1)){
+    const v=kinds[idx(x,y)];
+    if(rand(x,y,seed+1451)>.22)putKind(x,y,Math.max(0,v-1));
+    if(rand(x,y,seed+1459)>.76 && inb(x,y-1) && isRock(x,y-1))putKind(x,y-1,Math.max(0,v-1));
+   }
+  }
+ }
+ // Limpeza de clusters isolados para a arte ficar mais natural e menos ruidosa.
+ const smoothPasses=styleCfg.cleanup;
+ for(let pass=0;pass<smoothPasses;pass++){
+  const before=kinds.slice();
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=before[p]; if(v<0||v>4)continue;
+   const count=[0,0,0,0,0]; let rockN=0;
+   for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++){
+    if(!xx&&!yy)continue; const nv=before[idx(x+xx,y+yy)]; if(nv>=0&&nv<=4){count[nv]++; rockN++;}
+   }
+   if(rockN<3)continue;
+   let best=v,bestCount=count[v];
+   for(let c=0;c<5;c++) if(count[c]>bestCount){best=c;bestCount=count[c];}
+   if(best!==v && bestCount>=5) putKind(x,y,best);
+  }
+ }
+ // Bevel final / contorno seletivo.
+ const before=kinds.slice();
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),v=before[p]; if(v<0||v>4)continue;
+  const topOpen=!isRock(x,y-1)||!isRock(x-1,y-1), bottomOpen=!isRock(x,y+1)||!isRock(x+1,y+1);
+  if(topOpen){
+   if(style==='retro')putEdge(x,y,rocks[4]);
+   else if(rand(x>>1,y>>1,seed+601)>.28)putKind(x,y,Math.min(4,v+1));
+  }else if(bottomOpen){
+   if(style==='retro')putEdge(x,y,rocks[0]);
+   else if(rand(x>>1,y>>1,seed+677)>.34*styleCfg.edge)putKind(x,y,Math.max(0,v-1));
+  }
+ }
+ // Mantém minério e musgo legíveis, mas integra melhor à pedra.
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),v=kinds[p];
+  if(v===5){ // musgo
+   const k=p*4; if(style==='retro'){data[k]=rgb(geo.moss)[0];data[k+1]=rgb(geo.moss)[1];data[k+2]=rgb(geo.moss)[2];}
+   else {
+    if(rand(x,y,seed+701)>.48){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+10,0,255);}
+    if(rand(x,y,seed+702)<.16){data[k]=clamp(data[k]-5,0,255);data[k+1]=clamp(data[k+1]-3,0,255);}
+    if(rand(x,y,seed+703)<.12){data[k+1]=clamp(data[k+1]+8,0,255);}
+   }
+  }else if(v>=6){
+   const k=p*4,profile=oreProfiles[d.material]||oreProfiles.cobre,richness=clamp((d.grade-.34)/.58,0,1);
+   if(style==='realistic'&&rand(x,y,seed+733)>.58-(richness*.12) && isRock(x-1,y)&&isRock(x+1,y)){
+    data[k]=clamp(data[k]+10+richness*8,0,255);data[k+1]=clamp(data[k+1]+7+richness*4,0,255);data[k+2]=clamp(data[k+2]+4+richness*3,0,255);
+   }
+   // veios mais legíveis: engrossa pequenas sequências minerais conforme a riqueza.
+   const nearOre=(inb(x-1,y)&&kinds[idx(x-1,y)]>=6)||(inb(x+1,y)&&kinds[idx(x+1,y)]>=6)||(inb(x,y-1)&&kinds[idx(x,y-1)]>=6)||(inb(x,y+1)&&kinds[idx(x,y+1)]>=6);
+   if(nearOre && style!=='retro' && rand(x,y,seed+755)<profile.thickness*(.08+richness*.20)){
+    const nx=x+(rand(x,y,seed+766)>.5?1:-1), ny=y+(rand(x,y,seed+777)>.5?0:1);
+    if(inb(nx,ny) && kinds[idx(nx,ny)]>=0 && kinds[idx(nx,ny)]<=4){
+      const q=idx(nx,ny),qk=q*4;
+      kinds[q]=7; data[qk]=palette[7][0]; data[qk+1]=palette[7][1]; data[qk+2]=palette[7][2]; data[qk+3]=255;
+    }
+   }
+   if(d.material==='ouro' && rand(x,y,seed+788)<profile.glint*(.10+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]-1,0,255);} 
+   if(d.material==='prata'&& rand(x,y,seed+799)<profile.glint*(.12+richness*.22)*combo.oreSignature){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+12,0,255);data[k+2]=clamp(data[k+2]+16,0,255);} 
+   if(d.material==='ferro' && rand(x,y,seed+810)<profile.glint*(.08+richness*.16)*combo.oreSignature){data[k]=clamp(data[k]+6,0,255);data[k+1]=clamp(data[k+1]-5,0,255);data[k+2]=clamp(data[k+2]-7,0,255);} 
+   if(d.material==='cobre' && rand(x,y,seed+821)<profile.glint*(.06+richness*.16)*combo.oreSignature){data[k+1]=clamp(data[k+1]+7,0,255); if(rand(x,y,seed+822)<.06*combo.oreSignature){data[k]=clamp(data[k]-8,0,255);data[k+1]=clamp(data[k+1]+14,0,255);data[k+2]=clamp(data[k+2]+4,0,255);}} 
+   if((d.material==='quartzo'||d.material==='quartzo_leitoso'||d.material==='quartzo_fume'||d.material==='quartzo_roseo'||d.material==='quartzo_hialino') && rand(x,y,seed+823)<profile.glint*(.14+richness*.18)*combo.oreSignature){data[k]=clamp(data[k]+16,0,255);data[k+1]=clamp(data[k+1]+12,0,255);data[k+2]=clamp(data[k+2]+18,0,255);} 
+   if(d.material==='carvao' && rand(x,y,seed+824)<profile.glint*(.04+richness*.08+((s.coalPurity||0)*.08))*combo.oreSignature){const d1=12+Math.round((s.coalDepth||0)*8);data[k]=clamp(data[k]-d1,0,255);data[k+1]=clamp(data[k+1]-d1,0,255);data[k+2]=clamp(data[k+2]-d1,0,255);} 
+   if(d.material==='enxofre' && rand(x,y,seed+825)<profile.glint*(.12+richness*.20)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+16,0,255);} 
+   if(d.material==='gemas' && rand(x,y,seed+826)<profile.glint*(.12+richness*.26)*combo.oreSignature){data[k]=clamp(data[k]+4,0,255);data[k+1]=clamp(data[k+1]+18,0,255);data[k+2]=clamp(data[k+2]+20,0,255);} 
+   if(d.material==='rubi' && rand(x,y,seed+827)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+22,0,255);data[k+1]=clamp(data[k+1]-2,0,255);data[k+2]=clamp(data[k+2]+4,0,255);} 
+   if(d.material==='safira' && rand(x,y,seed+828)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+6,0,255);data[k+1]=clamp(data[k+1]+14,0,255);data[k+2]=clamp(data[k+2]+24,0,255);} 
+   if(d.material==='esmeralda' && rand(x,y,seed+829)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]-2,0,255);data[k+1]=clamp(data[k+1]+20,0,255);data[k+2]=clamp(data[k+2]+8,0,255);} 
+   if(d.material==='ametista' && rand(x,y,seed+830)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+6,0,255);data[k+2]=clamp(data[k+2]+24,0,255);} 
+   if(gemLike && ((x+y)%4===0 || rand(x,y,seed+831)<.18)){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]+10,0,255);} 
+   if(quartzLike && ((x+y)%5===0 || rand(x,y,seed+832)<.12)){data[k]=clamp(data[k]+8,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]+10,0,255);} 
+  }
+ }
+
+ // Modulação tonal final: reduz áreas chapadas e aproxima a superfície de rocha real.
+ if(style!=='retro'){
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=kinds[p];
+   if(v<0||v>4)continue;
+   // variação cromática sutil por geologia
+   if(inner(x,y)) geoTint(x,y,.75 + det*.55);
+   else geoTint(x,y,.38 + det*.24);
+   // pontos minerais e poros suaves
+   const grain=fbm(x/1.55,y/1.65,seed+1021), broad=fbm(x/7.8,y/7.2,seed+1033);
+   if(inner(x,y) && grain>.56 && rand(x>>1,y>>1,seed+1041)<det*.20){modRGB(x,y,6,5,4);}
+   if(inner(x,y) && grain<-.62 && rand(x>>1,y>>1,seed+1053)<det*.18){modRGB(x,y,-7,-6,-5);}
+   // transições menos sólidas nas superfícies amplas
+   if((geology==='sandstone'||geology==='limestone') && (y+Math.floor(x*.28))%6===0 && broad>.06) modRGB(x,y,4,3,2);
+   if(geology==='slate' && (x+y)%7===0) modRGB(x,y,-2,-2,2);
+   if(geology==='granite' && rand(x,y,seed+1069)<.05*det){modRGB(x,y,5,3,3);}
+   if(geology==='basalt' && rand(x,y,seed+1079)<.06*det){modRGB(x,y,-4,-3,-2);}
+   if(archetype==='slab' && (y+Math.floor(x*.16))%5===0 && inner(x,y))modRGB(x,y,3,2,1);
+   if(archetype==='monolith' && x%6===0 && inner(x,y))modRGB(x,y,-3,-2,-1);
+   if(archetype==='gravel' && rand(x,y,seed+1087)<.11*det){modRGB(x,y,(rand(x,y,seed+1088)>.5?5:-5),(rand(x,y,seed+1089)>.5?4:-4),(rand(x,y,seed+1090)>.5?3:-3));}
+   if(archetype==='outcrop' && ((x+y)%6===0 || rand(x,y,seed+1091)<.08*det))modRGB(x,y,4,3,2);
+   if((combo.band||0)>0 && inner(x,y) && (y+Math.floor(x*.14))%5===0) modRGB(x,y,Math.round(3*combo.band),Math.round(2*combo.band),Math.round(1*combo.band));
+   if((combo.vertical||0)>0 && inner(x,y) && x%5===0) modRGB(x,y,Math.round(-2*combo.vertical),Math.round(-2*combo.vertical),Math.round(-1*combo.vertical));
+   if(d.material==='carvao' && inner(x,y)){ const seam=((y+Math.floor(x*.22)+Math.round((s.coalDepth||0)*5))%4===0); if(seam) modRGB(x,y,-10-Math.round((s.coalDepth||0)*4),-10-Math.round((s.coalDepth||0)*4),-10-Math.round((s.coalDepth||0)*4)); else if(((y+Math.floor(x*.18))%4===2)) modRGB(x,y,5+Math.round((s.coalPurity||0)*3),5+Math.round((s.coalPurity||0)*3),6+Math.round((s.coalPurity||0)*2)); }
+   if((combo.speckle||0)>0 && inner(x,y) && rand(x,y,seed+1097)<.05*combo.speckle) modRGB(x,y,(rand(x,y,seed+1098)>.5?4:-4),(rand(x,y,seed+1099)>.5?3:-3),(rand(x,y,seed+1100)>.5?2:-2));
+   if((combo.bright||0)>0) modRGB(x,y,Math.round(6*combo.bright),Math.round(5*combo.bright),Math.round(3*combo.bright));
+   if((combo.dark||0)>0 && inner(x,y)) modRGB(x,y,Math.round(-6*combo.dark),Math.round(-5*combo.dark),Math.round(-4*combo.dark));
+   if(erosion>0 && !inner(x,y)) modRGB(x,y,Math.round(7*erosion),Math.round(6*erosion),Math.round(4*erosion));
+   if(weathering>0 && rand(x,y,seed+1103)<.05*weathering) modRGB(x,y,Math.round(-5*weathering),Math.round(-4*weathering),Math.round(-3*weathering));
+   if(age>0 && inner(x,y) && rand(x,y,seed+1109)<.045*age) modRGB(x,y,Math.round(4*age),Math.round(3*age),Math.round(2*age));
+   if(gemLike && inner(x,y) && ((x-y+64)%6===0)) modRGB(x,y,10,8,10);
+   if(gemLike && inner(x,y) && ((x+y)%7===0)) modRGB(x,y,-8,-7,-6);
+   if(quartzLike && inner(x,y) && ((x-y+64)%7===0)) modRGB(x,y,6,6,8);
+  }
+  // realce de planos e recessos, simulando micro volume.
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=kinds[p]; if(v<0||v>4)continue;
+   const light=(!isRock(x-1,y)||!isRock(x,y-1)||!isRock(x-1,y-1));
+   const recess=inner(x,y) && ((kinds[idx(x-1,y)]<v&&kinds[idx(x+1,y)]<v) || (kinds[idx(x,y-1)]<v&&kinds[idx(x,y+1)]<v));
+   if(light) modRGB(x,y,5,4,3);
+   if(recess) modRGB(x,y,-6,-5,-4);
+  }
+ }
+ cx.putImageData(img,0,0);
+ const output=makePixelCanvas(source.width,source.height),o=output.getContext('2d');
+ o.imageSmoothingEnabled=false;o.drawImage(mini,0,0,output.width,output.height);
+ output.nativePixelArt=mini;
+ output.pixelMetadata={nativeWidth:w,nativeHeight:h,paletteColors:palette.length,style,pixelScale:s.pixelSize,detail:det,seed:d.seed,tier};
+ return output;
+}
+
+// Cristais e bolsões emergentes: adorno determinístico conectado à raridade.
+// É adicionado antes da redução para pixel art, nunca por CSS ou filtro externo.
+function paintRarityFeatures(c,d,s,frameW,frameH,cx,foot,width,height){
+ const cfg=rarityOf(d);
+ if(cfg.crystalCount===0||d.material==='pedra')return;
+ const ore=oreColors[d.material]||oreColors.quartzo;
+ const r=rng(hash(d.seed,1317,d.rarity==='epic'?2:1));
+ const isCrystal=crystalMaterials.includes(d.material);
+ const count=cfg.crystalCount+(d.family==='vein'?1:0);
+ c.save();c.imageSmoothingEnabled=false;
+ for(let i=0;i<count;i++){
+  const t=(i+.5)/count, jitter=(r()-.5)*.24;
+  const x=cx+((t-.5)*.73+jitter)*width;
+  const baseY=foot-height*(.12+r()*.23);
+  const heightFactor=isCrystal?(d.rarity==='epic'?.43:.31):(d.rarity==='epic'?.20:.13);
+  const h=height*(heightFactor*(.42+r()*.72));
+  const baseWidth=Math.max(2,Math.min(width*.16,width*(isCrystal?.055:.078)*(0.55+r()*.75)));
+  const tipX=x+(r()-.5)*baseWidth*.80,tipY=baseY-h;
+  if(tipY<1)continue;
+  const front=[ [x-baseWidth,baseY],[x-baseWidth*.72,baseY-h*.68],[tipX,tipY],
+                [x+baseWidth*.72,baseY-h*.60],[x+baseWidth,baseY] ];
+  c.fillStyle=ore.dark;c.beginPath();c.moveTo(...front[0]);
+  for(let j=1;j<front.length;j++)c.lineTo(...front[j]);c.closePath();c.fill();
+  c.fillStyle=ore.base;c.beginPath();c.moveTo(x-baseWidth,baseY);c.lineTo(x-baseWidth*.72,baseY-h*.68);
+  c.lineTo(tipX,tipY);c.lineTo(x,baseY);c.closePath();c.fill();
+  c.fillStyle=ore.light;c.beginPath();c.moveTo(tipX,tipY);c.lineTo(x+baseWidth*.72,baseY-h*.60);
+  c.lineTo(x,baseY);c.closePath();c.fill();
+  if(r()>.26){c.strokeStyle=ore.accent;c.lineWidth=1;c.beginPath();c.moveTo(tipX,tipY+1);c.lineTo(x,baseY-h*.21);c.stroke();}
+  if(d.rarity==='epic' && r()>.54){c.fillStyle=ore.accent;c.fillRect(Math.round(tipX),Math.round(tipY-2),2,2);}
+ }
+ c.restore();
+}
+function rockSprite(d,s){
+ const family=d.family||d.forma||'round',variant=d.variant||0,tier=d.tier||'normal';
+ const w=tier==='macro'?384:tier==='large'?288:192,h=tier==='macro'?332:tier==='large'?246:176;
+ const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+ const c=cv.getContext('2d',{alpha:true});c.imageSmoothingEnabled=false;
+ const r=rng(d.seed^0x11335577),cx=w*.50,foot=h*.87;
+ const prof=variantShape(family,variant),scaleW=prof.scale[0],scaleH=prof.scale[1];
+ const dims={round:[.77,.79],block:[.80,.82],wedge:[.82,.82],plate:[.94,.78],column:[.59,.87],shard:[.60,.88],cluster:[.88,.80],vein:[.93,.72]}[family]||[.8,.65];
+ const tierVisual=rarityOf(d).scale;
+ const width=Math.min(w*.93,w*dims[0]*(scaleW*.87+.13)*tierVisual),height=Math.min(h*.82,h*dims[1]*(scaleH*.85+.15)*tierVisual);
+ let part=0;
+ const draw=(x,y,ww,hh,type,noiseSeed,variation=variant,override={})=>paintStone(c,{cx:x,footY:y,width:ww,height:hh,family:type,variant:variation,d:{...d,...override},s,seed:noiseSeed});
+ const pick=()=>hash(d.seed,part++,10991);
+ const geo=(d.geology||s.geology||'granite');
+ const layered=(family==='round'||family==='block'||family==='plate'||family==='wedge');
+ if(family==='cluster'){
+  const n=(tier==='macro'?8:(tier==='large'?6:4))+(variant%2);
+  const spread=width*(tier==='macro'?.82:.68);
+  for(let i=0;i<n;i++){
+   const center=Math.floor(n/2),dist=Math.abs(i-center);
+   const x=cx+((i/Math.max(1,n-1))-.5)*spread+(r()-.5)*width*.10;
+   const high=height*(i===center?1.0:(.48+Math.max(.10,.34-dist*.05)+r()*.12));
+   const ww=width*(i===center?.55:(tier==='macro'?.42:.38));
+   draw(x,foot-3-(i%2)*2,ww,high,i%2?'round':'block',pick(),(variant+i)%5);
+  }
+  if(tier!=='small')draw(cx,foot+1,width*.52,height*.22,'plate',pick(),(variant+3)%5,{grade:d.grade*.84});
+ }else if(family==='column'){
+  draw(cx,foot,width*(tier==='macro'?1.10:.99),Math.max(height*.38,18),'block',pick(),(variant+2)%5,{grade:d.grade*.82});
+  if(tier==='macro'&&geo!=='sandstone')draw(cx,foot-4,width*.76,height*.28,'plate',pick(),(variant+1)%5,{grade:d.grade*.78});
+  const count=tier==='macro'?5:(variant===4?4:variant===1?3:2);
+  for(let i=0;i<count;i++){
+   const frac=(i/Math.max(1,count-1)-.5),partW=width*(count>4?.24:count>3?.29:.39);
+   const tall=height*(i===Math.floor(count/2)?1:(.70+r()*.22));
+   draw(cx+frac*width*(tier==='macro'?.58:.48),foot-4,partW,tall,'column',pick(),(variant+i)%5);
+  }
+  draw(cx-width*.31,foot+2,width*.25,height*.19,'block',pick());
+  draw(cx+width*.34,foot+1,width*.27,height*.19,'round',pick());
+ }else if(family==='shard'){
+  if(tier!=='small')draw(cx-width*.23,foot,width*.42,height*.54,'wedge',pick(),(variant+1)%5,{grade:d.grade*.80});
+  draw(cx+width*.07,foot,width*(tier==='macro'?.79:.71),height,'shard',pick());
+  if(variant%2===1||tier==='macro')draw(cx+width*.34,foot+1,width*.27,height*.29,'block',pick());
+ }else if(family==='vein'){
+  if(tier!=='small')draw(cx,foot+2,width*(tier==='macro'?1.14:.98),height*.34,'plate',pick(),(variant+3)%5,{grade:d.grade*.72});
+  draw(cx+(variant===1?width*.05:0),foot,width,height,'vein',pick());
+  if(tier!=='small')draw(cx-width*.20,foot+1,width*.38,height*.30,'block',pick(),(variant+1)%5,{grade:d.grade*.70});
+  if(tier==='macro')draw(cx+width*.18,foot+1,width*.42,height*.24,'wedge',pick(),(variant+2)%5,{grade:d.grade*.68});
+ }else{
+  if(layered && (tier!=='small')){
+   const backType=(family==='plate'?'plate':(geo==='sandstone'?'plate':'block'));
+   draw(cx-width*.16,foot-2,width*(family==='plate'?.74:.66),height*.54,backType,pick(),(variant+1)%5,{grade:d.grade*.80});
+   if(tier==='macro'||geo==='sandstone'||geo==='slate')draw(cx+width*.18,foot-1,width*(family==='plate'?.52:.44),height*.38,backType,pick(),(variant+3)%5,{grade:d.grade*.74});
+  }
+  if(variant===4||variant===2)draw(cx-width*.30,foot,width*.37,height*.49,family==='plate'?'plate':'block',pick(),(variant+1)%5,{grade:d.grade*.80});
+  draw(cx+(variant===1?width*.05:0),foot,width,height,family,pick());
+  if(family==='plate'&&tier!=='small'){draw(cx+width*.06,foot+2,width*.68,height*.18,'plate',pick(),(variant+2)%5,{grade:d.grade*.70}); if(tier!=='small')draw(cx-width*.22,foot+1,width*.40,height*.16,'plate',pick(),(variant+4)%5,{grade:d.grade*.66});}
+  if((variant===1||variant===3||tier==='macro'))draw(cx+width*.36,foot+2,width*.27,height*.26,'block',pick(),(variant+2)%5,{grade:d.grade*.76});
+ }
+ if(family!=='vein'){
+  const rubbles=tier==='macro'?(family==='cluster'?7:4):(family==='cluster'?4:(family==='round'?4:(family==='vein'?3:(variant%3===0?3:2))));
+  for(let i=0;i<rubbles;i++){
+   const side=i%2?1:-1,x=cx+side*(width*.38+i*width*.045),y=foot+1+(i%2);
+   draw(x,y,Math.max(5,width*(.09+r()*.07)),Math.max(4,height*(.07+r()*.09)),'round',pick(),(i+variant)%5,{grade:d.grade*.62});
+  }
+ }
+ paintRarityFeatures(c,d,s,w,h,cx,foot,width,height);
+ return pixelFinish(cv,d,s);
+}
+function outcropSize(d){
+ const family=d.family||d.forma||'round';const tier=d.tier||'normal';
+ const mult=tier==='macro'?2.18:tier==='large'?1.56:tier==='small'?.72:1;
+ const base=(34+d.grade*12)*mult*rarityOf(d).scale;
+ const shape={round:[.92,.66],block:[1.08,1.02],wedge:[1.02,.94],plate:[1.34,.54],column:[.76,1.54],shard:[.74,1.56],cluster:[1.28,.74],vein:[1.34,.58]}[family]||[1,1];
+ return {w:Math.round(base*shape[0]),h:Math.round(base*shape[1])};
+}
+function drawSupportPiece(ctx,d,s,dx,dy,scale=.35,shift=1,alpha=1){
+ const family=d.family==='column'?'block':(d.family==='plate'?'plate':(d.family==='cluster'?'round':(shift%2===0?'wedge':'round')));
+ const sub={...d,tier:'normal',macro:false,large:false,tilesW:1,tilesH:1,family,forma:family,variant:((d.variant||0)+shift)%5,seed:hash(d.seed,shift,702),grade:Math.max(.36,d.grade*.7)};
+ const asset=rockSprite(sub,s),dims=outcropSize(d),w=Math.max(9,Math.round(dims.w*scale)),h=Math.max(6,Math.round(dims.h*scale*.70));
+ ctx.save();ctx.globalAlpha=alpha;ctx.imageSmoothingEnabled=false;ctx.drawImage(asset,Math.round(d.x+dx-w*.5),Math.round(d.y+dy-h*.87),w,h);ctx.restore();
+}
+function drawBurial(ctx,d,s,size){
+ if(s.burial<=0)return;
+ const r=rng(hash(d.seed,742)),colors=palettes[s.terrain].soil;
+ const buried=Math.max(1,Math.round(Math.min(10,size.h*.19)*s.burial));
+ const left=Math.round(d.x-size.w*.47),right=Math.round(d.x+size.w*.47);
+ ctx.save();
+ for(let x=left;x<=right;x++){
+  if(r()<.18)continue;
+  const wave=Math.round((noise(x/9,d.y/8,d.seed)-.5)*3+r()*2);
+  ctx.fillStyle=colors[r()>.55?0:3];ctx.globalAlpha=.80;
+  ctx.fillRect(x,Math.round(d.y-buried+wave),1,Math.max(1,buried+1-wave));
+ }
+ ctx.globalAlpha=1;
+ for(let i=0;i<Math.max(4,Math.round(size.w*.13));i++){
+  const x=Math.round(d.x+(r()-.5)*size.w*1.18),y=Math.round(d.y+(r()-.5)*6);
+  ctx.fillStyle=r()<.5?rockGeologies[d.geology]?.colors[1]||'#68605b':colors[3];ctx.fillRect(x,y,1+(r()>.7?1:0),1);
+ }
+ ctx.restore();
+}
+function drawOutcrop(ctx,d,s){
+ const sprite=rockSprite(d,s),size=outcropSize(d);
+ const r=rng(hash(d.seed,193));
+ ctx.save();ctx.imageSmoothingEnabled=false;
+ if(d.large||d.macro){
+  const n=Math.max(2,d.satellites||1);
+  for(let i=0;i<n;i++){
+   const side=i%2===0?-1:1;
+   const dx=side*size.w*(.25+r()*.17),dy=-(1+r()*4);
+   drawSupportPiece(ctx,d,s,dx,dy,.28+r()*.08,i+2,.92);
+  }
+  if(d.macro){
+   drawSupportPiece(ctx,d,s,-size.w*.18,-size.h*.04,.34,15,.62);
+   drawSupportPiece(ctx,d,s,size.w*.16,-size.h*.05,.30,16,.58);
+  }
+ }
+ ctx.drawImage(sprite,Math.round(d.x-size.w*.50),Math.round(d.y-size.h*.87),size.w,size.h);
+ if(d.large||d.macro){
+  drawSupportPiece(ctx,d,s,-size.w*.40,1,.28,7);
+  drawSupportPiece(ctx,d,s,size.w*.33,2,.24,8);
+  if(d.macro){
+   drawSupportPiece(ctx,d,s,-size.w*.12,3,.20,17,.96);
+   drawSupportPiece(ctx,d,s,size.w*.08,4,.17,18,.90);
+  }
+ }
+ drawBurial(ctx,d,s,size);
+ ctx.restore();
+}
+
+let last={};
+let selectedRock=null;
+function drawLegacy(ctx,d){const img=oldImages[d.material];const size=17+d.grade*21;
+ if(img&&img.complete&&img.naturalWidth){ctx.drawImage(img,Math.round(d.x-size*.50),Math.round(d.y-size*.83),Math.round(size),Math.round(size));}
+ else{ctx.fillStyle='#8b8064';ctx.beginPath();ctx.ellipse(d.x,d.y-8,10,7,0,0,Math.PI*2);ctx.fill();}}
+function updatePalettePreview(s){
+ const material=s.material==='mixed'?'pedra':(s.material==='gemas'?'rubi':(s.material==='quartzo'?'quartzo_hialino':s.material));
+ const geology=s.geology==='mixed'?'granite':s.geology;
+ const geo=geoColor({material,geology},s);
+ const block=Q('palettePreview');if(!block)return;
+ block.replaceChildren();
+ for(const hex of geo.colors){
+   const el=document.createElement('span');el.className='palette-color';el.style.backgroundColor=hex;el.title=hex;block.append(el);
+ }
+ const label=document.createElement('small');label.textContent=(s.paletteMode==='v14'?'Antiga v1.4':'Paleta de referência')+' · '+(oreColors[material]?.label||material);
+ block.append(label);
+}
+function render(updateSamples=true){const s=settings();if(!s.seed)s.seed=1947;updatePalettePreview(s);
+ for(const el of ['burial','density','fractures','moss','mineralization','macroRate','surfaceDetail','erosion','weathering','geologicalAge','coalPurity','coalDepth'])Q(el+'Val').textContent=Math.round(s[el]*100)+'%';
+ const world=depositData(s),deposits=world.deposits,terrainGrid=makeTerrainGrid(s);
+ const bgBefore=makeGround(s,deposits,false),bgAfter=makeGround(s,deposits,true);
+ const cb=Q('before').getContext('2d'),ca=Q('after').getContext('2d');cb.imageSmoothingEnabled=false;ca.imageSmoothingEnabled=false;
+ cb.clearRect(0,0,W,H);cb.drawImage(bgBefore,0,0);ca.clearRect(0,0,W,H);ca.drawImage(bgAfter,0,0);
+ if(s.autoTile){drawAutoTerrain(ca,terrainGrid,s);drawAutoTerrain(cb,terrainGrid,s);}
+ for(const d of deposits){drawLegacy(cb,d);drawOutcrop(ca,d,s);}
+ if(s.showGrid)drawOccupancyGrid(ca,world.grid);
+ Q('cnt').textContent=deposits.length;Q('seedout').textContent=s.seed;
+ const used=world.grid.owner.filter(id=>id>0).length;
+ Q('usedCells').textContent=used+'/'+world.grid.owner.length;
+ Q('multiCount').textContent=deposits.filter(d=>d.tilesW>1||d.tilesH>1).length;
+ Q('rareCount').textContent=deposits.filter(d=>d.rarity==='rare').length;
+ Q('epicCount').textContent=deposits.filter(d=>d.rarity==='epic').length;
+ Q('gridStats').textContent=GRID_W+'×'+GRID_H+' células de '+TILE+' px • '+used+' reservadas • '+deposits.length+' rochas • '+terrainGrid.masks.filter(v=>v>=0).length+' tiles rochosos.';
+ const atlas=makeTileAtlas(s);const atlasCtx=Q('tileAtlas').getContext('2d');atlasCtx.imageSmoothingEnabled=false;atlasCtx.clearRect(0,0,64,64);atlasCtx.drawImage(atlas,0,0);
+ last={s,deposits,grid:world.grid,terrainGrid,attempts:world.attempts,target:world.target};
+ if(updateSamples){selectedRock=null;samples(s);}updatePixelPreview();
+}
+function samples(s){let g=Q('samples');g.innerHTML='';
+ let cardId=0;
+ for(const [i,type] of shapeFamilies.entries()){
+  const material=resolveMaterial(s.material==='mixed'?keys[i%keys.length]:s.material,rng(hash(i,s.seed,991)));
+  for(let variant=0;variant<VARIANT_COUNT;variant++){
+   const elem=document.createElement('div');elem.className='sample';
+   const c=document.createElement('canvas');c.width=76;c.height=72;
+   const h=document.createElement('h3');h.textContent=shapeLabels[type]+' · V'+(variant+1);
+   const meta=document.createElement('b');meta.textContent=variantNotes[type][variant];
+   const p=document.createElement('p');p.textContent=(type==='vein'?'veio mineral':type==='cluster'?'múltiplos blocos':oreColors[material].label);
+   const cx=c.getContext('2d');cx.imageSmoothingEnabled=false;
+   cx.drawImage(makeSampleTerrain(s,i*19+variant),0,0);
+   const d={id:++cardId,rarity:s.rarity==='mixed'?(variant===4?'epic':(variant===3?'rare':'normal')):s.rarity,x:38,y:61,size:18,forma:type,family:type,variant,heightBias:(familyScale[type]||[1,1])[1],seed:hash(i,13+variant,s.seed),material,geology:s.geology==='mixed'?biomeProfiles[s.biome].geologies[(i+variant)%biomeProfiles[s.biome].geologies.length][0]:s.geology,grade:(type==='vein'?0.82:(type==='cluster'?0.70:0.60))+variant*0.03};
+   const sprite=rockSprite(d,s),size=outcropSize(d),scale=Math.min(61/size.w,58/size.h);
+   const sw=Math.round(size.w*scale),sh=Math.round(size.h*scale);
+   cx.drawImage(sprite,Math.round(38-sw/2),Math.round(61-sh*.87),sw,sh);
+   elem.addEventListener('click',()=>{
+    selectedRock=d;g.querySelectorAll('.sample').forEach(x=>x.classList.remove('selected'));elem.classList.add('selected');
+    Q('focusline').textContent='Selecionado: '+shapeLabels[type]+' · variante '+(variant+1)+' · '+rockGeologies[d.geology].label+' — exportação nativa ou 512 px.';updatePixelPreview();
+   });
+   const rar=document.createElement('b');rar.textContent=rarityOf(d).label;
+   elem.append(c,h,meta,p,rar);g.append(elem);
+  }
+ }}
+function makeSampleTerrain(s,salt){const c=document.createElement('canvas');c.width=76;c.height=72;const x=c.getContext('2d');const bg=palettes[s.terrain].soil,halo=palettes[s.terrain].halo;
+ x.fillStyle=bg[1];x.fillRect(0,0,76,72);
+ for(let y=0;y<72;y+=2)for(let xx=0;xx<76;xx+=2){const v=fbm(xx/22,y/22,s.seed+salt);x.fillStyle=bg[v>.62?4:v>.5?2:v<.35?3:0];x.fillRect(xx,y,2,2);}
+ const r=rng(hash(s.seed,salt,901));
+ for(let i=0;i<28;i++){const px=1+Math.floor(r()*74),py=1+Math.floor(r()*70);x.fillStyle=i%3===0?halo[0]:(i%3===1?bg[0]:halo[2]);x.fillRect(px,py,r()>.82?2:1,1);} 
+ if(s.terrain==='grass'){for(let i=0;i<10;i++){const gx=2+Math.floor(r()*70),gy=4+Math.floor(r()*64);x.fillStyle=bg[3];x.fillRect(gx,gy,1,2);if(r()>.45)x.fillRect(gx+1,gy+1,1,1);}}
+ if(s.terrain==='dry'||s.terrain==='coast'){for(let i=0;i<10;i++){const sx=2+Math.floor(r()*70),sy=2+Math.floor(r()*68);x.fillStyle=bg[4];x.fillRect(sx,sy,2,1);}}
+ return c}
+for(const id of ['biome','material','rarity','forma','terrain','geology','paletteMode','burial','density','fractures','moss','mineralization','macroRate','pixelStyle','pixelSize','surfaceDetail','erosion','weathering','geologicalAge','coalPurity','coalDepth','autoTile','showGrid'])Q(id).addEventListener('input',()=>render());
+Q('seed').addEventListener('change',()=>render());Q('regen').addEventListener('click',()=>render());
+Q('newseed').addEventListener('click',()=>{Q('seed').value=(Math.floor(Math.random()*2147483645)+1).toString();render()});
+function download(blob,name){const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
+Q('png').addEventListener('click',()=>Q('after').toBlob(b=>b&&download(b,'asterra_mapa_mineral_'+last.s.seed+'.png'),'image/png'));
+Q('sprite').addEventListener('click',()=>{const d=selectedRock||last.deposits[0];if(!d)return;const source=rockSprite(d,last.s),output=document.createElement('canvas');output.width=512;output.height=512;const cx=output.getContext('2d');cx.imageSmoothingEnabled=false;const scale=Math.min(480/source.width,480/source.height);const w=Math.round(source.width*scale),h=Math.round(source.height*scale);cx.drawImage(source,Math.round((512-w)/2),Math.round((512-h)/2),w,h);output.toBlob(blob=>blob&&download(blob,'asterra_rocha_v23_'+(d.id||'amostra')+'_'+(d.geology||'granite')+'_512.png'),'image/png');});
+Q('json').addEventListener('click',()=>{
+ const result={schema:'asterra-rocks-world/1.0',engine:'ASTERRA Rocks v2.3',rarityProfiles,seed:last.s.seed,
+  world:{pixelWidth:W,pixelHeight:H,tileSize:TILE,gridWidth:GRID_W,gridHeight:GRID_H,origin:'top-left',cellCoordinates:'x-right/y-down'},
+  parameters:last.s,biome:biomeProfiles[last.s.biome].label,
+  palette:{mode:last.s.paletteMode,source:'Pacote_Rochas_e_Minerios_Asterra(2).zip · PNG_128px',referenceColors:sourceRockPalettes,geologyShifts:{granite:[0,0,0],sandstone:[8,5,0],basalt:[-9,-8,-7],slate:[-4,-2,0],limestone:[8,7,5],tuff:[-6,-5,-4]}},
+  controls:{erosion:last.s.erosion,weathering:last.s.weathering,geologicalAge:last.s.geologicalAge,coalPurity:last.s.coalPurity,coalDepth:last.s.coalDepth},
+  collision:{blockedByDeposit:last.grid.owner},terrain:{autotile:'NESW/4bit',maskBits:last.terrainGrid.maskBits,masks:last.terrainGrid.masks,rocky:last.terrainGrid.rocky},
+  deposits:last.deposits.map(d=>({...d,footprint:d.footprint,cells:d.cells,blocksMovement:true})),
+  tileset:{png:'asterra_autotile_16_'+last.s.seed+'.png',tileWidth:16,tileHeight:16,columns:4,frames:16,maskToFrame:'frame=mask',bitOrder:'N=1,E=2,S=4,W=8'}
+ };
+ download(new Blob([JSON.stringify(result,null,2)],{type:'application/json'}),'asterra_mundo_v23_'+last.s.seed+'.json');
+});
+Q('tilePNG').addEventListener('click',()=>makeTileAtlas(last.s).toBlob(b=>b&&download(b,'asterra_autotile_16_'+last.s.seed+'.png'),'image/png'));
+
+Q('native').addEventListener('click',()=>{
+ const d=selectedRock||last.deposits[0];if(!d)return;
+ const high=rockSprite(d,last.s),sprite=high.nativePixelArt||high;
+ sprite.toBlob(blob=>blob&&download(blob,'asterra_rocha_v23_'+(d.id||'amostra')+'_nativo_'+sprite.width+'x'+sprite.height+'.png'),'image/png');
+});
+function updatePixelPreview(){
+ const d=selectedRock||(last.deposits&&last.deposits[0]);if(!d || !last.s)return;
+ const sprite=rockSprite(d,last.s),native=sprite.nativePixelArt||sprite;
+ const canvas=Q('pixelPreview');if(!canvas)return;
+ const c=canvas.getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,canvas.width,canvas.height);
+ const scale=Math.min(222/native.width,222/native.height),w=Math.round(native.width*scale),h=Math.round(native.height*scale);
+ c.drawImage(native,Math.round((256-w)/2),Math.round((256-h)/2),w,h);
+ Q('pixelPreviewName').textContent=(shapeLabels[d.family||d.forma]||'Rocha')+' · '+(rockGeologies[d.geology]?.label||'Granito')+' · variação '+((d.variant||0)+1);
+ Q('pixelPreviewMeta').textContent=native.width+'×'+native.height+' px nativos · '+sprite.width+'×'+sprite.height+' px interno · '+rarityOf(d).label+' · seed '+d.seed+' · estilo '+last.s.pixelStyle;
+}
+Q('after').addEventListener('click',e=>{const rc=e.currentTarget.getBoundingClientRect();const x=(e.clientX-rc.left)/rc.width*W,y=(e.clientY-rc.top)/rc.height*H;
+ const closest=last.deposits.slice().sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];if(closest && Math.hypot(closest.x-x,closest.y-y)<Math.max(20,outcropSize(closest).w*.51))selectedRock=closest;
+ Q('focusline').textContent=closest&&Math.hypot(closest.x-x,closest.y-y)<17?`Ocorrência #${closest.id} · ${rarityOf(closest).label} · ${oreColors[closest.material].label} · família ${shapeLabels[closest.family||closest.forma]||closest.forma} · variação ${1+(closest.variant||0)} (${variantNotes[closest.family||closest.forma][closest.variant||0]}) · porte ${sizeLabel(closest)} · footprint ${closest.tilesW||1}x${closest.tilesH||1} células, origem (${closest.footprint?.x},${closest.footprint?.y}) · riqueza ${Math.round(closest.grade*100)}% (${oreTier(closest.grade)}) · geologia ${rockGeologies[closest.geology].label} · posição (${closest.x}, ${closest.y})`:'Nenhuma ocorrência nessa posição. Clique mais perto de uma rocha.';
+ updatePixelPreview();
+});
+render();
+</script></body></html>

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PerformanceTracker } from './client/performance-metrics';
 import { StepDriver, type DriverState } from './client/step-driver';
 import { SimulationClient, type WorkerPort } from './client/worker-transport';
 import { logicalStateString } from './core/canonical-json';
@@ -37,6 +38,20 @@ const speedSelect = requiredElement<HTMLSelectElement>('speed-select');
 const saveButton = requiredElement<HTMLButtonElement>('save-button');
 const loadButton = requiredElement<HTMLButtonElement>('load-button');
 const loadInput = requiredElement<HTMLInputElement>('load-input');
+const performanceToggle = requiredElement<HTMLButtonElement>('performance-toggle');
+const performancePanel = requiredElement<HTMLElement>('performance-panel');
+const performanceFpsOutput = requiredElement<HTMLElement>('performance-fps');
+const performancePhaserFpsOutput = requiredElement<HTMLElement>('performance-phaser-fps');
+const performanceFrameOutput = requiredElement<HTMLElement>('performance-frame');
+const performanceRenderOutput = requiredElement<HTMLElement>('performance-render');
+const performanceLayersOutput = requiredElement<HTMLElement>('performance-layers');
+const performanceWaterOutput = requiredElement<HTMLElement>('performance-water-motion');
+const performanceWorkerOutput = requiredElement<HTMLElement>('performance-worker');
+const performanceTicksOutput = requiredElement<HTMLElement>('performance-ticks');
+const performanceCellsOutput = requiredElement<HTMLElement>('performance-cells');
+const performanceMemoryOutput = requiredElement<HTMLElement>('performance-memory');
+const performanceMemoryTotalOutput = requiredElement<HTMLElement>('performance-memory-total');
+const performanceMemoryLimitOutput = requiredElement<HTMLElement>('performance-memory-limit');
 const tickOutput = requiredElement<HTMLElement>('tick-value');
 const seedOutput = requiredElement<HTMLElement>('seed-value');
 const versionOutput = requiredElement<HTMLElement>('version-value');
@@ -49,6 +64,22 @@ const mineralsOutput = requiredElement<HTMLElement>('minerals-reading');
 const cellInfoOutput = requiredElement<HTMLElement>('cell-info');
 let currentNaturalWorld: NaturalWorldEntity | null = null;
 let selectedCellIndex: number | null = null;
+const performanceTracker = new PerformanceTracker();
+let performanceEnabled = false;
+let performanceFrameHandle: number | null = null;
+let lastPerformancePaintAt = 0;
+let performanceRenderStartedAt: number | null = null;
+let performanceSceneConfigured = false;
+
+game.events.on('prerender', () => {
+  if (performanceEnabled) performanceRenderStartedAt = now();
+});
+game.events.on('postrender', () => {
+  if (!performanceEnabled || performanceRenderStartedAt === null) return;
+  performanceTracker.recordRender(Math.max(0, now() - performanceRenderStartedAt));
+  performanceTracker.recordPhaserFps(game.loop.actualFps);
+  performanceRenderStartedAt = null;
+});
 
 seedInput.value = createRandomSeed();
 statusOutput.value = 'Runtime pronto · mundo pausado';
@@ -75,6 +106,7 @@ speedSelect.addEventListener('change', () => {
 saveButton.addEventListener('click', () => void exportSave());
 loadButton.addEventListener('click', () => loadInput.click());
 loadInput.addEventListener('change', () => void importSave());
+performanceToggle.addEventListener('click', () => setPerformanceEnabled(!performanceEnabled));
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-map-layer]')) {
   button.addEventListener('click', () => {
     const layer = button.dataset['mapLayer'];
@@ -123,7 +155,9 @@ async function stepOnce(): Promise<void> {
   await pauseDriver();
   stepButton.disabled = true;
   try {
+    const startedAt = performanceEnabled ? now() : null;
     const advanced = await client.step(1);
+    if (startedAt !== null && performanceEnabled) performanceTracker.recordWorker(Math.max(0, now() - startedAt), 1);
     const snapshot = await client.getSnapshot();
     updateSnapshot(snapshot.snapshot, advanced.worldId);
   } catch (error) {
@@ -177,6 +211,7 @@ function updateSnapshot(snapshot: WorldState, _worldId: string): void {
   seedOutput.textContent = snapshot.seed;
   versionOutput.textContent = snapshot.simulationVersion;
   currentNaturalWorld = snapshot.scenarioId === NATURAL_SCENARIO_ID ? getNaturalWorld(snapshot) : null;
+  performanceTracker.setCells(currentNaturalWorld?.cells.length ?? 0);
   const scene = getFoundationScene();
   scene?.showWorld(currentNaturalWorld, `${snapshot.scenarioId}:${snapshot.scenarioVersion}:${snapshot.seed}`);
   scene?.setOnCellSelected((index) => {
@@ -192,12 +227,89 @@ function updateSnapshot(snapshot: WorldState, _worldId: string): void {
         const current = await client.getSnapshot();
         updateSnapshot(current.snapshot, response.worldId);
       },
+      onStepTiming: ({ elapsedMs, ticks }) => {
+        if (performanceEnabled) performanceTracker.recordWorker(elapsedMs, ticks);
+      },
       onError: (error) => {
         showError(error);
         setStatus('Simulação pausada por erro');
       },
     });
   }
+}
+
+function setPerformanceEnabled(enabled: boolean): void {
+  performanceEnabled = enabled;
+  performanceToggle.setAttribute('aria-pressed', String(enabled));
+  const label = enabled ? 'Ocultar métricas de desempenho' : 'Mostrar métricas de desempenho';
+  performanceToggle.setAttribute('aria-label', label);
+  performanceToggle.title = label;
+  performancePanel.hidden = !enabled;
+  if (!enabled) {
+    if (performanceFrameHandle !== null) cancelAnimationFrame(performanceFrameHandle);
+    performanceFrameHandle = null;
+    performanceTracker.reset();
+    lastPerformancePaintAt = 0;
+    updatePerformancePanel();
+    return;
+  }
+  performanceTracker.reset();
+  performanceTracker.setCells(currentNaturalWorld?.cells.length ?? 0);
+  updatePerformancePanel();
+  schedulePerformanceFrame();
+}
+
+function schedulePerformanceFrame(): void {
+  if (!performanceEnabled || performanceFrameHandle !== null) return;
+  performanceFrameHandle = requestAnimationFrame((timestamp) => {
+    performanceFrameHandle = null;
+    if (!performanceEnabled) return;
+    performanceTracker.recordFrame(timestamp);
+    if (timestamp - lastPerformancePaintAt >= 250) {
+      updatePerformancePanel();
+      lastPerformancePaintAt = timestamp;
+    }
+    schedulePerformanceFrame();
+  });
+}
+
+function updatePerformancePanel(): void {
+  const metrics = performanceTracker.read();
+  performanceFpsOutput.textContent = metric(metrics.fps, ' fps');
+  performancePhaserFpsOutput.textContent = metric(metrics.phaserFps, ' fps');
+  performanceFrameOutput.textContent = metric(metrics.frameMs, ' ms');
+  performanceRenderOutput.textContent = metric(metrics.renderMs, ' ms');
+  performanceLayersOutput.textContent = metric(metrics.dynamicLayersMs, ' ms');
+  performanceWaterOutput.textContent = metric(metrics.waterMotionMs, ' ms');
+  performanceWorkerOutput.textContent = metric(metrics.workerMs, ' ms');
+  performanceTicksOutput.textContent = metrics.ticksPerBatch === null ? '—' : `${metrics.ticksPerBatch.toLocaleString('pt-BR')} ticks`;
+  performanceCellsOutput.textContent = metrics.cells.toLocaleString('pt-BR');
+  const memory = readMemoryStats();
+  performanceTracker.setMemory(memory.usedMb, memory.totalMb, memory.limitMb);
+  performanceMemoryOutput.textContent = metric(memory.usedMb, ' MB');
+  performanceMemoryTotalOutput.textContent = metric(memory.totalMb, ' MB');
+  performanceMemoryLimitOutput.textContent = metric(memory.limitMb, ' MB');
+}
+
+function readMemoryStats(): { usedMb: number | null; totalMb: number | null; limitMb: number | null } {
+  const performanceApi = globalThis.performance as (Performance & {
+    memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+  }) | undefined;
+  const memory = performanceApi?.memory;
+  if (memory === undefined) return { usedMb: null, totalMb: null, limitMb: null };
+  return {
+    usedMb: bytesToMb(memory.usedJSHeapSize),
+    totalMb: bytesToMb(memory.totalJSHeapSize),
+    limitMb: bytesToMb(memory.jsHeapSizeLimit),
+  };
+}
+
+function bytesToMb(bytes: number): number | null {
+  return Number.isFinite(bytes) && bytes >= 0 ? bytes / (1024 * 1024) : null;
+}
+
+function metric(value: number | null, suffix: string): string {
+  return value === null ? '—' : `${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}${suffix}`;
 }
 
 function updateWorldReadings(natural: NaturalWorldEntity | null, snapshot: WorldState): void {
@@ -295,6 +407,10 @@ function createRandomSeed(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function now(): number {
+  return globalThis.performance?.now() ?? Date.now();
+}
+
 function requiredElement<Type extends HTMLElement>(id: string): Type {
   const element = document.getElementById(id);
   if (element === null) throw new Error(`Elemento obrigatório não encontrado: ${id}.`);
@@ -303,7 +419,19 @@ function requiredElement<Type extends HTMLElement>(id: string): Type {
 
 function getFoundationScene(): FoundationScene | null {
   if (!game.scene.isActive('foundation')) return null;
-  return game.scene.getScene('foundation') as FoundationScene;
+  const scene = game.scene.getScene('foundation') as FoundationScene;
+  if (!performanceSceneConfigured) {
+    scene.setPerformanceHooks({
+      onDynamicLayersMs: (elapsedMs) => {
+        if (performanceEnabled) performanceTracker.recordDynamicLayers(elapsedMs);
+      },
+      onWaterMotionMs: (elapsedMs) => {
+        if (performanceEnabled) performanceTracker.recordWaterMotion(elapsedMs);
+      },
+    });
+    performanceSceneConfigured = true;
+  }
+  return scene;
 }
 
 if (import.meta.env.DEV) {

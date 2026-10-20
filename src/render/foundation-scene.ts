@@ -1,16 +1,16 @@
 import Phaser from 'phaser';
 import treeAtlasUrl from '../../data/assets/tree/Spritesheets/arvores_atlas_128.png?url';
-import mineralAtlasUrl from '../../data/assets/rocks/Spritesheets/atlas_128.png?url';
-import mineralAtlasJsonUrl from '../../data/assets/rocks/Documentacao/atlas_128_phaser.json?url';
 import type { NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, PlantSpeciesId, TreeSpeciesId } from '../core/natural/types';
 import { NATURAL_SCENARIO } from '../core/natural/parameters';
+import { drawProceduralRock, generateProceduralRocks, ROCK_NATIVE_CELL_SIZE, treeBlockingCellsForRocks } from './procedural-rocks';
+import { TERRAIN_SURFACE_COLORS, terrainSurface, type TerrainSurface } from './terrain-palette';
+import { worldObjectDepth } from './z-order';
 
 const CELL_SIZE = 40;
 const MIN_ZOOM = 0.38;
 const MAX_ZOOM = 1.55;
 const TERRAIN_TEXTURE_KEY = 'natural-terrain-map';
 const TREE_ATLAS_KEY = 'natural-tree-atlas';
-const MINERAL_ATLAS_KEY = 'natural-mineral-atlas';
 const WATER_THRESHOLD_MM = 10;
 const WATER_EDGE_INSET = 4;
 const WATER_CORNER_RADIUS = 9;
@@ -27,12 +27,16 @@ const WATER_DEPTH_STOPS = [
 const TREE_MATURE_WIDTH_CELLS = 4.4;
 type MapLayers = { relief: boolean; water: boolean; vegetation: boolean; minerals: boolean; geology: boolean };
 type TreeSprites = Record<TreeSpeciesId, Phaser.GameObjects.Image | null>;
-type TerrainSurface = 'loam' | 'sand' | 'clay' | 'rock' | 'upland' | 'highland' | 'wetland' | 'woodland' | 'meadow' | 'dryland' | 'desert';
 type TilePoint = { x: number; y: number };
+export type FoundationPerformanceHooks = {
+  onDynamicLayersMs?: (elapsedMs: number) => void;
+  onWaterMotionMs?: (elapsedMs: number) => void;
+};
 
 export class FoundationScene extends Phaser.Scene {
   private terrainImage: Phaser.GameObjects.Image | null = null;
   private waterGraphics: Phaser.GameObjects.Graphics | null = null;
+  private waterMotionGraphics: Phaser.GameObjects.Graphics | null = null;
   private plantGraphics: Phaser.GameObjects.Graphics | null = null;
   private treeShadowGraphics: Phaser.GameObjects.Graphics | null = null;
   private reliefGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -43,12 +47,17 @@ export class FoundationScene extends Phaser.Scene {
   private reliefWorldKey: string | null = null;
   private treeSprites: TreeSprites[] = [];
   private mineralSprites: Phaser.GameObjects.Image[] = [];
+  private mineralTextureKeys: string[] = [];
   private mineralSpritesWorldKey: string | null = null;
+  private rockTreeBlockedCells = new Set<number>();
   private layers: MapLayers = { relief: false, water: true, vegetation: true, minerals: true, geology: false };
   private selectedCellIndex: number | null = null;
   private onCellSelected: (index: number | null) => void = () => undefined;
   private dragStart: { x: number; y: number; scrollX: number; scrollY: number; moved: boolean } | null = null;
   private cameraManuallyAdjusted = false;
+  private waterAnimationClockMs = 0;
+  private waterAnimationBucket = -1;
+  private performanceHooks: FoundationPerformanceHooks = {};
 
   constructor() {
     super('foundation');
@@ -56,13 +65,13 @@ export class FoundationScene extends Phaser.Scene {
 
   preload(): void {
     this.load.spritesheet(TREE_ATLAS_KEY, treeAtlasUrl, { frameWidth: 128, frameHeight: 128 });
-    this.load.atlas(MINERAL_ATLAS_KEY, mineralAtlasUrl, mineralAtlasJsonUrl);
   }
 
   create(): void {
     this.cameras.main.setBackgroundColor('#24392a');
     this.terrainImage = null;
     this.waterGraphics = this.add.graphics().setDepth(2.25);
+    this.waterMotionGraphics = this.add.graphics().setDepth(2.32);
     this.plantGraphics = this.add.graphics().setDepth(2);
     this.treeShadowGraphics = this.add.graphics().setDepth(2.5);
     this.reliefGraphics = this.add.graphics().setDepth(0.55);
@@ -76,10 +85,20 @@ export class FoundationScene extends Phaser.Scene {
     this.input.on('wheel', this.zoomAtPointer, this);
   }
 
+  override update(_time: number, delta: number): void {
+    if (this.naturalWorld === null || this.waterMotionGraphics === null) return;
+    this.waterAnimationClockMs = (this.waterAnimationClockMs + delta) % 8_000;
+    const bucket = Math.floor(this.waterAnimationClockMs / 120);
+    if (bucket === this.waterAnimationBucket) return;
+    this.waterAnimationBucket = bucket;
+    this.drawWaterMotion();
+  }
+
   showWorld(world: NaturalWorldEntity | null, worldKey = ''): void {
     if (world === null) {
       this.naturalWorld = null;
       this.mapKey = null;
+      this.waterMotionGraphics?.clear();
       this.clearMap();
       return;
     }
@@ -103,6 +122,10 @@ export class FoundationScene extends Phaser.Scene {
 
   setOnCellSelected(handler: (index: number | null) => void): void {
     this.onCellSelected = handler;
+  }
+
+  setPerformanceHooks(hooks: FoundationPerformanceHooks): void {
+    this.performanceHooks = hooks;
   }
 
   setCameraView(x: number, y: number, zoom: number): void {
@@ -138,11 +161,17 @@ export class FoundationScene extends Phaser.Scene {
   private updateDynamicLayers(): void {
     const world = this.naturalWorld;
     if (world === null) return;
-    this.drawRelief();
-    this.drawGeologyPotential();
-    this.drawWater();
-    this.drawVegetation();
-    this.drawMinerals();
+    const startedAt = this.performanceHooks.onDynamicLayersMs === undefined ? null : renderNow();
+    try {
+      this.drawRelief();
+      this.drawGeologyPotential();
+      this.drawWater();
+      this.drawWaterMotion();
+      this.drawMinerals();
+      this.drawVegetation();
+    } finally {
+      if (startedAt !== null) this.performanceHooks.onDynamicLayersMs?.(Math.max(0, renderNow() - startedAt));
+    }
   }
 
   private drawRelief(): void {
@@ -228,8 +257,53 @@ export class FoundationScene extends Phaser.Scene {
         }
       }
     }
+    drawDryLakeBeds(graphics, world);
     drawLakeSurfaces(graphics, lakeCells, world);
+    drawRiverBeds(graphics, world);
     drawRiverNetwork(graphics, world);
+  }
+
+  private drawWaterMotion(): void {
+    const world = this.naturalWorld;
+    const graphics = this.waterMotionGraphics;
+    if (world === null || graphics === null) return;
+    const startedAt = this.performanceHooks.onWaterMotionMs === undefined ? null : renderNow();
+    try {
+      graphics.clear();
+      if (!this.layers.water) return;
+      const phase = this.waterAnimationClockMs / 8_000;
+      const seed = hashText(world.id);
+      for (const cell of world.cells) {
+        if (cell.terrain.waterBody === 'river' && isActiveRiverCell(cell)) {
+          if (cell.index % 2 !== 0) continue;
+          const downstreamIndex = cell.water.lastFlowTo ?? cell.terrain.flowTo;
+          const downstream = downstreamIndex >= 0 ? world.cells[downstreamIndex] : undefined;
+          if (downstream === undefined || downstream.terrain.waterBody !== 'river') continue;
+          const startX = (cell.x + 0.5) * CELL_SIZE;
+          const startY = (cell.y + 0.5) * CELL_SIZE;
+          const endX = (downstream.x + 0.5) * CELL_SIZE;
+          const endY = (downstream.y + 0.5) * CELL_SIZE;
+          const offset = coordinateNoise(seed, cell.x, cell.y, 1_203);
+          const progress = (phase * 0.9 + offset) % 1;
+          const x = startX + (endX - startX) * progress;
+          const y = startY + (endY - startY) * progress;
+          const length = 3.5 + coordinateNoise(seed, cell.x, cell.y, 1_207) * 3;
+          const directionLength = Math.max(1, Math.hypot(endX - startX, endY - startY));
+          const dx = (endX - startX) / directionLength;
+          const dy = (endY - startY) / directionLength;
+          graphics.lineStyle(1.35, 0xd1e6d8, 0.24);
+          graphics.lineBetween(x - dx * length, y - dy * length, x + dx * length, y + dy * length);
+        } else if (cell.terrain.waterBody === 'lake' && cell.water.surfaceMm > WATER_THRESHOLD_MM && cell.index % 19 === 0) {
+          const offset = coordinateNoise(seed, cell.x, cell.y, 1_231);
+          const x = cell.x * CELL_SIZE + 8 + ((offset + phase * 0.7) % 1) * 20;
+          const y = cell.y * CELL_SIZE + 10 + ((offset * 0.6 + phase * 0.35) % 1) * 18;
+          graphics.lineStyle(1.1, 0xd1e6d8, 0.18);
+          graphics.lineBetween(x, y, x + 5, y);
+        }
+      }
+    } finally {
+      if (startedAt !== null) this.performanceHooks.onWaterMotionMs?.(Math.max(0, renderNow() - startedAt));
+    }
   }
 
   private drawVegetation(): void {
@@ -239,12 +313,11 @@ export class FoundationScene extends Phaser.Scene {
     graphics.clear();
     const hasGeomorphology = world.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
     this.treeShadowGraphics?.clear();
-    this.reliefGraphics?.clear();
-    this.reliefWorldKey = null;
     for (const cell of world.cells) {
       const waterBody = cell.terrain.waterBody ?? 'none';
-      const treesAllowed = waterBody === 'none';
-      const groundcoverAllowed = treesAllowed || (hasGeomorphology && cell.water.surfaceMm < 8);
+      const rockBlocksCell = this.rockTreeBlockedCells.has(cell.index);
+      const treesAllowed = waterBody === 'none' && !cell.terrain.exposedRock && !rockBlocksCell;
+      const groundcoverAllowed = !rockBlocksCell && (treesAllowed || (hasGeomorphology && cell.water.surfaceMm < 8));
       const sprites = this.treeSprites[cell.index];
       const trees = new Map<TreeSpeciesId, NaturalWorldCellState['plants'][number]>();
       for (const plant of cell.plants) if (isTreeSpecies(plant.speciesId)) trees.set(plant.speciesId, plant);
@@ -303,7 +376,7 @@ export class FoundationScene extends Phaser.Scene {
     // Atlas growth frames already encode the tree's changing size; keep one scale
     // so saplings stay small and mature canopies occupy several map cells.
     const scale = CELL_SIZE * TREE_MATURE_WIDTH_CELLS / 128;
-    const depth = 3 + cell.y / Math.max(1, world.height);
+    const depth = worldObjectDepth(cell.y + 1, world.height);
     sprite.setPosition((cell.x + 0.5) * CELL_SIZE, (cell.y + 1) * CELL_SIZE)
       .setDepth(depth)
       .setFrame(frame)
@@ -339,116 +412,21 @@ export class FoundationScene extends Phaser.Scene {
   private buildMineralFormations(world: NaturalWorldEntity, visualSeed: number): void {
     this.destroyMineralSprites();
     this.mineralSpritesWorldKey = this.mapKey ?? 'natural-world';
-    const visibleOreByCell = new Map<number, NaturalWorldCellState['minerals'][number]>();
-    for (const cell of world.cells) {
-      const deposits = cell.minerals.filter((deposit) => deposit.exposed && deposit.reserveKg > 0 && deposit.resourceId !== 'stone');
-      if (deposits.length === 0) continue;
-      visibleOreByCell.set(cell.index, deposits.reduce((best, candidate) => mineralVisualRank(candidate) > mineralVisualRank(best) ? candidate : best));
-    }
-
-    const unvisited = new Set(visibleOreByCell.keys());
-    const components: Array<Array<{ cell: NaturalWorldCellState; deposit: NaturalWorldCellState['minerals'][number] }>> = [];
-    while (unvisited.size > 0) {
-      const firstIndex = Math.min(...unvisited);
-      const firstCell = world.cells[firstIndex];
-      const firstDeposit = visibleOreByCell.get(firstIndex);
-      if (firstCell === undefined || firstDeposit === undefined) { unvisited.delete(firstIndex); continue; }
-      const component: Array<{ cell: NaturalWorldCellState; deposit: NaturalWorldCellState['minerals'][number] }> = [];
-      const queue = [firstIndex];
-      unvisited.delete(firstIndex);
-      for (let cursor = 0; cursor < queue.length; cursor += 1) {
-        const index = queue[cursor]!;
-        const cell = world.cells[index];
-        const deposit = visibleOreByCell.get(index);
-        if (cell === undefined || deposit === undefined) continue;
-        component.push({ cell, deposit });
-        for (let dy = -1; dy <= 1; dy += 1) {
-          for (let dx = -1; dx <= 1; dx += 1) {
-            if (dx === 0 && dy === 0) continue;
-            const neighborX = cell.x + dx;
-            const neighborY = cell.y + dy;
-            if (neighborX < 0 || neighborX >= world.width || neighborY < 0 || neighborY >= world.height) continue;
-            const neighborIndex = neighborY * world.width + neighborX;
-            const neighborDeposit = visibleOreByCell.get(neighborIndex);
-            if (neighborDeposit?.resourceId !== deposit.resourceId || !unvisited.has(neighborIndex)) continue;
-            unvisited.delete(neighborIndex);
-            queue.push(neighborIndex);
-          }
-        }
-      }
-      components.push(component);
-    }
-
-    for (const component of components) this.drawOreFormation(component, visualSeed);
-    this.drawCommonStone(world, visualSeed, visibleOreByCell);
-  }
-
-  private drawOreFormation(
-    component: Array<{ cell: NaturalWorldCellState; deposit: NaturalWorldCellState['minerals'][number] }>,
-    visualSeed: number,
-  ): void {
-    if (component.length === 0) return;
-    const resourceId = component[0]!.deposit.resourceId;
-    if (resourceId === 'stone') return;
-    const material = MINERAL_ATLAS_MATERIAL[resourceId];
-    const ordered = [...component].sort((left, right) => mineralVisualRank(right.deposit) - mineralVisualRank(left.deposit) || left.cell.index - right.cell.index);
-    const coreCount = Math.min(8, Math.max(1, Math.ceil(component.length / 14)));
-    const minimumCoreSpacing = Math.max(2.4, Math.sqrt(component.length / coreCount) * 0.48);
-    const cores: typeof ordered = [];
-    for (const candidate of ordered) {
-      if (cores.every((core) => Math.hypot(candidate.cell.x - core.cell.x, candidate.cell.y - core.cell.y) >= minimumCoreSpacing)) cores.push(candidate);
-      if (cores.length >= coreCount) break;
-    }
-    if (cores.length === 0) cores.push(ordered[0]!);
-    for (const core of cores) {
-      const sizeClass = core.deposit.sizeClass ?? sizeClassFromGrade(core.deposit.grade);
-      const componentScale = clamp(0.92 + Math.sqrt(component.length) * 0.035, 0.95, 1.32);
-      this.addMineralSprite(core.cell, material, sizeClass, visualSeed, 101 + hashText(resourceId), componentScale);
-    }
-
-    const fringeCount = Math.min(10, Math.floor(component.length / 18));
-    if (fringeCount === 0) return;
-    const fringe = component
-      .filter(({ cell }) => cores.every((core) => Math.hypot(cell.x - core.cell.x, cell.y - core.cell.y) >= 1.8))
-      .sort((left, right) => coordinateNoise(visualSeed, left.cell.x, left.cell.y, 211 + hashText(resourceId)) - coordinateNoise(visualSeed, right.cell.x, right.cell.y, 211 + hashText(resourceId)) || left.cell.index - right.cell.index);
-    const selectedFringe: typeof fringe = [];
-    for (const candidate of fringe) {
-      if (selectedFringe.every((point) => Math.hypot(candidate.cell.x - point.cell.x, candidate.cell.y - point.cell.y) >= 1.9)) selectedFringe.push(candidate);
-      if (selectedFringe.length >= fringeCount) break;
-    }
-    for (const point of selectedFringe) {
-      const depositSize = point.deposit.sizeClass ?? 'small';
-      const sizeClass = depositSize === 'large' || depositSize === 'medium' ? 'small' : depositSize;
-      this.addMineralSprite(point.cell, material, sizeClass, visualSeed, 307 + hashText(resourceId), 0.78);
-    }
-  }
-
-  private addMineralSprite(
-    cell: NaturalWorldCellState,
-    material: string,
-    sizeClass: 'trace' | 'small' | 'medium' | 'large',
-    visualSeed: number,
-    salt: number,
-    formationScale: number,
-  ): void {
-    const baseScale: Record<typeof sizeClass, number> = { trace: 0.58, small: 0.78, medium: 1.08, large: 1.42 };
-    const frame = mineralAtlasFrame(material, sizeClass, visualSeed, cell.x, cell.y, salt);
-    const sprite = this.add.image((cell.x + 0.5) * CELL_SIZE, (cell.y + 1) * CELL_SIZE, MINERAL_ATLAS_KEY, frame);
-    sprite.setOrigin(0.5, 122 / 128)
-      .setDepth(2.8 + cell.y / Math.max(1, this.naturalWorld?.height ?? 1))
-      .setScale(CELL_SIZE * baseScale[sizeClass] * formationScale / 128);
-    this.mineralSprites.push(sprite);
-  }
-
-  private drawCommonStone(world: NaturalWorldEntity, visualSeed: number, oreCells: Map<number, NaturalWorldCellState['minerals'][number]>): void {
-    for (const cell of world.cells) {
-      if (!cell.terrain.exposedRock || oreCells.has(cell.index)) continue;
-      const scatter = coordinateNoise(visualSeed, cell.x, cell.y, 47);
-      const potential = cell.terrain.mineralPotential ?? 0;
-      const chance = clamp(0.16 + cell.terrain.slope * 0.32 + potential * 0.2, 0.16, 0.58);
-      if (scatter >= chance) continue;
-      const sizeClass = cell.terrain.slope > 0.42 ? 'large' : potential > 0.72 ? 'medium' : potential > 0.42 ? 'small' : 'trace';
-      this.addMineralSprite(cell, 'pedra', sizeClass, visualSeed, 83, 0.74);
+    const rocks = generateProceduralRocks(world, visualSeed);
+    this.rockTreeBlockedCells = treeBlockingCellsForRocks(rocks, world.width, world.height);
+    for (const [index, rock] of rocks.entries()) {
+      const textureKey = `natural-asterra-v23-${visualSeed}-${index}`;
+      const texture = this.textures.createCanvas(textureKey, rock.raster.width, rock.raster.height);
+      const context = texture?.getContext();
+      if (texture === null || context === undefined) continue;
+      drawProceduralRock(context, rock);
+      texture.refresh();
+      this.mineralTextureKeys.push(textureKey);
+      const sprite = this.add.image(rock.xCell * CELL_SIZE, rock.yCell * CELL_SIZE, textureKey);
+      sprite.setOrigin(rock.raster.anchorX / rock.raster.width, rock.raster.anchorY / rock.raster.height)
+        .setDepth(worldObjectDepth(rock.yCell, world.height, 0.002))
+        .setScale((CELL_SIZE / ROCK_NATIVE_CELL_SIZE) * rock.visualScale);
+      this.mineralSprites.push(sprite);
     }
   }
 
@@ -546,75 +524,20 @@ export class FoundationScene extends Phaser.Scene {
   private destroyMineralSprites(): void {
     for (const sprite of this.mineralSprites) sprite?.destroy();
     this.mineralSprites = [];
+    for (const key of this.mineralTextureKeys) if (this.textures.exists(key)) this.textures.remove(key);
+    this.mineralTextureKeys = [];
     this.mineralSpritesWorldKey = null;
+    this.rockTreeBlockedCells.clear();
   }
 }
 
 const TREE_SPECIES: TreeSpeciesId[] = ['oak', 'pine', 'birch', 'autumnal', 'willow'];
-const MINERAL_ATLAS_MATERIAL: Record<'copper' | 'iron' | 'silver' | 'gold', string> = {
-  copper: 'cobre',
-  iron: 'ferro',
-  silver: 'prata',
-  gold: 'ouro',
-};
-const MINERAL_SHAPES_BY_SIZE: Record<'trace' | 'small' | 'medium' | 'large', string[]> = {
-  trace: ['cascalho', 'seixo_pequeno', 'fragmentos'],
-  small: ['seixo_medio', 'fragmentos', 'blocos_duplos', 'lajes_agrupadas'],
-  medium: ['rocha_angular', 'monte_pedras', 'picos_medios', 'lajes_agrupadas'],
-  large: ['rochedo_grande', 'picos_medios', 'picos_altos', 'monolito', 'escarpa_grande'],
-};
-
-function mineralAtlasFrame(material: string, size: 'trace' | 'small' | 'medium' | 'large', seed: number, x: number, y: number, salt: number): string {
-  const shapes = MINERAL_SHAPES_BY_SIZE[size];
-  const index = Math.min(shapes.length - 1, Math.floor(coordinateNoise(seed, x, y, salt) * shapes.length));
-  return `${material}_${shapes[index]}`;
-}
-
-function mineralVisualRank(deposit: NaturalWorldCellState['minerals'][number]): number {
-  const size = deposit.sizeClass ?? sizeClassFromGrade(deposit.grade);
-  const sizeRank: Record<typeof size, number> = { trace: 0, small: 1, medium: 2, large: 3 };
-  return sizeRank[size] * 0.32 + deposit.grade + Math.log1p(deposit.reserveKg) * 0.01;
-}
-
-function sizeClassFromGrade(grade: number): 'trace' | 'small' | 'medium' | 'large' {
-  return grade >= 0.7 ? 'large' : grade >= 0.4 ? 'medium' : grade >= 0.16 ? 'small' : 'trace';
-}
-
 function emptyTreeSprites(): TreeSprites {
   return { oak: null, pine: null, birch: null, autumnal: null, willow: null };
 }
 
 function isTreeSpecies(speciesId: PlantSpeciesId): speciesId is TreeSpeciesId {
   return TREE_SPECIES.includes(speciesId as TreeSpeciesId);
-}
-
-const TERRAIN_SURFACE_COLORS: Record<TerrainSurface, number> = {
-  loam: 0x87965d,
-  sand: 0xb4a06c,
-  clay: 0x8f8861,
-  rock: 0x85836f,
-  upland: 0x9ca274,
-  highland: 0xb3aa88,
-  wetland: 0x607653,
-  woodland: 0x73865a,
-  meadow: 0x91a46a,
-  dryland: 0xa99a62,
-  desert: 0xc89a54,
-};
-
-function terrainSurface(cell: NaturalWorldCellState, minElevation: number, maxElevation: number): TerrainSurface {
-  const relative = (cell.terrain.elevationM - minElevation) / Math.max(1, maxElevation - minElevation);
-  if (cell.terrain.soilType === 'rock' || cell.terrain.exposedRock) return 'rock';
-  if (relative > 0.88) return 'highland';
-  if (relative > 0.74) return 'upland';
-  if (cell.terrain.habitat === 'wetland') return 'wetland';
-  if (cell.terrain.habitat === 'desert') return 'desert';
-  if (cell.terrain.habitat === 'dryland') return 'dryland';
-  if (cell.terrain.habitat === 'woodland') return 'woodland';
-  if (cell.terrain.habitat === 'meadow') return 'meadow';
-  if (cell.terrain.soilType === 'sand') return 'sand';
-  if (cell.terrain.soilType === 'clay') return 'clay';
-  return 'loam';
 }
 
 function drawTerrainTexture(context: CanvasRenderingContext2D, world: NaturalWorldEntity, minElevation: number, maxElevation: number, visualSeed: number): void {
@@ -1003,8 +926,7 @@ function smoothClosedPolygon(points: TilePoint[], iterations: number): TilePoint
 }
 
 function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
-  const isRiver = world.cells.map((cell) => cell.terrain.waterBody === 'river'
-    && (cell.water.surfaceMm > WATER_THRESHOLD_MM || (cell.water.lastFlows.runoffOutMm ?? 0) > 0.35 || (cell.water.lastFlows.runoffInMm ?? 0) > 0.35));
+  const isRiver = world.cells.map((cell) => cell.terrain.waterBody === 'river' && isActiveRiverCell(cell));
   const upstreamCount = new Uint8Array(world.cells.length);
   const lakeOutlets = new Map<number, NaturalWorldCellState>();
   for (const cell of world.cells) {
@@ -1145,6 +1067,50 @@ function drawWaterGlints(graphics: Phaser.GameObjects.Graphics, x: number, y: nu
   }
 }
 
+function isActiveRiverCell(cell: NaturalWorldCellState): boolean {
+  return cell.water.surfaceMm > WATER_THRESHOLD_MM
+    || (cell.water.lastFlows.runoffOutMm ?? 0) > 0.35
+    || (cell.water.lastFlows.runoffInMm ?? 0) > 0.35;
+}
+
+function drawRiverBeds(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
+  for (const cell of world.cells) {
+    if (cell.terrain.waterBody !== 'river') continue;
+    const downstreamIndex = cell.water.lastFlowTo ?? cell.terrain.flowTo;
+    const downstream = downstreamIndex >= 0 ? world.cells[downstreamIndex] : undefined;
+    const incision = cell.terrain.channelIncisionM ?? 0;
+    const width = clamp(8 + Math.sqrt(incision * 100) * 1.7 + cell.terrain.slope * 18, 8, 22);
+    const active = isActiveRiverCell(cell);
+    const bedColor = active ? 0x435c57 : 0x625e4d;
+    const bedAlpha = active ? 0.62 : 0.86;
+    const x = (cell.x + 0.5) * CELL_SIZE;
+    const y = (cell.y + 0.5) * CELL_SIZE;
+    graphics.lineStyle(width, bedColor, bedAlpha);
+    graphics.fillStyle(bedColor, bedAlpha);
+    graphics.fillCircle(x, y, width * 0.5);
+    if (downstream !== undefined && (downstream.terrain.waterBody === 'river' || downstream.terrain.waterBody === 'lake')
+      && cell.index < downstream.index) {
+      graphics.lineBetween(x, y, (downstream.x + 0.5) * CELL_SIZE, (downstream.y + 0.5) * CELL_SIZE);
+    }
+  }
+}
+
+function drawDryLakeBeds(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
+  for (const cell of world.cells) {
+    if (cell.terrain.waterBody !== 'lake' || cell.water.surfaceMm > WATER_THRESHOLD_MM) continue;
+    const x = cell.x * CELL_SIZE;
+    const y = cell.y * CELL_SIZE;
+    const moisture = clamp(cell.water.soilMm / Math.max(1, cell.water.capacityMm), 0, 1);
+    const color = mixColor(0x766f5b, 0x526452, moisture);
+    graphics.fillStyle(color, 0.34);
+    graphics.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+    if (cell.index % 3 === 0) {
+      graphics.lineStyle(0.7, 0x4c4b3f, 0.26);
+      graphics.lineBetween(x + 5, y + CELL_SIZE * 0.62, x + CELL_SIZE - 5, y + CELL_SIZE * 0.62);
+    }
+  }
+}
+
 function cssColor(color: number): string { return `#${color.toString(16).padStart(6, '0')}`; }
 
 function shiftColor(color: number, offset: number): number {
@@ -1186,4 +1152,8 @@ function plantStress(plant: PlantCohortState): number {
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function renderNow(): number {
+  return globalThis.performance?.now() ?? Date.now();
 }

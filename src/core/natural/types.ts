@@ -115,7 +115,7 @@ export type NaturalWorldEntity = {
   width: number;
   height: number;
   cellSizeM: number;
-  boundary: 'closed';
+  boundary: 'open' | 'closed';
   ticksPerDay: number;
   daysPerSeason: number;
   yearLengthDays: number;

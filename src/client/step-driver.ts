@@ -6,6 +6,7 @@ export type DriverState = 'paused' | 'running' | 'pausing';
 export type DriverCallbacks = {
   onState: (state: DriverState) => void;
   onAdvanced: (response: Extract<WorkerResponse, { type: 'ADVANCED' }>) => void | Promise<void>;
+  onStepTiming?: (timing: { elapsedMs: number; ticks: number }) => void;
   onError: (error: Error) => void;
 };
 
@@ -77,7 +78,9 @@ export class StepDriver {
 
   private async runScheduledStep(ticks: number): Promise<void> {
     try {
+      const startedAt = now();
       const response = await this.client.step(ticks);
+      this.callbacks.onStepTiming?.({ elapsedMs: Math.max(0, now() - startedAt), ticks });
       await this.callbacks.onAdvanced(response);
     } catch (error) {
       this.running = false;
@@ -93,4 +96,8 @@ export class StepDriver {
       this.timer = null;
     }
   }
+}
+
+function now(): number {
+  return globalThis.performance?.now() ?? Date.now();
 }

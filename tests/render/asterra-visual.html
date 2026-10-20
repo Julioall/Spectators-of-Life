@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>ASTERRA — comparação com o HTML original</title>
+  <style>
+    body { margin: 24px; background: #1d2c24; color: #eee5ca; font: 16px system-ui; }
+    #results { white-space: pre-wrap; padding: 16px; background: #122018; }
+    #gallery { display: grid; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); gap: 12px; }
+    article { padding: 12px; background: #354438; }
+    canvas { image-rendering: pixelated; max-width: 48%; vertical-align: bottom; }
+    iframe { position: fixed; left: -3000px; width: 1200px; height: 800px; }
+  </style>
+</head>
+<body>
+  <h1>Motor original e integração no jogo</h1>
+  <p>Esquerda: funções do HTML original. Direita: textura produzida pelo adaptador usado pelo Phaser.</p>
+  <pre id="results">Carregando a referência original…</pre>
+  <section id="gallery"></section>
+  <script type="module" src="./asterra-visual.ts"></script>
+</body>
+</html>

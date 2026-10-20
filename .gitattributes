@@ -1,0 +1,3 @@
+# Preserve the supplied source and extracted engine bytes for the integrity checks.
+data/assets/rocks/asterra/ASTERRA_Gerador_Rochas_v2.3.html -text
+src/render/asterra/engine.js -text

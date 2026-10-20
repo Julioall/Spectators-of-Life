@@ -30,7 +30,7 @@ O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. 
 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
 
-[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer usa os atlases de cinco espécies de árvores e de rochas/minérios; as referências de autotiling em `data/assets/environment/` continuam fora do runtime.
+[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer usa o atlas das cinco espécies de árvores e gera rochas/minérios em runtime; as referências de autotiling em `data/assets/environment/` continuam fora do runtime.
 
 ## Revisão documental
 
