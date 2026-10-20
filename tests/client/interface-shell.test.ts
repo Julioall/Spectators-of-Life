@@ -61,4 +61,11 @@ describe('interface de observação do mundo', () => {
     expect(html).not.toContain('<aside class="control-panel"');
     expect(html).not.toContain('<footer>');
   });
+
+  it('inicia com as camadas Altitude e Relevo ativas e a legenda visível', () => {
+    expect(html).toMatch(/<button id="altitude-map-toggle"[^>]*aria-pressed="true"/);
+    expect(html).toMatch(/<button type="button" data-map-layer="relief" aria-pressed="true"/);
+    const legendTag = html.match(/<div id="altitude-map-legend"[^>]*>/)?.[0] ?? '';
+    expect(legendTag).not.toContain('hidden');
+  });
 });

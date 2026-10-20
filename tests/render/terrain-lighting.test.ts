@@ -7,9 +7,12 @@ import {
   calculateTerrainGradient,
   calculateTerrainLightingFactors,
   calculateTerrainOcclusion,
+  compositeInterpolatedColorFieldToImageData,
   createTerrainLightingDirtyMask,
   DEFAULT_TERRAIN_LIGHTING_SETTINGS,
+  sampleCellFieldBilinear,
   sanitizeTerrainLightingSettings,
+  smoothCellField,
   smoothTerrainLightingFactors,
 } from '../../src/render/terrain-lighting';
 
@@ -79,6 +82,35 @@ describe('iluminação topográfica', () => {
     expect(ridge[1]!).toBeGreaterThan(1);
     expect(ridge[1]!).toBeLessThan(1.38);
     expect(ridge[3]!).toBeCloseTo(ridge[1]!);
+  });
+
+  it('suaviza profundidade da água dentro da máscara sem espalhar valores para o terreno seco', () => {
+    const field = smoothCellField(5, 1, [0, 20, 100, 20, 0], [0, 1, 1, 1, 0]);
+    expect(field[0]).toBe(0);
+    expect(field[4]).toBe(0);
+    expect(field[1]).toBeGreaterThan(20);
+    expect(field[1]).toBeLessThan(field[2]!);
+    expect(field[2]).toBeLessThan(100);
+  });
+
+  it('interpola o campo entre células e mistura a rampa por pixel sem mudar o alpha', () => {
+    expect(sampleCellFieldBilinear(2, 2, [0, 1, 2, 3], 0.5, 0.5)).toBe(1.5);
+    const imageData = {
+      width: 4,
+      height: 2,
+      data: new Uint8ClampedArray(4 * 2 * 4).fill(0),
+    } as ImageData;
+    for (let index = 3; index < imageData.data.length; index += 4) imageData.data[index] = 255;
+    compositeInterpolatedColorFieldToImageData(imageData, 2, 1, 2, [0, 1], (value) => {
+      const channel = Math.round(value * 255);
+      return (channel << 16) | (channel << 8) | channel;
+    }, 0.5);
+    expect([...imageData.data.slice(0, 16)]).toEqual([
+      0, 0, 0, 255,
+      32, 32, 32, 255,
+      96, 96, 96, 255,
+      128, 128, 128, 255,
+    ]);
   });
 
   it('expande alterações de altitude a uma região de iluminação e usa rebuild amplo quando ela é grande', () => {

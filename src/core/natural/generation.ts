@@ -57,12 +57,8 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     return round1(terrain.minimumElevationM + normalized * (terrain.maximumElevationM - terrain.minimumElevationM));
   });
 
-  const riverNetwork = carveMajorRiverNetwork(world.width, world.height, elevations, rainfallFactors, terrain.maximumElevationM, seed);
   const landformElevations = buildLandformElevationField(world.width, world.height, elevations);
   let flowTo = buildFlowDirections(world.width, world.height, elevations, world.cellSizeM);
-  for (const [from, to] of riverNetwork.downstream) {
-    if ((elevations[from] as number) > (elevations[to] as number)) flowTo[from] = to;
-  }
   let basinIds = findBasins(flowTo);
   let basinSizes = countBasins(basinIds);
   let { bedrock, soilTypes, slopes } = buildSurfaceFields(
@@ -70,6 +66,10 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     rainfallFactors, geologyField, soilField, moistureField, terrain.minimumElevationM, terrain.maximumElevationM, totalCells,
   );
   let runoff = buildRunoffAccumulation(flowTo, elevations, rainfallFactors, soilTypes, slopes);
+  const riverNetwork: RiverNetworkPlan = {
+    cells: findPersistentRiverCells(flowTo, runoff.contributingCells, runoff.runoffPotential, new Set(), terrain.riverRunoffThreshold),
+    downstream: new Map(),
+  };
   const lakeCandidates = [...basinSizes.entries()]
     .filter(([basinId, size]) => size >= 20
       && (elevations[basinId] as number) <= terrain.maximumElevationM * 0.74
@@ -123,7 +123,6 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     flowTo,
     runoff.contributingCells,
     runoff.runoffPotential,
-    riverNetwork.cells,
     lakeCells,
     terrain.riverRunoffThreshold,
   );
@@ -428,34 +427,18 @@ function findPersistentRiverCells(
   flowTo: number[],
   contributingCells: number[],
   runoffPotential: number[],
-  plannedChannels: Set<number>,
   lakeCells: Set<number>,
   runoffThreshold: number,
 ): Set<number> {
-  const upstream = Array.from({ length: flowTo.length }, () => [] as number[]);
-  flowTo.forEach((downstream, source) => {
-    if (downstream >= 0 && downstream < flowTo.length) upstream[downstream]!.push(source);
-  });
   const persistent = new Set<number>();
-  const queued = new Set<number>();
-  const queue: number[] = [];
-  for (const index of [...plannedChannels, ...lakeCells]) {
-    if (queued.has(index)) continue;
-    queued.add(index);
-    queue.push(index);
-    if (plannedChannels.has(index) && !lakeCells.has(index)) persistent.add(index);
-  }
-
-  for (let cursor = 0; cursor < queue.length; cursor += 1) {
-    const downstream = queue[cursor] as number;
-    for (const source of upstream[downstream] as number[]) {
-      if (lakeCells.has(source) || persistent.has(source)) continue;
-      if ((contributingCells[source] as number) < 32 || (runoffPotential[source] as number) < runoffThreshold) continue;
-      persistent.add(source);
-      if (!queued.has(source)) {
-        queued.add(source);
-        queue.push(source);
-      }
+  for (let source = 0; source < flowTo.length; source += 1) {
+    if (lakeCells.has(source) || (contributingCells[source] as number) < 32 || (runoffPotential[source] as number) < runoffThreshold) continue;
+    let cursor = source;
+    const visited = new Set<number>();
+    while (cursor >= 0 && cursor < flowTo.length && !lakeCells.has(cursor) && !visited.has(cursor)) {
+      persistent.add(cursor);
+      visited.add(cursor);
+      cursor = flowTo[cursor] as number;
     }
   }
   return persistent;
@@ -638,86 +621,6 @@ function carveLakeOutletProfile(path: number[], elevations: number[], startLevel
 
 type RiverNetworkPlan = { cells: Set<number>; downstream: Map<number, number> };
 
-function carveMajorRiverNetwork(width: number, height: number, elevations: number[], rainfallFactors: number[], maximumElevationM: number, seed: string): RiverNetworkPlan {
-  const cells = new Set<number>();
-  const downstream = new Map<number, number>();
-  const verticalStart = Math.floor(height * 0.14);
-  const verticalEnd = Math.ceil(height * 0.86);
-  const horizontalStart = Math.floor(width * 0.14);
-  const horizontalEnd = Math.ceil(width * 0.86);
-  const boundaries = [
-    Array.from({ length: verticalEnd - verticalStart }, (_, offset) => (verticalStart + offset) * width),
-    Array.from({ length: verticalEnd - verticalStart }, (_, offset) => (verticalStart + offset) * width + width - 1),
-    Array.from({ length: horizontalEnd - horizontalStart }, (_, offset) => horizontalStart + offset),
-    Array.from({ length: horizontalEnd - horizontalStart }, (_, offset) => (height - 1) * width + horizontalStart + offset),
-  ];
-  let trunk: number[] = [];
-  let trunkScore = 0;
-  const minimumLength = Math.max(12, Math.floor(Math.min(width, height) * 0.62));
-  for (let side = 0; side < boundaries.length; side += 1) {
-    const sources = boundaries[side] as number[];
-    const targets = boundaries[(side ^ 1)] as number[];
-    const source = sources.reduce((best, candidate) => (elevations[candidate] as number) > (elevations[best] as number) ? candidate : best, sources[0] as number);
-    const target = targets.reduce((best, candidate) => (elevations[candidate] as number) < (elevations[best] as number) ? candidate : best, targets[0] as number);
-    const drop = (elevations[source] as number) - (elevations[target] as number);
-    if (drop < maximumElevationM * 0.025) continue;
-    const route = findTerrainPath(width, height, elevations, [source], new Set([target]), maximumElevationM, `${seed}:main-river`);
-    if (route.length < minimumLength) continue;
-    const score = drop * Math.sqrt(route.length);
-    if (score > trunkScore) {
-      trunkScore = score;
-      trunk = route;
-    }
-  }
-
-  if (trunk.length > 1) {
-    carveRiverProfile(trunk, elevations, maximumElevationM, 8);
-    addRiverPath(trunk, elevations, cells, downstream);
-  }
-  if (trunk.length < 2) return { cells, downstream };
-
-  const minimumSourceSpacing = Math.max(7, Math.min(width, height) * 0.24);
-  const tributaryCount = Math.min(2, Math.max(1, Math.floor((width * height) / 3_000)));
-  const sourceThreshold = Math.min(...elevations) + maximumElevationM * 0.42;
-  const sourceCandidates = elevations.map((elevation, index) => {
-    const x = index % width;
-    const y = Math.floor(index / width);
-    const nearestTrunk = trunk.reduce((best, trunkIndex) => Math.min(best, Math.hypot(x - (trunkIndex % width), y - Math.floor(trunkIndex / width))), Number.POSITIVE_INFINITY);
-    const rainfall = clamp(((rainfallFactors[index] as number) - 0.55) / 1.25, 0, 1);
-    return { index, distance: nearestTrunk, score: ((elevation - sourceThreshold) / Math.max(1, maximumElevationM - sourceThreshold)) * 0.72 + rainfall * 0.28 };
-  }).filter((candidate) => candidate.distance >= minimumSourceSpacing && (elevations[candidate.index] as number) >= sourceThreshold)
-    .sort((left, right) => right.score - left.score || left.index - right.index)
-    .slice(0, 64);
-  const usedSources: number[] = [];
-  const targetCells = new Set(trunk);
-  for (let branch = 0; branch < tributaryCount; branch += 1) {
-    let bestPath: number[] = [];
-    let bestSource = -1;
-    let bestScore = 0;
-    for (const candidate of sourceCandidates) {
-      if (usedSources.some((source) => Math.hypot(candidate.index % width - (source % width), Math.floor(candidate.index / width) - Math.floor(source / width)) < minimumSourceSpacing)) continue;
-      const sourceElevation = elevations[candidate.index] as number;
-      const goals = new Set([...targetCells].filter((target) => (elevations[target] as number) < sourceElevation - maximumElevationM * 0.015
-        && Math.hypot(candidate.index % width - (target % width), Math.floor(candidate.index / width) - Math.floor(target / width)) >= minimumSourceSpacing));
-      if (goals.size === 0) continue;
-      const route = findTerrainPath(width, height, elevations, [candidate.index], goals, maximumElevationM, `${seed}:tributary-${branch}`);
-      if (route.length < Math.max(7, minimumLength * 0.24)) continue;
-      const score = route.length * (0.65 + candidate.score);
-      if (score > bestScore) {
-        bestScore = score;
-        bestPath = route;
-        bestSource = candidate.index;
-      }
-      if (bestScore >= minimumLength * 0.65) break;
-    }
-    if (bestPath.length < 2) continue;
-    usedSources.push(bestSource);
-    carveRiverProfile(bestPath, elevations, maximumElevationM, 3.5, true);
-    addRiverPath(bestPath, elevations, cells, downstream);
-  }
-  return { cells, downstream };
-}
-
 function findTerrainPath(
   width: number,
   height: number,
@@ -775,29 +678,6 @@ function findTerrainPath(
   }
   route.reverse();
   return route;
-}
-
-function carveRiverProfile(path: number[], elevations: number[], maximumElevationM: number, depthM: number, preserveEnd = false): void {
-  if (path.length < 3) return;
-  const distance = new Array<number>(path.length).fill(0);
-  for (let index = 1; index < path.length; index += 1) {
-    const previous = path[index - 1] as number;
-    const current = path[index] as number;
-    const dx = Math.abs((current % NATURAL_SCENARIO.world.width) - (previous % NATURAL_SCENARIO.world.width));
-    const dy = Math.abs(Math.floor(current / NATURAL_SCENARIO.world.width) - Math.floor(previous / NATURAL_SCENARIO.world.width));
-    distance[index] = (distance[index - 1] as number) + (dx === 1 && dy === 1 ? Math.SQRT2 : 1);
-  }
-  const startElevation = elevations[path[0] as number] as number;
-  const endElevation = elevations[path[path.length - 1] as number] as number;
-  let previousHeight = startElevation;
-  for (let index = 1; index < path.length - (preserveEnd ? 1 : 0); index += 1) {
-    const progress = (distance[index] as number) / Math.max(1, distance[distance.length - 1] as number);
-    const profile = lerp(startElevation, endElevation, progress) - Math.sin(Math.PI * progress) * depthM;
-    const terminalConstraint = preserveEnd ? endElevation - (path.length - 1 - index) * 0.08 : Number.POSITIVE_INFINITY;
-    const carved = clamp(Math.min(elevations[path[index] as number] as number, profile, previousHeight - 0.08, terminalConstraint), 0, maximumElevationM);
-    elevations[path[index] as number] = round1(carved);
-    previousHeight = elevations[path[index] as number] as number;
-  }
 }
 
 function addRiverPath(path: number[], elevations: number[], cells: Set<number>, downstream: Map<number, number>): void {

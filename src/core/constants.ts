@@ -5,8 +5,8 @@ export const SIMULATION_VERSION = '0.2.0' as const;
 export const EMPTY_SCENARIO_ID = 'foundation:empty-world' as const;
 export const EMPTY_SCENARIO_VERSION = '1.0.0' as const;
 export const NATURAL_SCENARIO_ID = 'natural:temperate-valley' as const;
-export const NATURAL_SCENARIO_VERSION = '1.10.0' as const;
-export const SUPPORTED_NATURAL_SCENARIO_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0', '1.7.0', '1.8.0', '1.9.0', NATURAL_SCENARIO_VERSION] as const;
+export const NATURAL_SCENARIO_VERSION = '1.11.0' as const;
+export const SUPPORTED_NATURAL_SCENARIO_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0', '1.7.0', '1.8.0', '1.9.0', '1.10.0', NATURAL_SCENARIO_VERSION] as const;
 
 export const RNG_ALGORITHM = 'xoshiro128**-1.1' as const;
 export const RNG_SEED_DERIVATION = 'fnv1a64-xor-splitmix64-v1' as const;

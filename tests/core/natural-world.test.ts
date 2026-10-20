@@ -16,7 +16,7 @@ describe('cenário natural do vale temperado', () => {
     const natural = getNaturalWorld(first);
     expect(canonicalStringify(first)).toBe(canonicalStringify(second));
     expect(first.scenarioId).toBe(NATURAL_SCENARIO_ID);
-    expect(first.scenarioVersion).toBe('1.10.0');
+    expect(first.scenarioVersion).toBe('1.11.0');
     expect(natural.cells).toHaveLength(natural.width * natural.height);
     expect(new Set(natural.cells.map((cell) => cell.terrain.soilType)).size).toBeGreaterThanOrEqual(3);
     expect(new Set(natural.cells.map((cell) => cell.terrain.bedrock)).size).toBeGreaterThanOrEqual(2);
@@ -60,7 +60,7 @@ describe('cenário natural do vale temperado', () => {
     }
   }, 30_000);
 
-  it('conecta canais aos lagos e alarga rios a jusante e em confluências', () => {
+  it('segue a drenagem do relevo, conecta cursos aos lagos e alarga rios a jusante', () => {
     const natural = getNaturalWorld(createNaturalWorld(FIXED_SEED));
     const rivers = natural.cells.filter((cell) => cell.terrain.waterBody === 'river');
     const isLakeAdjacent = (cell: (typeof natural.cells)[number]): boolean => {
@@ -97,7 +97,13 @@ describe('cenário natural do vale temperado', () => {
       return connectedRiverCells.size;
     };
     const lakeOutletReachSizes = lakeOutlets.map(connectedRiverComponentSize);
-    expect(Math.max(...lakeOutletReachSizes)).toBeGreaterThanOrEqual(12);
+    expect(Math.max(...lakeOutletReachSizes)).toBeGreaterThanOrEqual(6);
+    for (const cell of rivers) {
+      const downstream = cell.terrain.flowTo;
+      if (downstream < 0) continue;
+      expect(natural.cells[downstream]!.terrain.elevationM).toBeLessThan(cell.terrain.elevationM);
+      expect(['river', 'lake']).toContain(natural.cells[downstream]!.terrain.waterBody);
+    }
 
     const contributing = catchmentCellsForTest(natural);
     const nearbyRiverCells = (cell: (typeof natural.cells)[number]): number => natural.cells.filter((other) =>
@@ -118,7 +124,7 @@ describe('cenário natural do vale temperado', () => {
     if (junction !== undefined) expect(nearbyRiverCells(junction)).toBeGreaterThanOrEqual(4);
   }, 15_000);
 
-  it('incisa margens de rios mais depressa apenas no cenário 1.10', () => {
+  it('preserva a incisão reforçada das margens de rios em versões 1.10 ou posteriores', () => {
     const current = createNaturalWorld(FIXED_SEED);
     const legacy = structuredClone(current);
     legacy.scenarioVersion = '1.9.0';
@@ -180,6 +186,78 @@ describe('cenário natural do vale temperado', () => {
     expect(result.state.metrics['hydrology.boundaryOutflowMmM2']).toBeGreaterThan(0);
     expect(natural.cells.every((cell) => Object.values(cell.water.lastFlows).every((flow) => flow > 0))).toBe(true);
     expect(natural.cells.every((cell) => cell.plants.every((plant) => plant.stress !== undefined && plant.limitingFactors === undefined))).toBe(true);
+  });
+
+  it('encaminha chuva em cascata pelo relevo e forma lago em depressão fechada sem perder água', () => {
+    const state = createNaturalWorld(FIXED_SEED);
+    const natural = getNaturalWorld(state);
+    natural.boundary = 'closed';
+    for (const cell of natural.cells) {
+      cell.terrain.elevationM = 200;
+      cell.terrain.slope = 0;
+      cell.terrain.flowTo = -1;
+      cell.terrain.waterBody = 'none';
+      cell.water.surfaceMm = 0;
+      cell.water.soilMm = cell.water.capacityMm;
+      cell.climate.precipitationMm = 0;
+    }
+
+    const centerX = 12;
+    const centerY = 12;
+    const basinCells: typeof natural.cells = [];
+    for (let dy = -2; dy <= 2; dy += 1) {
+      for (let dx = -2; dx <= 2; dx += 1) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+        const cell = natural.cells[y * natural.width + x]!;
+        const radius = Math.max(Math.abs(dx), Math.abs(dy));
+        cell.terrain.elevationM = 90 + radius * 2;
+        cell.climate.precipitationMm = 5_000;
+        if (radius > 0) {
+          const nextX = x - Math.sign(dx);
+          const nextY = y - Math.sign(dy);
+          cell.terrain.flowTo = nextY * natural.width + nextX;
+        }
+        basinCells.push(cell);
+      }
+    }
+
+    const waterBefore = totalWater(natural);
+    const hydrology = NATURAL_SYSTEMS.find((system) => system.id === 'hydrology:surface-and-soil-water');
+    expect(hydrology).toBeDefined();
+    const events = hydrology!.run(state, 4, { periodTicks: 4, phaseOffsetTicks: 0, elapsedTicks: 4 }) ?? [];
+    const runoff = basinCells.filter((cell) => (cell.water.lastFlows.runoffOutMm ?? 0) > 0.35);
+    const cascadedCell = basinCells.find((cell) => (cell.water.lastFlows.runoffInMm ?? 0) > 0.35
+      && (cell.water.lastFlows.runoffOutMm ?? 0) > 0.35);
+    const precipitation = sum(natural.cells.map((cell) => cell.water.lastFlows.precipitationMm ?? 0));
+    const evaporation = sum(natural.cells.map((cell) => (cell.water.lastFlows.surfaceEvaporationMm ?? 0)
+      + (cell.water.lastFlows.soilEvaporationMm ?? 0)));
+    const boundaryOutflow = sum(natural.cells.map((cell) => cell.water.lastFlows.boundaryOutflowMm ?? 0));
+
+    expect(runoff.length).toBeGreaterThan(0);
+    expect(cascadedCell).toBeDefined();
+    expect(runoff.some((cell) => (cell.water.lastFlows.precipitationMm ?? 0) > 0
+      && (cell.water.lastFlows.runoffOutMm ?? 0) / ((cell.water.lastFlows.precipitationMm ?? 0)
+        + (cell.water.lastFlows.runoffInMm ?? 0)) > 0.78)).toBe(true);
+    expect(basinCells.filter((cell) => cell.terrain.waterBody === 'lake').length).toBeGreaterThanOrEqual(3);
+    expect(events.some((event) => event.eventType === 'hydrology:lake-formed')).toBe(true);
+    expect(Math.abs(totalWater(natural) - (waterBefore + precipitation - evaporation - boundaryOutflow))).toBeLessThan(1);
+    for (const cell of runoff) {
+      const downstream = cell.water.lastFlowTo ?? -1;
+      expect(downstream).toBeGreaterThanOrEqual(0);
+      expect(Math.hypot(natural.cells[downstream]!.x - cell.x, natural.cells[downstream]!.y - cell.y)).toBeLessThanOrEqual(Math.SQRT2);
+      expect(natural.cells[downstream]!.terrain.elevationM).toBeLessThan(cell.terrain.elevationM);
+    }
+
+    const lakeWaterBefore = totalWater(natural);
+    const continuedRainEvents = hydrology!.run(state, 8, { periodTicks: 4, phaseOffsetTicks: 0, elapsedTicks: 4 }) ?? [];
+    const secondPrecipitation = sum(natural.cells.map((cell) => cell.water.lastFlows.precipitationMm ?? 0));
+    const secondEvaporation = sum(natural.cells.map((cell) => (cell.water.lastFlows.surfaceEvaporationMm ?? 0)
+      + (cell.water.lastFlows.soilEvaporationMm ?? 0)));
+    const secondBoundaryOutflow = sum(natural.cells.map((cell) => cell.water.lastFlows.boundaryOutflowMm ?? 0));
+    expect(basinCells.filter((cell) => cell.terrain.waterBody === 'lake').length).toBeGreaterThanOrEqual(3);
+    expect(Math.abs(totalWater(natural) - (lakeWaterBefore + secondPrecipitation - secondEvaporation - secondBoundaryOutflow))).toBeLessThan(1);
+    expect(continuedRainEvents.some((event) => event.eventType === 'hydrology:runoff')).toBe(true);
   });
 
   it('mantém válidos lagos com mais de 100 m de coluna d’água e o orçamento de estado após o primeiro dia', () => {

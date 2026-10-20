@@ -143,10 +143,30 @@ export function calculateTerrainLightingFactors(
 
 /** Softens cell boundaries while retaining some local contrast for pixel-art relief. */
 export function smoothTerrainLightingFactors(width: number, height: number, factors: ArrayLike<number>): Float32Array {
+  return smoothCellField(width, height, factors, undefined, 0.25, 1);
+}
+
+/** Smooths a render-only cell field with the same weighted brush used by hillshade. */
+export function smoothCellField(
+  width: number,
+  height: number,
+  values: ArrayLike<number>,
+  includedCells?: ArrayLike<number>,
+  localWeight = 0.25,
+  fallbackValue = 0,
+): Float32Array {
   const smoothed = new Float32Array(Math.max(0, width * height));
-  if (width < 1 || height < 1 || factors.length !== width * height) return smoothed;
+  if (width < 1 || height < 1 || values.length !== width * height
+    || (includedCells !== undefined && includedCells.length !== width * height)) return smoothed;
+  const keepLocal = clamp(Number.isFinite(localWeight) ? localWeight : 0.25, 0, 1);
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const local = finiteValue(values[index], fallbackValue);
+      if (includedCells !== undefined && includedCells[index] !== 1) {
+        smoothed[index] = local;
+        continue;
+      }
       let weighted = 0;
       let totalWeight = 0;
       for (let offsetY = -2; offsetY <= 2; offsetY += 1) {
@@ -156,19 +176,78 @@ export function smoothTerrainLightingFactors(width: number, height: number, fact
         for (let offsetX = -2; offsetX <= 2; offsetX += 1) {
           const sampleX = x + offsetX;
           if (sampleX < 0 || sampleX >= width) continue;
-          const factor = factors[sampleY * width + sampleX] ?? 1;
+          const sampleIndex = sampleY * width + sampleX;
+          if (includedCells !== undefined && includedCells[sampleIndex] !== 1) continue;
+          const value = finiteValue(values[sampleIndex], fallbackValue);
           const weight = weightY * LIGHTING_SMOOTHING_WEIGHTS[offsetX + 2]!;
-          weighted += (Number.isFinite(factor) ? factor : 1) * weight;
+          weighted += value * weight;
           totalWeight += weight;
         }
       }
-      const index = y * width + x;
-      const local = factors[index] ?? 1;
       const average = totalWeight === 0 ? local : weighted / totalWeight;
-      smoothed[index] = (Number.isFinite(local) ? local : 1) * 0.25 + average * 0.75;
+      smoothed[index] = local * keepLocal + average * (1 - keepLocal);
     }
   }
   return smoothed;
+}
+
+/** Samples a cell-centered field at fractional cell coordinates with bilinear interpolation. */
+export function sampleCellFieldBilinear(width: number, height: number, values: ArrayLike<number>, x: number, y: number): number {
+  if (width < 1 || height < 1 || values.length !== width * height || !Number.isFinite(x) || !Number.isFinite(y)) return 0;
+  const sampleX = clamp(x, 0, width - 1);
+  const sampleY = clamp(y, 0, height - 1);
+  const leftX = Math.floor(sampleX);
+  const topY = Math.floor(sampleY);
+  const rightX = Math.min(width - 1, leftX + 1);
+  const bottomY = Math.min(height - 1, topY + 1);
+  const xAmount = sampleX - leftX;
+  const yAmount = sampleY - topY;
+  const top = interpolate(finiteValue(values[topY * width + leftX]), finiteValue(values[topY * width + rightX]), xAmount);
+  const bottom = interpolate(finiteValue(values[bottomY * width + leftX]), finiteValue(values[bottomY * width + rightX]), xAmount);
+  return interpolate(top, bottom, yAmount);
+}
+
+/** Composites a smoothed, bilinearly interpolated color field over a map texture. */
+export function compositeInterpolatedColorFieldToImageData(
+  imageData: ImageData,
+  worldWidth: number,
+  worldHeight: number,
+  cellSizePixels: number,
+  values: ArrayLike<number>,
+  colorForValue: (value: number) => number,
+  alpha: number,
+  dirtyCells?: ArrayLike<number>,
+): void {
+  if (![worldWidth, worldHeight, cellSizePixels].every(Number.isInteger)
+    || worldWidth < 1 || worldHeight < 1 || cellSizePixels < 1 || values.length !== worldWidth * worldHeight
+    || imageData.width < worldWidth * cellSizePixels || imageData.height < worldHeight * cellSizePixels
+    || (dirtyCells !== undefined && dirtyCells.length !== worldWidth * worldHeight)) return;
+  const opacity = clamp(Number.isFinite(alpha) ? alpha : 0, 0, 1);
+  if (opacity === 0) return;
+  const pixels = imageData.data;
+  for (let cellY = 0; cellY < worldHeight; cellY += 1) {
+    const yStart = cellY * cellSizePixels;
+    const yEnd = Math.min(imageData.height, yStart + cellSizePixels);
+    for (let cellX = 0; cellX < worldWidth; cellX += 1) {
+      if (dirtyCells !== undefined && dirtyCells[cellY * worldWidth + cellX] !== 1) continue;
+      const xStart = cellX * cellSizePixels;
+      const xEnd = Math.min(imageData.width, xStart + cellSizePixels);
+      for (let y = yStart; y < yEnd; y += 1) {
+        const sampleY = (y + 0.5) / cellSizePixels - 0.5;
+        let pixelIndex = (y * imageData.width + xStart) * 4;
+        for (let x = xStart; x < xEnd; x += 1) {
+          if (pixels[pixelIndex + 3] !== 0) {
+            const value = sampleCellFieldBilinear(worldWidth, worldHeight, values, (x + 0.5) / cellSizePixels - 0.5, sampleY);
+            const color = colorForValue(value);
+            pixels[pixelIndex] = mixByte(pixels[pixelIndex] ?? 0, (color >>> 16) & 0xff, opacity);
+            pixels[pixelIndex + 1] = mixByte(pixels[pixelIndex + 1] ?? 0, (color >>> 8) & 0xff, opacity);
+            pixels[pixelIndex + 2] = mixByte(pixels[pixelIndex + 2] ?? 0, color & 0xff, opacity);
+          }
+          pixelIndex += 4;
+        }
+      }
+    }
+  }
 }
 
 /** Expands changed elevation cells to cover gradient, horizon, brush, and pixel interpolation neighbors. */
@@ -265,6 +344,14 @@ export function applyTerrainLightingToImageData(
 
 function interpolate(left: number, right: number, amount: number): number {
   return left + (right - left) * amount;
+}
+
+function finiteValue(value: number | undefined, fallback = 0): number {
+  return value !== undefined && Number.isFinite(value) ? value : fallback;
+}
+
+function mixByte(start: number, end: number, amount: number): number {
+  return Math.round(clamp(start + (end - start) * amount, 0, 255));
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

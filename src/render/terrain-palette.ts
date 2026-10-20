@@ -1,5 +1,6 @@
 import type { NaturalWorldCellState, NaturalWorldEntity } from '../core/natural/types';
 import { buildLandformElevationField } from '../core/natural/topography';
+import { sampleCellFieldBilinear, smoothCellField } from './terrain-lighting';
 import type { AsterraTerrain } from './asterra/engine.js';
 
 export type TerrainSurface = 'loam' | 'sand' | 'clay' | 'rock' | 'upland' | 'highland' | 'wetland' | 'woodland' | 'meadow' | 'dryland' | 'desert';
@@ -18,6 +19,47 @@ export const TERRAIN_SURFACE_COLORS: Record<TerrainSurface, number> = {
   dryland: 0xa99a62,
   desert: 0xc89a54,
 };
+
+export type TerrainPaletteField = {
+  width: number;
+  height: number;
+  red: Float32Array;
+  green: Float32Array;
+  blue: Float32Array;
+};
+
+/** Smooths only render colors; terrain classes and simulation values remain unchanged. */
+export function smoothTerrainPaletteField(width: number, height: number, surfaces: readonly TerrainSurface[]): TerrainPaletteField {
+  const validDimensions = Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0;
+  const cellCount = validDimensions ? width * height : 0;
+  const red = new Float32Array(cellCount);
+  const green = new Float32Array(cellCount);
+  const blue = new Float32Array(cellCount);
+  if (!validDimensions || surfaces.length !== cellCount) {
+    return { width: 0, height: 0, red, green, blue };
+  }
+  for (let index = 0; index < cellCount; index += 1) {
+    const color = TERRAIN_SURFACE_COLORS[surfaces[index] ?? 'loam'];
+    red[index] = (color >>> 16) & 0xff;
+    green[index] = (color >>> 8) & 0xff;
+    blue[index] = color & 0xff;
+  }
+  return {
+    width,
+    height,
+    red: smoothCellField(width, height, red),
+    green: smoothCellField(width, height, green),
+    blue: smoothCellField(width, height, blue),
+  };
+}
+
+/** Samples a palette field at cell coordinates for pixel-scaled terrain rendering. */
+export function sampleTerrainPaletteColor(field: TerrainPaletteField, x: number, y: number): number {
+  const red = Math.round(sampleCellFieldBilinear(field.width, field.height, field.red, x, y));
+  const green = Math.round(sampleCellFieldBilinear(field.width, field.height, field.green, x, y));
+  const blue = Math.round(sampleCellFieldBilinear(field.width, field.height, field.blue, x, y));
+  return (red << 16) | (green << 8) | blue;
+}
 
 const ALTITUDE_MAP_STOPS = [0x254d45, 0x467852, 0x719754, 0xa9a565, 0x9b7c68, 0xe0dec9] as const;
 export const ALTITUDE_MAP_OVERLAY_ALPHA = 0.48;

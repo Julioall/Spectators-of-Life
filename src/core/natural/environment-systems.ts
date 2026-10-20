@@ -169,8 +169,13 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
 
   const hydraulicHeads = proposals.map(({ cell, remainingSurface }) => cell.terrain.elevationM + remainingSurface / 1000);
   const useDynamicHydraulicHead = naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.4.0');
-  for (const proposal of proposals) {
+  const cascadeRunoff = naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.11.0');
+  const flowOrder = proposals.map((_, index) => index);
+  if (cascadeRunoff) flowOrder.sort((left, right) => (hydraulicHeads[right] as number) - (hydraulicHeads[left] as number) || left - right);
+  for (const index of flowOrder) {
+    const proposal = proposals[index]!;
     const { cell, remainingSurface } = proposal;
+    const availableSurface = remainingSurface + (cascadeRunoff ? incoming[cell.index] as number : 0);
     const downstream = useDynamicHydraulicHead
       ? steepestHydraulicNeighbor(cell, natural.width, natural.height, natural.cellSizeM, hydraulicHeads)
       : cell.terrain.flowTo;
@@ -180,13 +185,21 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
         ? hydraulicSlopeBetween(cell.index, downstream, natural.width, natural.cellSizeM, hydraulicHeads)
         : cell.terrain.slope;
     const soilProfile = SOIL_PROFILES.get(cell.terrain.soilType) as SoilProfile;
-    const runoffFraction = downstream < 0 ? 0 : clamp(soilProfile.runoffFraction + hydraulicSlope * 1.55, 0, 0.82);
-    const boundaryOutlet = isOpenBoundaryOutlet(natural, cell, downstream);
+    const runoffFraction = downstream < 0 ? 0 : cascadeRunoff
+      ? clamp(
+        NATURAL_SCENARIO.hydrology.minimumSurfaceRunoffFraction
+          + soilProfile.runoffFraction * NATURAL_SCENARIO.hydrology.soilRunoffInfluence
+          + hydraulicSlope * NATURAL_SCENARIO.hydrology.hydraulicSlopeInfluence,
+        NATURAL_SCENARIO.hydrology.minimumSurfaceRunoffFraction,
+        NATURAL_SCENARIO.hydrology.maximumSurfaceRunoffFraction,
+      )
+      : clamp(soilProfile.runoffFraction + hydraulicSlope * 1.55, 0, 0.82);
+    const boundaryOutlet = cascadeRunoff
+      ? isOpenDrainageBoundaryOutlet(natural, cell, downstream)
+      : isOpenBoundaryOutlet(natural, cell, downstream);
     proposal.flowTo = downstream;
-    proposal.runoffOut = remainingSurface * runoffFraction;
-    proposal.boundaryOutflow = boundaryOutlet
-      ? remainingSurface * (cell.terrain.waterBody === 'river' ? 0.82 : 0.36)
-      : 0;
+    proposal.runoffOut = boundaryOutlet ? 0 : availableSurface * runoffFraction;
+    proposal.boundaryOutflow = boundaryOutlet ? availableSurface : 0;
     outgoing[cell.index] = proposal.runoffOut;
     if (downstream >= 0) incoming[downstream] = (incoming[downstream] as number) + proposal.runoffOut;
     runoffTotal += proposal.runoffOut;
@@ -199,9 +212,8 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
     const { cell } = proposal;
     const runoffIn = incoming[cell.index] as number;
     if (useDynamicHydraulicHead) cell.water.lastFlowTo = proposal.flowTo;
-    const surfaceAfterRain = cell.water.surfaceMm + proposal.precipitation;
-    const surfaceRemaining = surfaceAfterRain - proposal.infiltration - proposal.surfaceEvaporation - proposal.runoffOut - proposal.boundaryOutflow;
-    cell.water.surfaceMm = round4(Math.max(0, surfaceRemaining + runoffIn));
+    const surfaceRemaining = proposal.remainingSurface + runoffIn - proposal.runoffOut - proposal.boundaryOutflow;
+    cell.water.surfaceMm = round4(Math.max(0, surfaceRemaining));
     cell.water.soilMm = round4(Math.max(0, Math.min(cell.water.capacityMm, proposal.soilAfter)));
     cell.water.lastFlows = nonZeroFlows({
       precipitationMm: round4(proposal.precipitation),
@@ -215,6 +227,11 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
     });
     surfaceTotal += cell.water.surfaceMm;
     soilTotal += cell.water.soilMm;
+  }
+
+  const formedLakes = cascadeRunoff ? fillClosedDrainageBasins(natural) : { cells: 0, drownedPlantMatterG: 0 };
+  if (cascadeRunoff) {
+    surfaceTotal = natural.cells.reduce((total, cell) => total + cell.water.surfaceMm, 0);
   }
 
   const bankSeepageTotal = hasGeomorphology(natural)
@@ -240,6 +257,15 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   }
 
   const events: SimulationEvent[] = [];
+  if (formedLakes.cells > 0) {
+    events.push({
+      tick,
+      systemId: 'hydrology:surface-and-soil-water',
+      eventType: 'hydrology:lake-formed',
+      actorIds: [],
+      data: { newLakeCells: formedLakes.cells, drownedPlantMatterG: round3(formedLakes.drownedPlantMatterG) },
+    });
+  }
   if (runoffTotal > 0.01 || infiltrationTotal > 0.01 || boundaryOutflowTotal > 0.01) {
     events.push({
       tick,
@@ -271,6 +297,169 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
 function isOpenBoundaryOutlet(natural: NaturalWorldEntity, cell: NaturalWorldCellState, downstream: number): boolean {
   if (natural.boundary !== 'open' || downstream >= 0 || cell.terrain.waterBody === undefined || cell.terrain.waterBody === 'none') return false;
   return cell.x === 0 || cell.y === 0 || cell.x === natural.width - 1 || cell.y === natural.height - 1;
+}
+
+function isOpenDrainageBoundaryOutlet(natural: NaturalWorldEntity, cell: NaturalWorldCellState, downstream: number): boolean {
+  if (natural.boundary !== 'open' || downstream >= 0) return false;
+  return cell.x === 0 || cell.y === 0 || cell.x === natural.width - 1 || cell.y === natural.height - 1;
+}
+
+function fillClosedDrainageBasins(natural: NaturalWorldEntity): { cells: number; drownedPlantMatterG: number } {
+  const roots = new Int32Array(natural.cells.length).fill(-1);
+  const resolveRoot = (start: number): number => {
+    if ((roots[start] as number) >= 0) return roots[start] as number;
+    const path: number[] = [];
+    let cursor = start;
+    while (cursor >= 0 && cursor < natural.cells.length && (roots[cursor] as number) < 0) {
+      path.push(cursor);
+      const downstream = natural.cells[cursor]!.terrain.flowTo;
+      if (downstream < 0 || downstream >= natural.cells.length) break;
+      cursor = downstream;
+    }
+    const root = cursor >= 0 && cursor < natural.cells.length && (roots[cursor] as number) >= 0
+      ? roots[cursor] as number
+      : path[path.length - 1] as number;
+    for (const index of path) roots[index] = root;
+    return root;
+  };
+  const basins = new Map<number, NaturalWorldCellState[]>();
+  for (const cell of natural.cells) {
+    const root = resolveRoot(cell.index);
+    const members = basins.get(root) ?? [];
+    members.push(cell);
+    basins.set(root, members);
+  }
+
+  let newlyFormedCells = 0;
+  let drownedPlantMatterG = 0;
+  for (const [rootIndex, members] of basins) {
+    const root = natural.cells[rootIndex]!;
+    if (natural.boundary === 'open' && isWorldEdge(root, natural.width, natural.height)) continue;
+    const catchmentIndices = new Set(members.map((cell) => cell.index));
+    const spillElevation = basinSpillElevation(members, catchmentIndices, natural);
+    if (!Number.isFinite(spillElevation)) continue;
+    const poolCells = depressionFootprint(root, members, spillElevation, natural);
+    if (poolCells.length === 0) continue;
+    const poolIndices = new Set(poolCells.map((cell) => cell.index));
+    const storedWaterMm = poolCells.reduce((total, cell) => total + cell.water.surfaceMm, 0);
+    if (storedWaterMm <= 0.01) continue;
+    const spillCapacityMm = poolCells.reduce((total, cell) => total + Math.max(0, spillElevation - cell.terrain.elevationM) * 1000, 0);
+    const overflowMm = Math.max(0, storedWaterMm - spillCapacityMm);
+    const waterLevelM = solveBasinWaterLevel(poolCells, Math.min(storedWaterMm, spillCapacityMm), spillElevation);
+    for (const cell of poolCells) {
+      cell.water.surfaceMm = round4(Math.max(0, (waterLevelM - cell.terrain.elevationM) * 1000));
+    }
+    if (overflowMm > 0) {
+      const outlet = findBasinSpillCell(poolCells, poolIndices, natural);
+      if (outlet !== undefined) outlet.cell.water.surfaceMm = round4(outlet.cell.water.surfaceMm + overflowMm);
+    }
+
+    const floodedCells = poolCells.filter((cell) => cell.terrain.waterBody === 'none' && cell.water.surfaceMm >= 20);
+    if (floodedCells.length < 3 || Math.max(...floodedCells.map((cell) => cell.water.surfaceMm)) < NATURAL_SCENARIO.terrain.lakeSurfaceWaterMm) continue;
+    for (const cell of floodedCells) {
+      cell.terrain.waterBody = 'lake';
+      cell.terrain.habitat = 'wetland';
+      const trees = cell.plants.filter((plant) => plant.speciesId === 'oak' || plant.speciesId === 'pine'
+        || plant.speciesId === 'birch' || plant.speciesId === 'autumnal' || plant.speciesId === 'willow');
+      if (trees.length > 0) {
+        for (const tree of trees) {
+          cell.soil.detritusGPerM2 = round4(cell.soil.detritusGPerM2 + tree.biomassGPerM2 + tree.seedBankMatterGPerM2);
+          cell.soil.detritusNitrogenGPerM2 = round5(cell.soil.detritusNitrogenGPerM2 + tree.nitrogenGPerM2 + tree.seedBankNitrogenGPerM2);
+          drownedPlantMatterG += (tree.biomassGPerM2 + tree.seedBankMatterGPerM2) * natural.cellSizeM ** 2;
+        }
+        cell.plants = cell.plants.filter((plant) => !trees.includes(plant));
+      }
+      newlyFormedCells += 1;
+    }
+  }
+  return { cells: newlyFormedCells, drownedPlantMatterG };
+}
+
+function depressionFootprint(
+  root: NaturalWorldCellState,
+  members: NaturalWorldCellState[],
+  spillElevation: number,
+  natural: NaturalWorldEntity,
+): NaturalWorldCellState[] {
+  const catchment = new Set(members.map((cell) => cell.index));
+  const reachable = new Set<number>();
+  const queue: number[] = [];
+  if (root.terrain.elevationM < spillElevation) {
+    reachable.add(root.index);
+    queue.push(root.index);
+  }
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const cell = natural.cells[queue[cursor]!]!;
+    for (const [dx, dy] of FLOW_NEIGHBORS) {
+      const x = cell.x + dx;
+      const y = cell.y + dy;
+      if (x < 0 || x >= natural.width || y < 0 || y >= natural.height) continue;
+      const index = y * natural.width + x;
+      if (reachable.has(index) || !catchment.has(index) || natural.cells[index]!.terrain.elevationM >= spillElevation) continue;
+      reachable.add(index);
+      queue.push(index);
+    }
+  }
+  return [...reachable].map((index) => natural.cells[index]!);
+}
+
+function basinSpillElevation(members: NaturalWorldCellState[], basinIndices: Set<number>, natural: NaturalWorldEntity): number {
+  let spillElevation = Number.POSITIVE_INFINITY;
+  for (const cell of members) {
+    for (const [dx, dy] of FLOW_NEIGHBORS) {
+      const x = cell.x + dx;
+      const y = cell.y + dy;
+      if (x < 0 || x >= natural.width || y < 0 || y >= natural.height) continue;
+      const neighborIndex = y * natural.width + x;
+      if (basinIndices.has(neighborIndex)) continue;
+      spillElevation = Math.min(spillElevation, natural.cells[neighborIndex]!.terrain.elevationM);
+    }
+  }
+  return spillElevation;
+}
+
+function findBasinSpillCell(
+  members: NaturalWorldCellState[],
+  basinIndices: Set<number>,
+  natural: NaturalWorldEntity,
+): { cell: NaturalWorldCellState; spillNeighbor: NaturalWorldCellState } | undefined {
+  let best: { cell: NaturalWorldCellState; spillNeighbor: NaturalWorldCellState } | undefined;
+  let minimumSaddle = Number.POSITIVE_INFINITY;
+  for (const cell of members) {
+    for (const [dx, dy] of FLOW_NEIGHBORS) {
+      const x = cell.x + dx;
+      const y = cell.y + dy;
+      if (x < 0 || x >= natural.width || y < 0 || y >= natural.height) continue;
+      const neighborIndex = y * natural.width + x;
+      if (basinIndices.has(neighborIndex)) continue;
+      const neighbor = natural.cells[neighborIndex]!;
+      const saddle = Math.max(cell.terrain.elevationM, neighbor.terrain.elevationM);
+      if (saddle < minimumSaddle || (saddle === minimumSaddle && neighbor.index < (best?.spillNeighbor.index ?? Number.MAX_SAFE_INTEGER))) {
+        minimumSaddle = saddle;
+        best = { cell, spillNeighbor: neighbor };
+      }
+    }
+  }
+  return best;
+}
+
+function solveBasinWaterLevel(members: NaturalWorldCellState[], volumeMm: number, maximumLevelM: number): number {
+  const lowest = Math.min(...members.map((cell) => cell.terrain.elevationM));
+  let low = lowest;
+  let high = Number.isFinite(maximumLevelM)
+    ? maximumLevelM
+    : Math.max(...members.map((cell) => cell.terrain.elevationM)) + volumeMm / Math.max(1000, members.length * 1000) + 1;
+  for (let iteration = 0; iteration < 32; iteration += 1) {
+    const level = (low + high) * 0.5;
+    const contained = members.reduce((total, cell) => total + Math.max(0, level - cell.terrain.elevationM) * 1000, 0);
+    if (contained < volumeMm) low = level;
+    else high = level;
+  }
+  return (low + high) * 0.5;
+}
+
+function isWorldEdge(cell: NaturalWorldCellState, width: number, height: number): boolean {
+  return cell.x === 0 || cell.y === 0 || cell.x === width - 1 || cell.y === height - 1;
 }
 
 function hasGeomorphology(natural: NaturalWorldEntity): boolean {

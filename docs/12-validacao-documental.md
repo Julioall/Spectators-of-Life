@@ -131,3 +131,23 @@ O renderer aplica iluminação direcional derivada da elevação às cores do te
 ### Revisão da vista Altitude — 20/10/2026
 
 A rampa hipsométrica passou a usar 48% de opacidade e mantém água, vegetação, minérios e iluminação visíveis sob a sobreposição. No navegador, a seed `17360b1723241014` mostrou esses elementos junto às curvas de nível; o mundo permaneceu pausado no tick 0. A camada segue sendo apenas visual e não altera o estado lógico.
+
+### Composição suave de relevo e água — 20/10/2026
+
+Altitude e Relevo agora usam o pincel 5×5 de hillshade e interpolação por pixel sobre a textura do solo; as curvas ainda vêm da elevação original. Uma textura auxiliar de água mistura profundidade e iluminação por amostragem bilinear na máscara molhada e usa feather nas margens. A inspeção visual com Altitude, Relevo e Água ativas confirmou relevo contínuo e rios/lagos coloridos pelo gradiente de luz; a seed foi `2f85efac3c9d280f`, tick 0, mundo pausado. A lógica hídrica e a geometria lógica do mapa não mudaram.
+
+`npm run check` passou nesta revisão: typecheck, 93 testes em 18 arquivos, fronteira headless em 17 módulos e build. O build mantém o aviso conhecido do Vite para o bundle acima de 500 KiB. Foram verificados 114 destinos locais de links Markdown.
+
+## Drenagem de rios e escoamento em cascata — 20/10/2026
+
+O cenário natural `1.11.0` substitui o traçado fluvial planejado por cursos selecionados da acumulação de chuva e ligados pelas direções descendentes do relevo. A chuva agora pode percorrer vários trechos em um mesmo passo; em depressões fechadas, o nível sobe até formar um lago e a água acima da soleira segue para a saída. A camada Água desenha lâminas temporárias como manchas conectadas e suavizadas e mostra caminhos de escoamento com correnteza animada. Saves `1.0.0` a `1.10.0` seguem reconhecidos; os novos enums `1.11.0` estão presentes nos schemas de save e Worker. Ver decisão e limites em [ADR 0014](adr/0014-drenagem-fluvial-guiada-pelo-relevo.md).
+
+Testes determinísticos verificam que cursos permanentes acompanham vizinhos mais baixos até outro corpo d'água ou sumidouro, que uma bacia artificial recebe chuva por múltiplas células em um passo, forma lago e mantém a conservação no passo seguinte. A SPEC-100 continua em revisão; a calibração para várias seeds, zooms e estações permanece pendente.
+
+`npm run check` passou: typecheck, 94 testes em 18 arquivos, fronteira headless aprovada em 17 arquivos e build de produção. `git diff --check` passou; 36 arquivos Markdown tiveram seus destinos locais verificados. O build ainda emite o aviso conhecido do Vite para o chunk principal acima de 500 KiB. A inspeção visual no navegador usou o seed `f508bcde7db23742`, camadas Altitude, Relevo e Água, e confirmou cursos conectados ao longo do terreno após vários dias simulados; não foi uma calibração visual entre múltiplas seeds.
+
+### Suavização da paleta do terreno — 20/10/2026
+
+A paleta base do solo agora recebe o mesmo filtro ponderado 5×5 das camadas topográficas e é interpolada na escala de pixel. O dither entre classes foi removido para evitar faixas abruptas; grãos determinísticos preservam a textura. Altitude e Relevo iniciam ativos, com a legenda visível. A mudança permanece na projeção visual e não modifica classe de terreno, relevo, água nem saves.
+
+`npm run check` passou: typecheck, 97 testes em 18 arquivos, fronteira headless em 17 arquivos e build. O build mantém o aviso existente do Vite para o bundle JavaScript acima de 500 KiB. A inspeção no navegador com o seed `1ec4ae9c6e383f8a` confirmou a paleta suavizada e os controles Altitude e Relevo ativos; o mundo permaneceu no início do ano 1.
