@@ -4,7 +4,7 @@
 
 Core em TypeScript, independente de Phaser e DOM. Worker executa ticks fixos; renderização recebe snapshots completos em F0; deltas são uma extensão posterior versionada. Velocidade altera quantos ticks são processados, não as regras ou a duração lógica de um tick.
 
-O runtime atual está em `0.2.0`: preserva `foundation:empty-world@1.0.0` para ensaios F0 e acrescenta `natural:temperate-valley@1.7.0`, com relevo dinâmico, chuva regional, biomas, rios e lagos, erosão/deposição de sedimentos, margens ripárias, geologia, minerais, solo, plantas e decomposição agregada. Saves F0 `0.1.0` continuam aceitos e migram no formato v1 para `0.2.0`; o Worker mantém as versões naturais `1.0.0` a `1.7.0` com seus mapas e agendas.
+O runtime atual está em `0.2.0`: preserva `foundation:empty-world@1.0.0` para ensaios F0 e acrescenta `natural:temperate-valley@1.10.0`, com relevo dinâmico, regiões de terreno e solo guiadas pelo relevo regional, chuva, biomas, rios e lagos, erosão/deposição de sedimentos, margens ripárias, geologia, minerais, plantas e decomposição agregada. Saves F0 `0.1.0` continuam aceitos e migram no formato v1 para `0.2.0`; o Worker mantém as versões naturais `1.0.0` a `1.10.0` com seus mapas e agendas.
 
 Estado básico: versões, seed, estado do RNG, tick, agenda dos sistemas, mapa, clima, reservatórios de água, solo, vegetação, detritos, organismos, linhagens, métricas e eventos. No cenário atual, rochas/minerais e coortes vegetais são parte da entidade do mapa. Cérebro existe apenas em entidades que possuem esse componente. Estado humano e institucional é opcional e ausente em cenários naturais.
 

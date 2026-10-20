@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { PerformanceTracker } from './client/performance-metrics';
+import { PerformanceTracker, type TimingSamples } from './client/performance-metrics';
+import { shouldFetchSnapshotAfterAdvance } from './client/snapshot-policy';
 import { StepDriver, type DriverState } from './client/step-driver';
 import { SimulationClient, type WorkerPort } from './client/worker-transport';
 import { logicalStateString } from './core/canonical-json';
 import { EMPTY_SCENARIO_ID, EMPTY_SCENARIO_VERSION, NATURAL_SCENARIO_ID, NATURAL_SCENARIO_VERSION } from './core/constants';
 import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type PlantStageId, type WaterBodyId } from './core/natural/types';
-import type { WorldState } from './core/types';
+import type { WorkerResponse, WorldState } from './core/types';
 import { FoundationScene } from './render/foundation-scene';
 import './styles.css';
 
@@ -24,6 +25,7 @@ const worker = new Worker(new URL('./worker/entry.ts', import.meta.url), { type:
 const client = new SimulationClient(worker as unknown as WorkerPort);
 let driver: StepDriver | null = null;
 let currentTick: number | null = null;
+let currentSchedules: WorldState['schedules'] | null = null;
 
 const statusOutput = requiredElement<HTMLOutputElement>('runtime-status');
 const seedInput = requiredElement<HTMLInputElement>('seed-input');
@@ -46,6 +48,8 @@ const performanceFrameOutput = requiredElement<HTMLElement>('performance-frame')
 const performanceRenderOutput = requiredElement<HTMLElement>('performance-render');
 const performanceLayersOutput = requiredElement<HTMLElement>('performance-layers');
 const performanceWaterOutput = requiredElement<HTMLElement>('performance-water-motion');
+const performanceSimulationOutput = requiredElement<HTMLElement>('performance-simulation');
+const performanceSnapshotOutput = requiredElement<HTMLElement>('performance-snapshot');
 const performanceWorkerOutput = requiredElement<HTMLElement>('performance-worker');
 const performanceTicksOutput = requiredElement<HTMLElement>('performance-ticks');
 const performanceCellsOutput = requiredElement<HTMLElement>('performance-cells');
@@ -128,8 +132,8 @@ async function createWorld(): Promise<void> {
   try {
     selectedCellIndex = null;
     const ready = await client.createWorld(seedInput.value.trim(), NATURAL_SCENARIO_ID, NATURAL_SCENARIO_VERSION);
-    const snapshot = await client.getSnapshot();
-    updateSnapshot(snapshot.snapshot, ready.worldId);
+    const snapshot = await getSnapshotMeasured();
+    updateSnapshot(snapshot.snapshot, ready.worldId, true);
     enableWorldControls(true);
     setupPanel.open = false;
     setStatus('Mundo criado · pausado');
@@ -158,8 +162,7 @@ async function stepOnce(): Promise<void> {
     const startedAt = performanceEnabled ? now() : null;
     const advanced = await client.step(1);
     if (startedAt !== null && performanceEnabled) performanceTracker.recordWorker(Math.max(0, now() - startedAt), 1);
-    const snapshot = await client.getSnapshot();
-    updateSnapshot(snapshot.snapshot, advanced.worldId);
+    await updateAfterAdvance(advanced);
   } catch (error) {
     showError(error);
   } finally {
@@ -195,8 +198,8 @@ async function importSave(): Promise<void> {
     const parsed: unknown = JSON.parse(await file.text());
     selectedCellIndex = null;
     const loaded = await client.load(parsed);
-    const snapshot = await client.getSnapshot();
-    updateSnapshot(snapshot.snapshot, loaded.worldId);
+    const snapshot = await getSnapshotMeasured();
+    updateSnapshot(snapshot.snapshot, loaded.worldId, true);
     enableWorldControls(true);
     setupPanel.open = false;
     setStatus(`Save carregado · tick ${loaded.tick}`);
@@ -205,15 +208,16 @@ async function importSave(): Promise<void> {
   }
 }
 
-function updateSnapshot(snapshot: WorldState, _worldId: string): void {
+function updateSnapshot(snapshot: WorldState, _worldId: string, forceRender = false): void {
   currentTick = snapshot.tick;
+  currentSchedules = snapshot.schedules;
   tickOutput.textContent = snapshot.tick.toLocaleString('pt-BR');
   seedOutput.textContent = snapshot.seed;
   versionOutput.textContent = snapshot.simulationVersion;
   currentNaturalWorld = snapshot.scenarioId === NATURAL_SCENARIO_ID ? getNaturalWorld(snapshot) : null;
   performanceTracker.setCells(currentNaturalWorld?.cells.length ?? 0);
   const scene = getFoundationScene();
-  scene?.showWorld(currentNaturalWorld, `${snapshot.scenarioId}:${snapshot.scenarioVersion}:${snapshot.seed}`);
+  scene?.showWorld(currentNaturalWorld, `${snapshot.scenarioId}:${snapshot.scenarioVersion}:${snapshot.seed}`, forceRender);
   scene?.setOnCellSelected((index) => {
     selectedCellIndex = index;
     if (index !== null) worldDetails.open = true;
@@ -223,10 +227,7 @@ function updateSnapshot(snapshot: WorldState, _worldId: string): void {
   if (driver === null) {
     driver = new StepDriver(client, {
       onState: updateDriverState,
-      onAdvanced: async (response) => {
-        const current = await client.getSnapshot();
-        updateSnapshot(current.snapshot, response.worldId);
-      },
+      onAdvanced: updateAfterAdvance,
       onStepTiming: ({ elapsedMs, ticks }) => {
         if (performanceEnabled) performanceTracker.recordWorker(elapsedMs, ticks);
       },
@@ -236,6 +237,26 @@ function updateSnapshot(snapshot: WorldState, _worldId: string): void {
       },
     });
   }
+}
+
+async function updateAfterAdvance(advanced: Extract<WorkerResponse, { type: 'ADVANCED' }>): Promise<void> {
+  if (performanceEnabled) performanceTracker.recordSimulation(advanced.diagnostics.durationMs);
+  if (shouldFetchSnapshotAfterAdvance(currentSchedules, advanced.tickFrom, advanced.tickTo)) {
+    const current = await getSnapshotMeasured();
+    updateSnapshot(current.snapshot, advanced.worldId);
+  } else {
+    currentTick = advanced.tickTo;
+    tickOutput.textContent = advanced.tickTo.toLocaleString('pt-BR');
+  }
+}
+
+async function getSnapshotMeasured(): Promise<Extract<WorkerResponse, { type: 'SNAPSHOT' }>> {
+  const startedAt = performanceEnabled ? now() : null;
+  const response = await client.getSnapshot();
+  if (startedAt !== null && performanceEnabled) {
+    performanceTracker.recordSnapshot(Math.max(0, now() - startedAt));
+  }
+  return response;
 }
 
 function setPerformanceEnabled(enabled: boolean): void {
@@ -278,9 +299,11 @@ function updatePerformancePanel(): void {
   performanceFpsOutput.textContent = metric(metrics.fps, ' fps');
   performancePhaserFpsOutput.textContent = metric(metrics.phaserFps, ' fps');
   performanceFrameOutput.textContent = metric(metrics.frameMs, ' ms');
-  performanceRenderOutput.textContent = metric(metrics.renderMs, ' ms');
+  performanceRenderOutput.textContent = timingMetric(metrics.renderMs, metrics.renderSamples);
   performanceLayersOutput.textContent = metric(metrics.dynamicLayersMs, ' ms');
   performanceWaterOutput.textContent = metric(metrics.waterMotionMs, ' ms');
+  performanceSimulationOutput.textContent = timingMetric(metrics.simulationMs, metrics.simulationSamples);
+  performanceSnapshotOutput.textContent = timingMetric(metrics.snapshotMs, metrics.snapshotSamples);
   performanceWorkerOutput.textContent = metric(metrics.workerMs, ' ms');
   performanceTicksOutput.textContent = metrics.ticksPerBatch === null ? '—' : `${metrics.ticksPerBatch.toLocaleString('pt-BR')} ticks`;
   performanceCellsOutput.textContent = metrics.cells.toLocaleString('pt-BR');
@@ -310,6 +333,13 @@ function bytesToMb(bytes: number): number | null {
 
 function metric(value: number | null, suffix: string): string {
   return value === null ? '—' : `${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}${suffix}`;
+}
+
+function timingMetric(value: number | null, samples: TimingSamples | null): string {
+  if (value === null) return '—';
+  if (samples === null) return metric(value, ' ms');
+  const format = (sample: number) => sample.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  return `${format(value)} ms · P50 ${format(samples.p50Ms)} · P95 ${format(samples.p95Ms)} · n ${samples.samples}`;
 }
 
 function updateWorldReadings(natural: NaturalWorldEntity | null, snapshot: WorldState): void {
@@ -484,11 +514,12 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
   await pauseDriver();
   if (currentTick !== null) await client.dispose();
   currentTick = null;
+  currentSchedules = null;
 
   const seed = '0123456789abcdef';
   seedInput.value = seed;
   const ready = await client.createWorld(seed, EMPTY_SCENARIO_ID, EMPTY_SCENARIO_VERSION);
-  const initial = await client.getSnapshot();
+  const initial = await getSnapshotMeasured();
   updateSnapshot(initial.snapshot, ready.worldId);
   enableWorldControls(true);
   const initialSave = (await client.save()).save;
@@ -496,7 +527,7 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
     { label: 'render-off', render: false, targetFps: 30, camera: { x: 0, y: 0, zoom: 1 } },
     { label: '30-fps-camera-origin', render: true, targetFps: 30, camera: { x: 0, y: 0, zoom: 1 } },
     { label: '60-fps-camera-east', render: true, targetFps: 60, camera: { x: 320, y: -180, zoom: 1.25 } },
-    { label: '60-fps-camera-west', render: true, targetFps: 60, camera: { x: -2048, y: 1024, zoom: 0.75 } },
+    { label: '60-fps-camera-west', render: true, targetFps: 60, camera: { x: -800, y: 1024, zoom: 0.75 } },
   ];
   const results: Array<Record<string, unknown>> = [];
   let referenceState: string | null = null;
@@ -507,8 +538,8 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
     for (const profile of profiles) {
       setStatus(`Ensaio F0 · preparando ${profile.label}`);
       const loaded = await client.load(initialSave);
-      const start = await client.getSnapshot();
-      updateSnapshot(start.snapshot, loaded.worldId);
+      const start = await getSnapshotMeasured();
+      updateSnapshot(start.snapshot, loaded.worldId, true);
       getFoundationScene()?.setCameraView(profile.camera.x, profile.camera.y, profile.camera.zoom);
       game.loop.setFPSLimit(profile.targetFps);
       if (profile.render) game.loop.wake();
@@ -540,7 +571,7 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
       game.events.off('postrender', cleanupHandler);
       cleanupHandler = null;
 
-      const snapshot = await client.getSnapshot();
+      const snapshot = await getSnapshotMeasured();
       const canonicalState = logicalStateString(snapshot.snapshot);
       const canonicalEvents = logicalStateString(events);
       const equalToReference = referenceState === null || canonicalState === referenceState;
@@ -593,8 +624,8 @@ async function runF0PresentationSweep(): Promise<{ passed: boolean; seed: string
     game.loop.wake();
     getFoundationScene()?.setCameraView(0, 0, 1);
     const restored = await client.load(initialSave);
-    const snapshot = await client.getSnapshot();
-    updateSnapshot(snapshot.snapshot, restored.worldId);
+    const snapshot = await getSnapshotMeasured();
+    updateSnapshot(snapshot.snapshot, restored.worldId, true);
     enableWorldControls(true);
     setStatus('Mundo de teste restaurado · pausado');
   }

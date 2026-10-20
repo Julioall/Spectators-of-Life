@@ -3,7 +3,7 @@ import { MAX_SAFE_TICK } from '../../src/core/constants';
 import { ContractError, StepFaultError } from '../../src/core/errors';
 import { drawFromSystem, nextUint32, deriveStreamState, splitMix64Outputs } from '../../src/core/rng';
 import { createEmptyWorld, stepWorld, toSaveDocument, validateSaveDocument, worldFromSave } from '../../src/core/world';
-import { logicalStateString } from '../../src/core/canonical-json';
+import { canonicalStringify, cloneValidatedJson, logicalStateString } from '../../src/core/canonical-json';
 import type { TickSystem } from '../../src/core/types';
 
 function emptyWorld(seed = '0000000000000000', systems: readonly TickSystem[] = []) {
@@ -11,6 +11,19 @@ function emptyWorld(seed = '0000000000000000', systems: readonly TickSystem[] = 
 }
 
 describe('SPEC-000 · core headless', () => {
+  it('clona estado JSON validado sem mudar semântica canônica nem compartilhar objetos', () => {
+    const source = { elevation: -0, cells: [{ water: -0, biomass: 3 }] };
+    const copy = cloneValidatedJson(source);
+    expect(copy).not.toBe(source);
+    expect(copy.cells).not.toBe(source.cells);
+    expect(copy.cells[0]).not.toBe(source.cells[0]);
+    expect(Object.is(copy.elevation, -0)).toBe(false);
+    expect(Object.is(copy.cells[0]!.water, -0)).toBe(false);
+    expect(canonicalStringify(copy)).toBe(canonicalStringify(source));
+    copy.cells[0]!.biomass = 8;
+    expect(source.cells[0]!.biomass).toBe(3);
+  });
+
   it('cria o mundo vazio no tick zero e avança exatamente a quantidade pedida', () => {
     const world = emptyWorld();
     expect(world.tick).toBe(0);

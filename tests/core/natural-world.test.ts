@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { canonicalStringify, utf8ByteLength } from '../../src/core/canonical-json';
 import { MAX_WORLD_BYTES, MAX_WORLD_STATE_BYTES, NATURAL_SCENARIO_ID } from '../../src/core/constants';
 import { createNaturalWorld, NATURAL_SYSTEMS } from '../../src/core/natural/scenario';
+import { buildLandformElevationField } from '../../src/core/natural/topography';
 import { getNaturalWorld } from '../../src/core/natural/types';
 import { validateSaveDocument, validateWorldState, worldFromSave, toSaveDocument, stepWorld } from '../../src/core/world';
 
@@ -15,10 +16,27 @@ describe('cenário natural do vale temperado', () => {
     const natural = getNaturalWorld(first);
     expect(canonicalStringify(first)).toBe(canonicalStringify(second));
     expect(first.scenarioId).toBe(NATURAL_SCENARIO_ID);
+    expect(first.scenarioVersion).toBe('1.10.0');
     expect(natural.cells).toHaveLength(natural.width * natural.height);
     expect(new Set(natural.cells.map((cell) => cell.terrain.soilType)).size).toBeGreaterThanOrEqual(3);
     expect(new Set(natural.cells.map((cell) => cell.terrain.bedrock)).size).toBeGreaterThanOrEqual(2);
     expect(natural.cells.every((cell) => cell.terrain.flowTo < 0 || natural.cells[cell.terrain.flowTo]!.terrain.elevationM < cell.terrain.elevationM)).toBe(true);
+    const elevationSorted = [...natural.cells].sort((left, right) => left.terrain.elevationM - right.terrain.elevationM || left.index - right.index);
+    const quartileSize = Math.floor(elevationSorted.length / 4);
+    const lowland = elevationSorted.slice(0, quartileSize);
+    const highland = elevationSorted.slice(-quartileSize);
+    const meanMineralPotential = (cells: typeof natural.cells): number =>
+      sum(cells.map((cell) => cell.terrain.mineralPotential ?? 0)) / cells.length;
+    expect(natural.cells.every((cell) => Number.isFinite(cell.terrain.mineralPotential)
+      && (cell.terrain.mineralPotential ?? -1) >= 0 && (cell.terrain.mineralPotential ?? 2) <= 1)).toBe(true);
+    expect(meanMineralPotential(highland)).toBeGreaterThan(meanMineralPotential(lowland) + 0.05);
+    const landformElevations = buildLandformElevationField(natural.width, natural.height, natural.cells.map((cell) => cell.terrain.elevationM));
+    const landformOrder = natural.cells.map((cell) => ({ cell, elevation: landformElevations[cell.index] as number }))
+      .sort((left, right) => left.elevation - right.elevation || left.cell.index - right.cell.index);
+    const lowlandByForm = landformOrder.slice(0, quartileSize).map(({ cell }) => cell);
+    const highlandByForm = landformOrder.slice(-quartileSize).map(({ cell }) => cell);
+    const uplandShare = (cells: typeof natural.cells): number => cells.filter((cell) => cell.terrain.habitat === 'upland').length / cells.length;
+    expect(uplandShare(highlandByForm)).toBeGreaterThan(uplandShare(lowlandByForm));
     expect(natural.cells.filter((cell) => cell.water.surfaceMm >= 18).length).toBeGreaterThanOrEqual(3);
     for (const speciesId of ['grass', 'shrub', 'oak', 'pine', 'birch', 'autumnal', 'willow']) {
       expect(natural.cells.some((cell) => cell.plants.some((plant) => plant.speciesId === speciesId))).toBe(true);
@@ -42,9 +60,104 @@ describe('cenário natural do vale temperado', () => {
     }
   }, 30_000);
 
+  it('conecta canais aos lagos e alarga rios a jusante e em confluências', () => {
+    const natural = getNaturalWorld(createNaturalWorld(FIXED_SEED));
+    const rivers = natural.cells.filter((cell) => cell.terrain.waterBody === 'river');
+    const isLakeAdjacent = (cell: (typeof natural.cells)[number]): boolean => {
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const x = cell.x + dx;
+          const y = cell.y + dy;
+          if (x >= 0 && x < natural.width && y >= 0 && y < natural.height
+            && natural.cells[y * natural.width + x]!.terrain.waterBody === 'lake') return true;
+        }
+      }
+      return false;
+    };
+    const lakeOutlets = rivers.filter(isLakeAdjacent);
+    expect(lakeOutlets.length).toBeGreaterThan(0);
+    const connectedRiverComponentSize = (outlet: (typeof natural.cells)[number]): number => {
+      const connectedRiverCells = new Set<number>([outlet.index]);
+      const queue = [outlet.index];
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const cell = natural.cells[queue[cursor] as number]!;
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            const x = cell.x + dx;
+            const y = cell.y + dy;
+            if (x < 0 || x >= natural.width || y < 0 || y >= natural.height) continue;
+            const neighbor = y * natural.width + x;
+            if (natural.cells[neighbor]!.terrain.waterBody !== 'river' || connectedRiverCells.has(neighbor)) continue;
+            connectedRiverCells.add(neighbor);
+            queue.push(neighbor);
+          }
+        }
+      }
+      return connectedRiverCells.size;
+    };
+    const lakeOutletReachSizes = lakeOutlets.map(connectedRiverComponentSize);
+    expect(Math.max(...lakeOutletReachSizes)).toBeGreaterThanOrEqual(12);
+
+    const contributing = catchmentCellsForTest(natural);
+    const nearbyRiverCells = (cell: (typeof natural.cells)[number]): number => natural.cells.filter((other) =>
+      other.terrain.waterBody === 'river' && Math.hypot(other.x - cell.x, other.y - cell.y) <= 1.5).length;
+    const byCatchment = [...rivers].sort((left, right) => (contributing[left.index] as number) - (contributing[right.index] as number));
+    const quartile = Math.max(1, Math.floor(byCatchment.length / 4));
+    const headwaterWidth = mean(byCatchment.slice(0, quartile).map(nearbyRiverCells));
+    const downstreamWidth = mean(byCatchment.slice(-quartile).map(nearbyRiverCells));
+    expect(downstreamWidth).toBeGreaterThan(headwaterWidth);
+
+    const riverUpstreamCount = new Uint8Array(natural.cells.length);
+    for (const cell of rivers) {
+      const downstream = cell.terrain.flowTo;
+      if (downstream >= 0 && natural.cells[downstream]!.terrain.waterBody === 'river') riverUpstreamCount[downstream] = (riverUpstreamCount[downstream] ?? 0) + 1;
+    }
+    const junction = rivers.find((cell) => (riverUpstreamCount[cell.index] ?? 0) >= 2);
+    expect(junction).toBeDefined();
+    if (junction !== undefined) expect(nearbyRiverCells(junction)).toBeGreaterThanOrEqual(4);
+  }, 15_000);
+
+  it('incisa margens de rios mais depressa apenas no cenário 1.10', () => {
+    const current = createNaturalWorld(FIXED_SEED);
+    const legacy = structuredClone(current);
+    legacy.scenarioVersion = '1.9.0';
+    getNaturalWorld(legacy).scenarioVersion = '1.9.0';
+    const initialNatural = getNaturalWorld(current);
+    const riverBankIndices = initialNatural.cells.filter((cell) => {
+      if (cell.terrain.waterBody !== 'none') return false;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const x = cell.x + dx;
+          const y = cell.y + dy;
+          if (x >= 0 && x < initialNatural.width && y >= 0 && y < initialNatural.height
+            && initialNatural.cells[y * initialNatural.width + x]!.terrain.waterBody === 'river') return true;
+        }
+      }
+      return false;
+    }).map((cell) => cell.index);
+    const currentAfterRain = getNaturalWorld(stepWorld(current, 4, NATURAL_SYSTEMS).state);
+    const legacyAfterRain = getNaturalWorld(stepWorld(legacy, 4, NATURAL_SYSTEMS).state);
+    expect(riverBankIndices.some((index) =>
+      (currentAfterRain.cells[index]!.soil.lastMineralErosionKgPerM2 ?? 0)
+        > (legacyAfterRain.cells[index]!.soil.lastMineralErosionKgPerM2 ?? 0))).toBe(true);
+  }, 30_000);
+
+  it('mantém as capacidades de estado das versões anteriores após versionar a geração', () => {
+    const current = createNaturalWorld(FIXED_SEED);
+    for (const version of ['1.7.0', '1.8.0', '1.9.0'] as const) {
+      const legacyWorld = structuredClone(current);
+      legacyWorld.scenarioVersion = version;
+      getNaturalWorld(legacyWorld).scenarioVersion = version;
+      expect(validateWorldState(legacyWorld)).toBe(true);
+    }
+  });
+
   it('avança clima, água, decomposição e plantas em passos diários com saída fluvial auditada', () => {
     const initial = createNaturalWorld(FIXED_SEED);
     const initialNatural = getNaturalWorld(initial);
+    const initialStateString = canonicalStringify(initial);
     const waterBefore = totalWater(initialNatural);
     const result = stepWorld(initial, 4, NATURAL_SYSTEMS);
     const natural = getNaturalWorld(result.state);
@@ -54,6 +167,7 @@ describe('cenário natural do vale temperado', () => {
     const boundaryOutflow = sum(natural.cells.map((cell) => cell.water.lastFlows.boundaryOutflowMm ?? 0));
     const expectedWater = waterBefore + precipitation - evaporation - transpiration - boundaryOutflow;
     expect(result.state.tick).toBe(4);
+    expect(canonicalStringify(initial)).toBe(initialStateString);
     expect(natural.daysSimulated).toBe(1);
     expect(precipitation).toBeGreaterThan(0);
     expect(Math.abs(totalWater(natural) - expectedWater)).toBeLessThan(0.5);
@@ -109,6 +223,24 @@ describe('cenário natural do vale temperado', () => {
 
 function totalWater(world: ReturnType<typeof getNaturalWorld>): number {
   return sum(world.cells.map((cell) => cell.water.surfaceMm + cell.water.soilMm));
+}
+
+function catchmentCellsForTest(world: ReturnType<typeof getNaturalWorld>): number[] {
+  const contributing = new Array<number>(world.cells.length).fill(1);
+  const downhill = world.cells.map((cell) => cell.index)
+    .sort((left, right) => world.cells[right]!.terrain.elevationM - world.cells[left]!.terrain.elevationM || left - right);
+  for (const index of downhill) {
+    const cell = world.cells[index]!;
+    const downstream = cell.terrain.flowTo;
+    if (downstream >= 0 && cell.terrain.elevationM > world.cells[downstream]!.terrain.elevationM) {
+      contributing[downstream] = (contributing[downstream] as number) + (contributing[index] as number);
+    }
+  }
+  return contributing;
+}
+
+function mean(values: number[]): number {
+  return sum(values) / Math.max(1, values.length);
 }
 
 function sum(values: number[]): number {

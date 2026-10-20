@@ -13,7 +13,8 @@
     "test": "vitest",
     "build": "vite build",
     "verify:boundary": "node scripts/verify-core-boundary.mjs",
-    "benchmark:f0": "node --expose-gc scripts/f0-benchmark.mjs",
+    "benchmark:natural": "node --expose-gc scripts/natural-benchmark.mjs",
+    "benchmark:f0": "npm run benchmark:natural",
     "soak:natural": "vitest run --config vite.natural-soak.config.ts",
     "check": "npm run typecheck && npm test -- --run && npm run verify:boundary && npm run build",
     "preview": "vite preview"

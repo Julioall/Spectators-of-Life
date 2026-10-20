@@ -45,6 +45,16 @@ export function cloneJson<T>(value: T): T {
   return JSON.parse(canonicalStringify(value)) as T;
 }
 
+/**
+ * Fast deep copy for already-validated JSON state. The caller must validate
+ * the input first; negative zero is normalized to match canonical JSON.
+ */
+export function cloneValidatedJson<T>(value: T): T {
+  const copy = structuredClone(value);
+  normalizeNegativeZero(copy);
+  return copy;
+}
+
 export function logicalStateString(value: unknown): string {
   if (value !== null && typeof value === 'object' && 'worldId' in value && 'state' in value) {
     return canonicalStringify((value as { state: unknown }).state);
@@ -73,4 +83,21 @@ export function utf8ByteLength(value: string): number {
     }
   }
   return bytes;
+}
+
+function normalizeNegativeZero(value: unknown): void {
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      const item: unknown = value[index];
+      if (typeof item === 'number' && Object.is(item, -0)) value[index] = 0;
+      else normalizeNegativeZero(item);
+    }
+    return;
+  }
+  if (value === null || typeof value !== 'object') return;
+  for (const key of Object.keys(value)) {
+    const item = (value as Record<string, unknown>)[key];
+    if (typeof item === 'number' && Object.is(item, -0)) (value as Record<string, unknown>)[key] = 0;
+    else normalizeNegativeZero(item);
+  }
 }

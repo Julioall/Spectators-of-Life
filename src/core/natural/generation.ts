@@ -1,6 +1,7 @@
 import { drawFromSystem } from '../rng';
 import type { RandomState } from '../types';
 import { NATURAL_SCENARIO, validateNaturalScenarioParameters, type MineralVeinProfile, type SoilProfile } from './parameters';
+import { buildLandformElevationField } from './topography';
 import type { BedrockId, NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, PlantSpeciesId, SoilTypeId, TreeSpeciesId, WaterBodyId } from './types';
 
 const NEIGHBORS = [
@@ -57,6 +58,7 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
   });
 
   const riverNetwork = carveMajorRiverNetwork(world.width, world.height, elevations, rainfallFactors, terrain.maximumElevationM, seed);
+  const landformElevations = buildLandformElevationField(world.width, world.height, elevations);
   let flowTo = buildFlowDirections(world.width, world.height, elevations, world.cellSizeM);
   for (const [from, to] of riverNetwork.downstream) {
     if ((elevations[from] as number) > (elevations[to] as number)) flowTo[from] = to;
@@ -64,8 +66,8 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
   let basinIds = findBasins(flowTo);
   let basinSizes = countBasins(basinIds);
   let { bedrock, soilTypes, slopes } = buildSurfaceFields(
-    world.width, world.cellSizeM, elevations, flowTo, basinIds, basinSizes,
-    rainfallFactors, geologyField, soilField, moistureField, terrain.maximumElevationM, totalCells,
+    world.width, world.cellSizeM, elevations, landformElevations, flowTo, basinIds, basinSizes,
+    rainfallFactors, geologyField, soilField, moistureField, terrain.minimumElevationM, terrain.maximumElevationM, totalCells,
   );
   let runoff = buildRunoffAccumulation(flowTo, elevations, rainfallFactors, soilTypes, slopes);
   const lakeCandidates = [...basinSizes.entries()]
@@ -110,8 +112,8 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     basinIds = findBasins(flowTo);
     basinSizes = countBasins(basinIds);
     ({ bedrock, soilTypes, slopes } = buildSurfaceFields(
-      world.width, world.cellSizeM, elevations, flowTo, basinIds, basinSizes,
-      rainfallFactors, geologyField, soilField, moistureField, terrain.maximumElevationM, totalCells,
+      world.width, world.cellSizeM, elevations, landformElevations, flowTo, basinIds, basinSizes,
+      rainfallFactors, geologyField, soilField, moistureField, terrain.minimumElevationM, terrain.maximumElevationM, totalCells,
     ));
     runoff = buildRunoffAccumulation(flowTo, elevations, rainfallFactors, soilTypes, slopes);
   }
@@ -125,12 +127,14 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     lakeCells,
     terrain.riverRunoffThreshold,
   );
+  const widenedRiverCells = widenRiverChannels(world.width, world.height, flowTo, runoff.contributingCells, persistentRiverCells, lakeCells);
   for (let index = 0; index < totalCells; index += 1) {
-    if (waterBodies[index] !== 'lake' && persistentRiverCells.has(index)) waterBodies[index] = 'river';
+    if (waterBodies[index] !== 'lake' && widenedRiverCells.has(index)) waterBodies[index] = 'river';
   }
   const riparianCells = findRiparianCells(world.width, world.height, waterBodies, slopes);
 
   const cells: NaturalWorldCellState[] = [];
+  const elevationRange = Math.max(1, terrain.maximumElevationM - terrain.minimumElevationM);
   for (let index = 0; index < totalCells; index += 1) {
     const x = index % world.width;
     const y = Math.floor(index / world.width);
@@ -139,6 +143,13 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     const gradient = slopes[index] as number;
     const soilProfile = terrain.soilTypes.find((profile) => profile.id === soilTypes[index]) as SoilProfile;
     const exposedRock = soilProfile.id === 'rock' || gradient > 0.45;
+    const hostBedrock = bedrock[index] as BedrockId;
+    const landformElevationM = landformElevations[index] as number;
+    const relativeRelief = clamp((landformElevationM - terrain.minimumElevationM) / elevationRange, 0, 1);
+    const upliftProspectivity = smooth(clamp((relativeRelief - 0.22) / 0.55, 0, 1));
+    const slopeProspectivity = clamp(gradient / 0.3, 0, 1);
+    const hostRockProspectivity = hostBedrock === 'sedimentary' ? 0.34 : 1;
+    const exposureProspectivity = exposedRock ? 1 : 0.35;
     const basinId = basinIds[index] as number;
     const waterBody = waterBodies[index] as WaterBodyId;
     const isLake = waterBody === 'lake';
@@ -147,7 +158,7 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
     const riverDepth = terrain.riverSurfaceWaterMm + Math.min(1_450, Math.log1p(Math.max(0, runoff.runoffPotential[index] as number)) * 165);
     const surfaceWaterMm = isLake ? round1(Math.min(25_000, lakeDepth)) : waterBody === 'river' ? round1(riverDepth) : 0;
     const rainfallFactor = rainfallFactors[index] as number;
-    const moisturePotential = clamp(0.43 + (rainfallFactor - 1) * 0.29 + (1 - heightM / terrain.maximumElevationM) * 0.2 + ((moistureField[index] as number) - 0.5) * 0.2 + (basinSizes.get(basinId) ?? 1) / totalCells * 0.66, 0, 1);
+    const moisturePotential = clamp(0.43 + (rainfallFactor - 1) * 0.29 + (1 - relativeRelief) * 0.2 + ((moistureField[index] as number) - 0.5) * 0.2 + (basinSizes.get(basinId) ?? 1) / totalCells * 0.66, 0, 1);
     const moistureFactor = clamp(0.4 + moisturePotential * 0.35 + rainfallFactor * 0.25 - gradient * 0.3, 0.35, 1.15);
     const soilWaterMm = round3(soilProfile.waterCapacityMm * terrain.initialWaterTableFraction * moistureFactor);
     const season = climate.seasonalForcing[0]!;
@@ -170,12 +181,12 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
         slope: round4(gradient),
         flowTo: downstream,
         basinId,
-        bedrock: bedrock[index] as BedrockId,
+        bedrock: hostBedrock,
         soilType: soilId,
         habitat: initialHabitat({
           isLake: waterBody !== 'none',
           isRiparian: riparianCells.has(index),
-          relativeElevation: heightM / terrain.maximumElevationM,
+          relativeElevation: relativeRelief,
           slope: gradient,
           moisturePotential,
           rainfallFactor,
@@ -185,9 +196,11 @@ export function generateNaturalWorld(seed: string, rng: RandomState): NaturalWor
         exposedRock,
         waterBody,
         mineralPotential: round3(clamp(
-          (normalizedMineralPotential[index] as number) * 0.62
-            + (bedrock[index] === 'sedimentary' ? 0.11 : 0.24)
-            + (exposedRock ? 0.14 : clamp((heightM / terrain.maximumElevationM) * 0.10, 0.02, 0.10)),
+          (normalizedMineralPotential[index] as number) * 0.46
+            + hostRockProspectivity * 0.2
+            + upliftProspectivity * 0.18
+            + slopeProspectivity * 0.1
+            + exposureProspectivity * 0.06,
           0,
           1,
         )),
@@ -448,10 +461,58 @@ function findPersistentRiverCells(
   return persistent;
 }
 
+/** Widen high-catchment channels where neighboring runoff already drains into the river. */
+function widenRiverChannels(
+  width: number,
+  height: number,
+  flowTo: number[],
+  contributingCells: number[],
+  centerline: Set<number>,
+  lakeCells: Set<number>,
+): Set<number> {
+  const riverCells = new Set(centerline);
+  const upstreamCount = new Uint8Array(flowTo.length);
+  for (const source of centerline) {
+    const downstream = flowTo[source] as number;
+    if (centerline.has(downstream)) upstreamCount[downstream] = (upstreamCount[downstream] ?? 0) + 1;
+  }
+  const ordered = [...centerline].sort((left, right) => (contributingCells[right] as number) - (contributingCells[left] as number) || left - right);
+  for (const channel of ordered) {
+    const catchment = contributingCells[channel] as number;
+    const junction = (upstreamCount[channel] ?? 0) >= 2;
+    const radius = Math.min(2.15, 0.55 + Math.log2(Math.max(1, catchment / 32)) * 0.33 + (junction ? 0.28 : 0));
+    if (radius < 1) continue;
+    const x = channel % width;
+    const y = Math.floor(channel / width);
+    const minimumBankCatchment = Math.max(2, Math.floor(catchment * 0.01));
+    const candidates: Array<{ cell: number; distance: number }> = [];
+    for (let dy = -2; dy <= 2; dy += 1) {
+      for (let dx = -2; dx <= 2; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        const distance = Math.hypot(dx, dy);
+        if (distance > radius) continue;
+        const cell = ny * width + nx;
+        if (lakeCells.has(cell) || riverCells.has(cell) || (contributingCells[cell] as number) < minimumBankCatchment) continue;
+        candidates.push({ cell, distance });
+      }
+    }
+    candidates.sort((left, right) => left.distance - right.distance || left.cell - right.cell);
+    for (const candidate of candidates) {
+      const downstream = flowTo[candidate.cell] as number;
+      if (riverCells.has(downstream)) riverCells.add(candidate.cell);
+    }
+  }
+  return riverCells;
+}
+
 function buildSurfaceFields(
   width: number,
   cellSizeM: number,
   elevations: number[],
+  landformElevations: number[],
   flowTo: number[],
   basinIds: number[],
   basinSizes: Map<number, number>,
@@ -459,14 +520,16 @@ function buildSurfaceFields(
   geologyField: number[],
   soilField: number[],
   moistureField: number[],
+  minimumElevationM: number,
   maximumElevationM: number,
   totalCells: number,
 ): { bedrock: BedrockId[]; soilTypes: SoilTypeId[]; slopes: number[] } {
   const bedrock: BedrockId[] = [];
   const soilTypes: SoilTypeId[] = [];
   const slopes: number[] = [];
+  const elevationRange = Math.max(1, maximumElevationM - minimumElevationM);
   for (let index = 0; index < totalCells; index += 1) {
-    const relativeElevation = (elevations[index] as number) / maximumElevationM;
+    const relativeElevation = clamp(((landformElevations[index] as number) - minimumElevationM) / elevationRange, 0, 1);
     const geology = geologyField[index] as number;
     const substrate = soilField[index] as number;
     const moisture = moistureField[index] as number;

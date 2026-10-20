@@ -7,7 +7,9 @@ type WorkerScope = {
 };
 
 const scope = globalThis as unknown as WorkerScope;
-const engine = new WorkerEngine();
+// postMessage performs the structured clone at the worker boundary. Avoid a
+// second full-world clone inside WorkerEngine for snapshots.
+const engine = new WorkerEngine({ snapshotOwnership: 'post-message' });
 
 scope.addEventListener('message', (event) => {
   scope.postMessage(engine.handle(event.data));

@@ -6,7 +6,7 @@ import {
   type AsterraSizeProfile, type AsterraTerrain,
 } from './asterra/engine.js';
 import { createAsterraSettings } from './asterra/settings';
-import { asterraTerrainForSurface, terrainContext, terrainSurface, TERRAIN_SURFACE_COLORS } from './terrain-palette';
+import { asterraTerrainForSurface, terrainContext, terrainSurface, TERRAIN_SURFACE_COLORS, type TerrainContext as SurfaceTerrainContext } from './terrain-palette';
 
 export { TILE as ROCK_NATIVE_CELL_SIZE } from './asterra/engine.js';
 export type RockFootprint = { x: number; y: number; width: number; height: number };
@@ -101,7 +101,7 @@ type RockCandidate = {
   transition: number;
 };
 
-type TerrainContext = { minimumElevation: number; maximumElevation: number };
+type TerrainContext = SurfaceTerrainContext;
 
 /** Adapts exposed world deposits to original ASTERRA descriptors without touching world state. */
 export function generateProceduralRocks(world: NaturalWorldEntity, visualSeed: number): ProceduralRock[] {
@@ -513,7 +513,7 @@ function terrainContextFor(world: NaturalWorldEntity): TerrainContext {
 }
 
 function terrainPaletteFor(cell: NaturalWorldCellState, context: TerrainContext): AsterraTerrain {
-  const surface = terrainSurface(cell, context.minimumElevation, context.maximumElevation);
+  const surface = terrainSurface(cell, context.minimumElevation, context.maximumElevation, context.landformElevations[cell.index]);
   return asterraTerrainForSurface(surface, cell.terrain.bedrock);
 }
 

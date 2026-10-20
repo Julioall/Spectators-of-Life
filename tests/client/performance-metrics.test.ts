@@ -9,6 +9,8 @@ describe('métricas de desempenho da apresentação', () => {
     tracker.recordRender(3.2);
     tracker.recordDynamicLayers(1.8);
     tracker.recordWaterMotion(0.4);
+    tracker.recordSimulation(7.1);
+    tracker.recordSnapshot(9.4);
     tracker.recordWorker(12.5, 4);
     tracker.setCells(128);
     tracker.setMemory(128, 256, 4096);
@@ -20,6 +22,11 @@ describe('métricas de desempenho da apresentação', () => {
       renderMs: 3.2,
       dynamicLayersMs: 1.8,
       waterMotionMs: 0.4,
+      simulationMs: 7.1,
+      snapshotMs: 9.4,
+      renderSamples: { samples: 1, p50Ms: 3.2, p95Ms: 3.2, maxMs: 3.2 },
+      simulationSamples: { samples: 1, p50Ms: 7.1, p95Ms: 7.1, maxMs: 7.1 },
+      snapshotSamples: { samples: 1, p50Ms: 9.4, p95Ms: 9.4, maxMs: 9.4 },
       workerMs: 12.5,
       ticksPerBatch: 4,
       cells: 128,
@@ -48,6 +55,11 @@ describe('métricas de desempenho da apresentação', () => {
       renderMs: null,
       dynamicLayersMs: null,
       waterMotionMs: null,
+      simulationMs: null,
+      snapshotMs: null,
+      renderSamples: null,
+      simulationSamples: null,
+      snapshotSamples: null,
       workerMs: null,
       ticksPerBatch: null,
       cells: 0,
@@ -66,6 +78,11 @@ describe('métricas de desempenho da apresentação', () => {
       renderMs: null,
       dynamicLayersMs: null,
       waterMotionMs: null,
+      simulationMs: null,
+      snapshotMs: null,
+      renderSamples: null,
+      simulationSamples: null,
+      snapshotSamples: null,
       workerMs: null,
       ticksPerBatch: null,
       cells: 0,
@@ -73,5 +90,11 @@ describe('métricas de desempenho da apresentação', () => {
       memoryTotalMb: null,
       memoryLimitMb: null,
     });
+  });
+
+  it('mantém P50/P95/max separados numa janela móvel de 120 medições', () => {
+    const tracker = new PerformanceTracker();
+    for (let value = 1; value <= 121; value += 1) tracker.recordRender(value);
+    expect(tracker.read().renderSamples).toEqual({ samples: 120, p50Ms: 61, p95Ms: 115, maxMs: 121 });
   });
 });

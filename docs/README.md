@@ -28,7 +28,7 @@ Estado: F0 validado localmente; protótipo F1–F2 em revisão. Implementação 
 
 O índice em [specs/README.md](specs/README.md) acompanha o avanço do roadmap. SPEC-000 está validada localmente, SPEC-001 implementa contratos comuns e SPEC-100/200 têm implementação inicial ligada ao cenário de referência.
 
-[AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos, [ADR 0006](adr/0006-prng-f0.md) fecha os geradores determinísticos de F0 e [ADR 0007](adr/0007-ui-contextual-tela-unica.md) define a tela única com inspeção contextual.
+[AGENTS.md](../AGENTS.md) orienta agentes e [CONTRIBUTING.md](../CONTRIBUTING.md) contribuições. [ADRs](adr/) registram decisões; [ADR 0005](adr/0005-mundo-natural-primeiro.md) formaliza natureza antes de humanos, [ADR 0006](adr/0006-prng-f0.md) fecha os geradores determinísticos de F0, [ADR 0007](adr/0007-ui-contextual-tela-unica.md) define a tela única com inspeção contextual, [ADR 0010](adr/0010-snapshot-and-render-performance.md) registra os limites de cópia dos snapshots e atualização visual e [ADR 0012](adr/0012-alargamento-e-confluencia-fluvial.md) registra largura fluvial e integração visual com lagos.
 
 F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F7–F9 ampliam para especialização, Estados e impérios. Progressão de produção não impõe uma trajetória social a toda população.
 

@@ -13,7 +13,7 @@ import {
   SAVE_SCHEMA_VERSION,
   SIMULATION_VERSION,
 } from './constants';
-import { canonicalStringify, cloneJson, utf8ByteLength } from './canonical-json';
+import { canonicalStringify, cloneJson, cloneValidatedJson, utf8ByteLength } from './canonical-json';
 import { ContractError, StepFaultError } from './errors';
 import { createRandomState, validateRandomState } from './rng';
 import { isNaturalWorldEntity } from './natural/contracts';
@@ -306,7 +306,7 @@ export function stepWorld(initial: WorldState, ticks: number, systems: readonly 
       committed = { ...committed, tick: nextTick };
       continue;
     }
-    const draft = cloneJson(committed);
+    const draft = cloneValidatedJson(committed);
     draft.tick = nextTick;
     const draftSchedules = new Map(draft.schedules.map((schedule) => [schedule.systemId, schedule]));
     try {

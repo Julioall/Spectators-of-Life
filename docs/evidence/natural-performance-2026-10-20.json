@@ -1,0 +1,209 @@
+{
+  "format": "spectators-of-life-natural-performance",
+  "benchmarkSchemaVersion": 1,
+  "measuredAt": "2026-10-20T03:00:52.408Z",
+  "revision": "a423c5a5c366b0db714880c6ad66c40f6f0ba41f",
+  "workingTree": "modified",
+  "workingTreeFingerprint": "9eff85d11ff8a2e98906dca49784ff2a93addfc0d5db10f237cbc1db17985422",
+  "host": {
+    "platform": "Windows_NT 10.0.26200",
+    "cpu": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+    "logicalCpus": 8,
+    "ramBytes": 17041817600,
+    "node": "v24.19.0",
+    "v8": "13.6.233.17-node.51",
+    "arch": "x64"
+  },
+  "methodology": "Seed fixa 0123456789abcdef; 3 dias de aquecimento e 30 dias medidos, cada dia com STEP(4). Simulação vem de diagnostics.durationMs dentro do WorkerEngine; snapshot inclui handler mais structuredClone para representar a cópia de postMessage. Render Phaser é medido no painel do navegador, com último tempo e P50/P95 em janela móvel de até 120 frames.",
+  "scenario": {
+    "id": "natural:temperate-valley",
+    "version": "1.7.0",
+    "seed": "0123456789abcdef",
+    "width": 80,
+    "height": 56,
+    "cells": 4480,
+    "daysSimulated": 33,
+    "finalTick": 132,
+    "stateBytes": 6914410
+  },
+  "measurements": {
+    "simulationMsPerDay": {
+      "samples": 30,
+      "p50Ms": 446.629,
+      "p95Ms": 524.728,
+      "maxMs": 591.273
+    },
+    "stepRoundTripMsPerDay": {
+      "samples": 30,
+      "p50Ms": 446.818,
+      "p95Ms": 524.933,
+      "maxMs": 591.456
+    },
+    "snapshotHandlerMs": {
+      "samples": 30,
+      "p50Ms": 0.034,
+      "p95Ms": 0.075,
+      "maxMs": 0.141
+    },
+    "snapshotTransferCloneMs": {
+      "samples": 30,
+      "p50Ms": 73.039,
+      "p95Ms": 89.722,
+      "maxMs": 90.098
+    },
+    "snapshotTotalMs": {
+      "samples": 30,
+      "p50Ms": 73.085,
+      "p95Ms": 89.775,
+      "maxMs": 90.173
+    },
+    "render": {
+      "source": "painel de desempenho do navegador",
+      "p50P95Window": "até 120 frames"
+    }
+  },
+  "benchmarkManifests": [
+    {
+      "format": "spectators-of-life-benchmark",
+      "benchmarkSchemaVersion": 1,
+      "runId": "natural:simulation-snapshot-20261020T030052408Z",
+      "simulationVersion": "0.2.0",
+      "seed": "0123456789abcdef",
+      "scenario": {
+        "id": "natural:temperate-valley",
+        "version": "1.7.0",
+        "environmentConfig": {},
+        "content": [],
+        "cadences": [
+          {
+            "systemId": "climate:seasonal-forcing",
+            "periodTicks": 4,
+            "phaseOffsetTicks": 0
+          },
+          {
+            "systemId": "hydrology:surface-and-soil-water",
+            "periodTicks": 4,
+            "phaseOffsetTicks": 0
+          },
+          {
+            "systemId": "soil:decomposition-and-erosion",
+            "periodTicks": 4,
+            "phaseOffsetTicks": 0
+          },
+          {
+            "systemId": "vegetation:plant-dynamics",
+            "periodTicks": 4,
+            "phaseOffsetTicks": 0
+          }
+        ],
+        "initialPopulation": []
+      },
+      "learningCondition": {
+        "controllerMode": "heuristic",
+        "weightsInherited": false,
+        "conditionId": "f0:natural-no-learning",
+        "parameters": {}
+      },
+      "durationTicks": 132,
+      "metrics": [
+        {
+          "metricId": "performance.natural-simulation-p50",
+          "scope": "performance",
+          "unit": "ms_per_STEP_4",
+          "window": {
+            "fromTickExclusive": 12,
+            "toTickInclusive": 132
+          },
+          "denominator": "30 dias naturais medidos após 3 dias de aquecimento",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.natural-simulation-p95",
+          "scope": "performance",
+          "unit": "ms_per_STEP_4",
+          "window": {
+            "fromTickExclusive": 12,
+            "toTickInclusive": 132
+          },
+          "denominator": "30 dias naturais medidos após 3 dias de aquecimento",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.natural-snapshot-p50",
+          "scope": "performance",
+          "unit": "ms_per_GET_SNAPSHOT_plus_structuredClone",
+          "window": {
+            "fromTickExclusive": 12,
+            "toTickInclusive": 132
+          },
+          "denominator": "30 dias naturais medidos após 3 dias de aquecimento",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        },
+        {
+          "metricId": "performance.natural-snapshot-p95",
+          "scope": "performance",
+          "unit": "ms_per_GET_SNAPSHOT_plus_structuredClone",
+          "window": {
+            "fromTickExclusive": 12,
+            "toTickInclusive": 132
+          },
+          "denominator": "30 dias naturais medidos após 3 dias de aquecimento",
+          "populationFilter": {
+            "speciesId": null,
+            "lifeStageId": null
+          }
+        }
+      ],
+      "buildRevision": "a423c5a5c366b0db714880c6ad66c40f6f0ba41f+wt:9eff85d11ff8a2e98906dca49784ff2a",
+      "performanceEquipment": {
+        "platform": "Windows_NT 10.0.26200",
+        "architecture": "x64",
+        "processor": "Intel(R) Core(TM) i3-10105 CPU @ 3.70GHz",
+        "logicalProcessorCount": 8,
+        "memoryBytes": 17041817600
+      }
+    }
+  ],
+  "browserObservation": {
+    "measuredLocalDate": "2026-10-20",
+    "browser": "Codex in-app browser on localhost",
+    "scenarioSeed": "0123456789abcdef",
+    "tick": 4,
+    "daysSimulated": 1,
+    "metrics": {
+      "phaserFps": 3.3,
+      "browserFrameMs": 494.8,
+      "phaserRenderMs": {
+        "last": 68.4,
+        "p50": 60.4,
+        "p95": 93.3,
+        "samples": 43
+      },
+      "dynamicLayersMs": 23.3,
+      "waterMotionMs": 1.1,
+      "simulationWorkerMs": {
+        "last": 404.2,
+        "p50": 50.5,
+        "p95": 404.2,
+        "samples": 4
+      },
+      "snapshotRoundTripMs": {
+        "last": 83.5,
+        "p50": 83.5,
+        "p95": 83.5,
+        "samples": 1
+      },
+      "stepRoundTripMs": 411
+    },
+    "note": "Teste manual de quatro avanços após iniciar o cenário: nenhum snapshot nos ticks 1–3 e um snapshot no tick 4, quando os sistemas diários rodaram. Render medido em janela curta de 43 frames no browser embutido; FPS variou muito nesta execução e não deve ser tratado como baseline representativo."
+  }
+}

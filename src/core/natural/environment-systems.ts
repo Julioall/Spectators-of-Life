@@ -1,6 +1,7 @@
 import { drawFromSystem } from '../rng';
 import type { SimulationEvent, TickSystem, TickSystemContext, WorldState } from '../types';
 import { NATURAL_SCENARIO, type SoilProfile } from './parameters';
+import { naturalScenarioVersionAtLeast } from './versioning';
 import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type SeasonId } from './types';
 
 const SEASON_ORDER: SeasonId[] = ['spring', 'summer', 'autumn', 'winter'];
@@ -167,7 +168,7 @@ function updateHydrology(world: WorldState, tick: number, context: TickSystemCon
   }
 
   const hydraulicHeads = proposals.map(({ cell, remainingSurface }) => cell.terrain.elevationM + remainingSurface / 1000);
-  const useDynamicHydraulicHead = ['1.4.0', '1.5.0', '1.6.0', NATURAL_SCENARIO.scenarioVersion].includes(natural.scenarioVersion);
+  const useDynamicHydraulicHead = naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.4.0');
   for (const proposal of proposals) {
     const { cell, remainingSurface } = proposal;
     const downstream = useDynamicHydraulicHead
@@ -273,7 +274,7 @@ function isOpenBoundaryOutlet(natural: NaturalWorldEntity, cell: NaturalWorldCel
 }
 
 function hasGeomorphology(natural: NaturalWorldEntity): boolean {
-  return natural.scenarioVersion === '1.6.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+  return naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.6.0');
 }
 
 function transferBankSeepage(natural: NaturalWorldEntity, elapsedDays: number): number {
@@ -509,6 +510,7 @@ function updateGeomorphology(world: WorldState, natural: NaturalWorldEntity, ela
   const bulkDensity = NATURAL_SCENARIO.soil.sedimentBulkDensityKgPerM3;
   const catchmentCells = accumulateCatchmentCells(natural);
   const incoming = new Array<number>(natural.cells.length).fill(0);
+  const riverbankErosionEnabled = naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.10.0');
   let erodedKg = 0;
   let depositedKg = 0;
   let drownedPlantMatterG = 0;
@@ -517,12 +519,19 @@ function updateGeomorphology(world: WorldState, natural: NaturalWorldEntity, ela
     const profile = SOIL_PROFILES.get(cell.terrain.soilType) as SoilProfile;
     const flowMm = (cell.water.lastFlows.runoffOutMm ?? 0) + (cell.water.lastFlows.runoffInMm ?? 0);
     const contributing = catchmentCells[cell.index] as number;
+    const bankAdjacentToRiver = riverbankErosionEnabled && cell.terrain.waterBody === 'none' && FLOW_NEIGHBORS.some(([dx, dy]) => {
+      const x = cell.x + dx;
+      const y = cell.y + dy;
+      return x >= 0 && x < natural.width && y >= 0 && y < natural.height
+        && natural.cells[y * natural.width + x]!.terrain.waterBody === 'river';
+    });
     const runoffFactor = clamp(flowMm / 2.2, 0, 2.4);
     const catchmentFactor = clamp(Math.sqrt(contributing / 16), 0.35, 3.4);
     const slopeFactor = clamp(cell.terrain.slope * 24, 0.12, 1.4);
     const exposedRockFactor = cell.terrain.exposedRock ? 0.38 : 1;
-    const channelFactor = cell.terrain.waterBody === 'river' ? 1.65 : 1;
-    const erosionMm = Math.min(0.35,
+    const channelFactor = cell.terrain.waterBody === 'river' ? 1.65 : bankAdjacentToRiver ? 1.9 : 1;
+    const erosionLimitMm = bankAdjacentToRiver ? 0.8 : 0.35;
+    const erosionMm = Math.min(erosionLimitMm,
       NATURAL_SCENARIO.soil.erosionRateMmPerDay * elapsedDays * runoffFactor * catchmentFactor
       * slopeFactor * (1 - profile.erosionResistance) * exposedRockFactor * channelFactor);
     const availableDepthMm = Math.max(0, (cell.terrain.elevationM - NATURAL_SCENARIO.terrain.minimumElevationM) * 1000);

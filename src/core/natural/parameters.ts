@@ -1,4 +1,4 @@
-import scenarioJson from '../../../data/scenarios/natural-temperate-valley.v1.7.json';
+import scenarioJson from '../../../data/scenarios/natural-temperate-valley.v1.10.json';
 import { NATURAL_SCENARIO_VERSION } from '../constants';
 import type { BedrockId, HabitatId, PlantSpeciesId, SeasonId, SoilTypeId } from './types';
 

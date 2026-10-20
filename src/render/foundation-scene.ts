@@ -2,8 +2,11 @@ import Phaser from 'phaser';
 import treeAtlasUrl from '../../data/assets/tree/Spritesheets/arvores_atlas_128.png?url';
 import type { NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, PlantSpeciesId, TreeSpeciesId } from '../core/natural/types';
 import { NATURAL_SCENARIO } from '../core/natural/parameters';
+import { naturalScenarioVersionAtLeast } from '../core/natural/versioning';
 import { drawProceduralRock, generateProceduralRocks, ROCK_NATIVE_CELL_SIZE, treeBlockingCellsForRocks } from './procedural-rocks';
-import { TERRAIN_SURFACE_COLORS, terrainSurface, type TerrainSurface } from './terrain-palette';
+import { TERRAIN_SURFACE_COLORS, terrainSurfaceField, type TerrainSurface } from './terrain-palette';
+import { hasNaturalLayerRevisionChanged, type NaturalLayerRevision } from './natural-layer-revision';
+import { reliefShadeForNeighbors } from './relief-shading';
 import { worldObjectDepth } from './z-order';
 
 const CELL_SIZE = 40;
@@ -23,6 +26,9 @@ const WATER_DEPTH_STOPS = [
   { depth: 5_000, color: 0x5b7a78 },
   { depth: 11_000, color: 0x557474 },
   { depth: 22_000, color: 0x4f6d70 },
+] as const;
+const RIVER_NEIGHBORS = [
+  [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1],
 ] as const;
 const TREE_MATURE_WIDTH_CELLS = 4.4;
 type MapLayers = { relief: boolean; water: boolean; vegetation: boolean; minerals: boolean; geology: boolean };
@@ -45,6 +51,8 @@ export class FoundationScene extends Phaser.Scene {
   private naturalWorld: NaturalWorldEntity | null = null;
   private mapKey: string | null = null;
   private reliefWorldKey: string | null = null;
+  private geologyWorldKey: string | null = null;
+  private dynamicLayerRevision: NaturalLayerRevision | null = null;
   private treeSprites: TreeSprites[] = [];
   private mineralSprites: Phaser.GameObjects.Image[] = [];
   private mineralTextureKeys: string[] = [];
@@ -94,15 +102,21 @@ export class FoundationScene extends Phaser.Scene {
     this.drawWaterMotion();
   }
 
-  showWorld(world: NaturalWorldEntity | null, worldKey = ''): void {
+  showWorld(world: NaturalWorldEntity | null, worldKey = '', forceRefresh = false): void {
     if (world === null) {
       this.naturalWorld = null;
       this.mapKey = null;
+      this.reliefWorldKey = null;
+      this.geologyWorldKey = null;
+      this.dynamicLayerRevision = null;
       this.waterMotionGraphics?.clear();
       this.clearMap();
       return;
     }
-    const needsRebuild = this.mapKey !== worldKey || this.naturalWorld?.width !== world.width || this.naturalWorld?.height !== world.height;
+    const previousWorld = this.naturalWorld;
+    const needsRebuild = this.mapKey !== worldKey || previousWorld?.width !== world.width || previousWorld?.height !== world.height;
+    const revision = { worldKey, daysSimulated: world.daysSimulated };
+    const needsDynamicRefresh = forceRefresh || needsRebuild || hasNaturalLayerRevisionChanged(this.dynamicLayerRevision, revision);
     this.naturalWorld = world;
     if (needsRebuild) {
       this.mapKey = worldKey;
@@ -111,8 +125,16 @@ export class FoundationScene extends Phaser.Scene {
       this.cameraManuallyAdjusted = false;
       this.buildTerrain();
     }
-    this.updateDynamicLayers();
-    this.drawSelection();
+    if (needsDynamicRefresh) {
+      if (forceRefresh) {
+        this.reliefWorldKey = null;
+        this.geologyWorldKey = null;
+        this.mineralSpritesWorldKey = null;
+      }
+      this.updateDynamicLayers();
+      this.drawSelection();
+      this.dynamicLayerRevision = revision;
+    }
   }
 
   setLayers(layers: Partial<MapLayers>): void {
@@ -182,7 +204,8 @@ export class FoundationScene extends Phaser.Scene {
       graphics.setVisible(false);
       return;
     }
-    if (this.reliefWorldKey === this.mapKey) {
+    const revisionKey = `${this.mapKey}:${world.daysSimulated}`;
+    if (this.reliefWorldKey === revisionKey) {
       graphics.setVisible(true);
       return;
     }
@@ -193,20 +216,41 @@ export class FoundationScene extends Phaser.Scene {
     const range = Math.max(1, maximum - minimum);
     for (const cell of world.cells) {
       const relative = clamp((cell.terrain.elevationM - minimum) / range, 0, 1);
-      graphics.fillStyle(reliefBandColor(relative), 0.24);
-      graphics.fillRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      const center = cell.terrain.elevationM;
+      const west = neighborAt(world, cell.x, cell.y, -1, 0)?.terrain.elevationM ?? center;
+      const east = neighborAt(world, cell.x, cell.y, 1, 0)?.terrain.elevationM ?? center;
+      const north = neighborAt(world, cell.x, cell.y, 0, -1)?.terrain.elevationM ?? center;
+      const south = neighborAt(world, cell.x, cell.y, 0, 1)?.terrain.elevationM ?? center;
+      const shade = reliefShadeForNeighbors(west, east, north, south, world.cellSizeM);
+      const x = cell.x * CELL_SIZE;
+      const y = cell.y * CELL_SIZE;
+      graphics.fillStyle(reliefBandColor(relative), 0.28);
+      graphics.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+      if (Math.abs(shade) >= 0.025) {
+        const shadeColor = shade > 0 ? 0xfff1cf : 0x202b29;
+        const shadeAlpha = clamp(0.05 + Math.abs(shade) * 0.22, 0.05, 0.21);
+        graphics.fillStyle(shadeColor, shadeAlpha);
+        graphics.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+      }
     }
     drawElevationContours(graphics, world, minimum, maximum);
     graphics.setVisible(true);
-    this.reliefWorldKey = this.mapKey;
+    this.reliefWorldKey = revisionKey;
   }
 
   private drawGeologyPotential(): void {
     const world = this.naturalWorld;
     const graphics = this.geologyGraphics;
     if (world === null || graphics === null) return;
+    if (!this.layers.geology) {
+      graphics.setVisible(false);
+      return;
+    }
+    if (this.geologyWorldKey === this.mapKey) {
+      graphics.setVisible(true);
+      return;
+    }
     graphics.clear();
-    if (!this.layers.geology) return;
     for (const cell of world.cells) {
       const potential = cell.terrain.mineralPotential ?? 0;
       if (potential < 0.18) continue;
@@ -215,6 +259,8 @@ export class FoundationScene extends Phaser.Scene {
       graphics.fillStyle(color, alpha);
       graphics.fillRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     }
+    graphics.setVisible(true);
+    this.geologyWorldKey = this.mapKey;
   }
 
   private drawWater(): void {
@@ -260,6 +306,7 @@ export class FoundationScene extends Phaser.Scene {
     drawDryLakeBeds(graphics, world);
     drawLakeSurfaces(graphics, lakeCells, world);
     drawRiverBeds(graphics, world);
+    drawRiverSurfaces(graphics, world);
     drawRiverNetwork(graphics, world);
   }
 
@@ -311,7 +358,7 @@ export class FoundationScene extends Phaser.Scene {
     const graphics = this.plantGraphics;
     if (world === null || graphics === null) return;
     graphics.clear();
-    const hasGeomorphology = world.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+    const hasGeomorphology = naturalScenarioVersionAtLeast(world.scenarioVersion, '1.6.0');
     this.treeShadowGraphics?.clear();
     for (const cell of world.cells) {
       const waterBody = cell.terrain.waterBody ?? 'none';
@@ -541,7 +588,7 @@ function isTreeSpecies(speciesId: PlantSpeciesId): speciesId is TreeSpeciesId {
 }
 
 function drawTerrainTexture(context: CanvasRenderingContext2D, world: NaturalWorldEntity, minElevation: number, maxElevation: number, visualSeed: number): void {
-  const surfaces = world.cells.map((cell) => terrainSurface(cell, minElevation, maxElevation));
+  const surfaces = terrainSurfaceField(world, minElevation, maxElevation);
   for (const cell of world.cells) {
     const x = cell.x * CELL_SIZE;
     const y = cell.y * CELL_SIZE;
@@ -555,21 +602,20 @@ function drawTerrainTexture(context: CanvasRenderingContext2D, world: NaturalWor
     const mask = terrainNeighborMask(cell, world, surfaces);
     drawTerrainTransitions(context, cell, world, surfaces, mask, visualSeed);
   }
-  drawElevationShading(context, world, minElevation, maxElevation);
+  drawElevationShading(context, world);
 }
 
-function drawElevationShading(context: CanvasRenderingContext2D, world: NaturalWorldEntity, minimum: number, maximum: number): void {
-  const range = Math.max(1, maximum - minimum);
+function drawElevationShading(context: CanvasRenderingContext2D, world: NaturalWorldEntity): void {
   for (const cell of world.cells) {
     const center = cell.terrain.elevationM;
     const west = neighborAt(world, cell.x, cell.y, -1, 0)?.terrain.elevationM ?? center;
     const east = neighborAt(world, cell.x, cell.y, 1, 0)?.terrain.elevationM ?? center;
     const north = neighborAt(world, cell.x, cell.y, 0, -1)?.terrain.elevationM ?? center;
     const south = neighborAt(world, cell.x, cell.y, 0, 1)?.terrain.elevationM ?? center;
-    const directionalLight = clamp(0.5 + ((east - west) + (south - north)) / range * 1.35, 0.32, 0.68);
-    const alpha = Math.abs(directionalLight - 0.5) * 0.58;
+    const shade = reliefShadeForNeighbors(west, east, north, south, world.cellSizeM);
+    const alpha = clamp(Math.abs(shade) * 0.18, 0, 0.13);
     if (alpha < 0.018) continue;
-    context.fillStyle = directionalLight > 0.5
+    context.fillStyle = shade > 0
       ? `rgba(255, 245, 213, ${alpha})`
       : `rgba(24, 31, 25, ${alpha})`;
     context.fillRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -821,6 +867,39 @@ function drawLakeSurfaces(graphics: Phaser.GameObjects.Graphics, cells: NaturalW
   }
 }
 
+function drawRiverSurfaces(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
+  const riverCells = world.cells.filter((cell) => cell.terrain.waterBody === 'river' && isActiveRiverCell(cell));
+  const remaining = new Set(riverCells.map((cell) => cell.index));
+  while (remaining.size > 0) {
+    const first = remaining.values().next().value as number;
+    const queue = [first];
+    const component: NaturalWorldCellState[] = [];
+    remaining.delete(first);
+    while (queue.length > 0) {
+      const index = queue.pop() as number;
+      const cell = world.cells[index]!;
+      component.push(cell);
+      for (const neighbor of [index - world.width, index + 1, index + world.width, index - 1]) {
+        if (neighbor < 0 || neighbor >= world.cells.length) continue;
+        const candidate = world.cells[neighbor]!;
+        if (Math.abs(candidate.x - cell.x) + Math.abs(candidate.y - cell.y) !== 1 || !remaining.has(neighbor)) continue;
+        remaining.delete(neighbor);
+        queue.push(neighbor);
+      }
+    }
+    const indices = new Set(component.map((cell) => cell.index));
+    const contours = traceLakeContours(indices, world.width, world.height);
+    const surface = component.reduce((total, cell) => total + cell.water.surfaceMm, 0) / component.length;
+    for (const contour of contours) {
+      const smooth = smoothClosedPolygon(contour, 3);
+      graphics.fillStyle(waterDepthColor(surface), 0.86);
+      graphics.fillPoints(smooth as unknown as Phaser.Math.Vector2[], true);
+      graphics.lineStyle(1.1, 0xa3b09a, 0.18);
+      graphics.strokePoints(smooth as unknown as Phaser.Math.Vector2[], true);
+    }
+  }
+}
+
 function drawLakeFeatherBrush(graphics: Phaser.GameObjects.Graphics, contour: TilePoint[], color: number): void {
   const brushPasses = [
     { width: CELL_SIZE * 0.58, alpha: 0.028 },
@@ -926,14 +1005,28 @@ function smoothClosedPolygon(points: TilePoint[], iterations: number): TilePoint
 }
 
 function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
-  const isRiver = world.cells.map((cell) => cell.terrain.waterBody === 'river' && isActiveRiverCell(cell));
+  const riverCandidates = world.cells.map((cell) => cell.terrain.waterBody === 'river' && isActiveRiverCell(cell));
+  const contributingCells = riverCatchmentCells(world);
+  const isRiver = riverCandidates.map((candidate, index) => {
+    if (!candidate) return false;
+    const downstream = world.cells[index]!.terrain.flowTo;
+    if (downstream < 0 || downstream >= world.cells.length || !riverCandidates[downstream]) return true;
+    return (contributingCells[index] as number) >= (contributingCells[downstream] as number) * 0.12;
+  });
   const upstreamCount = new Uint8Array(world.cells.length);
   const lakeOutlets = new Map<number, NaturalWorldCellState>();
   for (const cell of world.cells) {
-    const downstream = cell.terrain.waterBody === 'river' ? cell.terrain.flowTo : cell.water.lastFlowTo ?? cell.terrain.flowTo;
-    if (downstream < 0 || downstream >= world.cells.length) continue;
-    if (isRiver[cell.index] && isRiver[downstream]) upstreamCount[downstream] = (upstreamCount[downstream] ?? 0) + 1;
-    if (cell.terrain.waterBody === 'lake' && isRiver[downstream]) {
+    if (isRiver[cell.index]) {
+      const downstream = cell.terrain.flowTo;
+      if (downstream >= 0 && downstream < world.cells.length && isRiver[downstream]) upstreamCount[downstream] = (upstreamCount[downstream] ?? 0) + 1;
+    }
+    if (cell.terrain.waterBody !== 'lake') continue;
+    for (const [dx, dy] of RIVER_NEIGHBORS) {
+      const x = cell.x + dx;
+      const y = cell.y + dy;
+      if (x < 0 || x >= world.width || y < 0 || y >= world.height) continue;
+      const downstream = y * world.width + x;
+      if (!riverCandidates[downstream]) continue;
       const current = lakeOutlets.get(downstream);
       if (current === undefined || (cell.water.lastFlows.runoffOutMm ?? 0) > (current.water.lastFlows.runoffOutMm ?? 0)) lakeOutlets.set(downstream, cell);
     }
@@ -941,14 +1034,15 @@ function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalW
 
   for (const source of world.cells) {
     if (!isRiver[source.index] || upstreamCount[source.index] === 1) continue;
-    const path: Array<{ x: number; y: number; surfaceMm: number; widthScale: number }> = [];
+    const path: Array<{ x: number; y: number; surfaceMm: number; contributingCells: number; widthScale: number }> = [];
     const lakeSource = upstreamCount[source.index] === 0 ? lakeOutlets.get(source.index) : undefined;
     if (lakeSource !== undefined) {
       path.push({
         x: ((lakeSource.x + source.x + 1) / 2) * CELL_SIZE,
         y: ((lakeSource.y + source.y + 1) / 2) * CELL_SIZE,
         surfaceMm: source.water.surfaceMm,
-        widthScale: riverWidthScale(source, world),
+        contributingCells: contributingCells[source.index] as number,
+        widthScale: riverWidthScale(source, world, contributingCells[source.index] as number, upstreamCount[source.index] ?? 0),
       });
     }
     const seen = new Set<number>();
@@ -959,7 +1053,8 @@ function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalW
         x: (current.x + 0.5) * CELL_SIZE,
         y: (current.y + 0.5) * CELL_SIZE,
         surfaceMm: current.water.surfaceMm,
-        widthScale: riverWidthScale(current, world),
+        contributingCells: contributingCells[current.index] as number,
+        widthScale: riverWidthScale(current, world, contributingCells[current.index] as number, upstreamCount[current.index] ?? 0),
       });
       const downstreamIndex = current.terrain.flowTo;
       if (downstreamIndex < 0) break;
@@ -968,7 +1063,13 @@ function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalW
       if (isRiver[downstreamIndex]) {
         current = downstream;
         if (upstreamCount[downstreamIndex] !== 1) {
-          path.push({ x: (downstream.x + 0.5) * CELL_SIZE, y: (downstream.y + 0.5) * CELL_SIZE, surfaceMm: downstream.water.surfaceMm, widthScale: riverWidthScale(downstream, world) });
+          path.push({
+            x: (downstream.x + 0.5) * CELL_SIZE,
+            y: (downstream.y + 0.5) * CELL_SIZE,
+            surfaceMm: downstream.water.surfaceMm,
+            contributingCells: contributingCells[downstreamIndex] as number,
+            widthScale: riverWidthScale(downstream, world, contributingCells[downstreamIndex] as number, upstreamCount[downstreamIndex] ?? 0),
+          });
           break;
         }
         continue;
@@ -978,23 +1079,81 @@ function drawRiverNetwork(graphics: Phaser.GameObjects.Graphics, world: NaturalW
           x: ((current.x + downstream.x + 1) / 2) * CELL_SIZE,
           y: ((current.y + downstream.y + 1) / 2) * CELL_SIZE,
           surfaceMm: current.water.surfaceMm,
-          widthScale: riverWidthScale(current, world),
+          contributingCells: contributingCells[current.index] as number,
+          widthScale: riverWidthScale(current, world, contributingCells[current.index] as number, upstreamCount[current.index] ?? 0),
         });
       }
       break;
     }
+    const adjacentLake = lakeOutlets.get(current.index);
+    if (adjacentLake !== undefined && path.length > 0 && path.at(-1)!.x === (current.x + 0.5) * CELL_SIZE) {
+      path.push({
+        x: ((adjacentLake.x + current.x + 1) / 2) * CELL_SIZE,
+        y: ((adjacentLake.y + current.y + 1) / 2) * CELL_SIZE,
+        surfaceMm: current.water.surfaceMm,
+        contributingCells: contributingCells[current.index] as number,
+        widthScale: riverWidthScale(current, world, contributingCells[current.index] as number, upstreamCount[current.index] ?? 0),
+      });
+    }
     drawSmoothedRiverPath(graphics, path);
+  }
+  drawLakeRiverConnections(graphics, world, lakeOutlets, contributingCells);
+  drawRiverConfluencePools(graphics, world, isRiver, upstreamCount, contributingCells);
+}
+
+function drawLakeRiverConnections(
+  graphics: Phaser.GameObjects.Graphics,
+  world: NaturalWorldEntity,
+  lakeOutlets: Map<number, NaturalWorldCellState>,
+  contributingCells: number[],
+): void {
+  for (const [riverIndex, lake] of lakeOutlets) {
+    const river = world.cells[riverIndex];
+    if (river === undefined) continue;
+    const midpoint = {
+      x: ((lake.x + river.x + 1) / 2) * CELL_SIZE,
+      y: ((lake.y + river.y + 1) / 2) * CELL_SIZE,
+    };
+    const lakeCenter = { x: (lake.x + 0.5) * CELL_SIZE, y: (lake.y + 0.5) * CELL_SIZE };
+    const mouth = {
+      x: midpoint.x + (lakeCenter.x - midpoint.x) * 0.55,
+      y: midpoint.y + (lakeCenter.y - midpoint.y) * 0.55,
+    };
+    const x = (river.x + 0.5) * CELL_SIZE;
+    const y = (river.y + 0.5) * CELL_SIZE;
+    const width = clamp(6.5 + Math.sqrt(Math.max(1, contributingCells[riverIndex] as number)) * 0.42, 7, 30);
+    const color = waterDepthColor(river.water.surfaceMm);
+    graphics.lineStyle(width, color, 0.9);
+    graphics.lineBetween(mouth.x, mouth.y, x, y);
+    graphics.fillStyle(color, 0.9);
+    graphics.fillCircle(mouth.x, mouth.y, width * 0.5);
   }
 }
 
-function riverWidthScale(cell: NaturalWorldCellState, world: NaturalWorldEntity): number {
-  const seed = hashText(world.id);
-  const broadShape = coordinateNoise(seed, Math.floor(cell.x / 3), Math.floor(cell.y / 3), 619);
-  const bankDetail = coordinateNoise(seed, cell.x, cell.y, 887);
-  return 0.82 + broadShape * 0.34 + bankDetail * 0.16;
+function riverCatchmentCells(world: NaturalWorldEntity): number[] {
+  const contributing = new Uint32Array(world.cells.length);
+  contributing.fill(1);
+  const downhill = world.cells.map((cell) => cell.index)
+    .sort((left, right) => world.cells[right]!.terrain.elevationM - world.cells[left]!.terrain.elevationM || left - right);
+  for (const index of downhill) {
+    const cell = world.cells[index]!;
+    const downstream = cell.terrain.flowTo;
+    if (downstream >= 0 && downstream < world.cells.length && cell.terrain.elevationM > world.cells[downstream]!.terrain.elevationM) {
+      contributing[downstream] = (contributing[downstream] ?? 0) + (contributing[index] ?? 0);
+    }
+  }
+  return Array.from(contributing);
 }
 
-function drawSmoothedRiverPath(graphics: Phaser.GameObjects.Graphics, path: Array<{ x: number; y: number; surfaceMm: number; widthScale: number }>): void {
+function riverWidthScale(cell: NaturalWorldCellState, world: NaturalWorldEntity, catchmentCells: number, upstreamCount: number): number {
+  const seed = hashText(world.id);
+  const bankDetail = coordinateNoise(seed, cell.x, cell.y, 887);
+  const accumulation = clamp(Math.log2(Math.max(1, catchmentCells / 32)) * 0.065, 0, 0.22);
+  const junction = upstreamCount >= 2 ? 0.12 : 0;
+  return clamp(0.88 + accumulation + junction + (bankDetail - 0.5) * 0.1, 0.84, 1.28);
+}
+
+function drawSmoothedRiverPath(graphics: Phaser.GameObjects.Graphics, path: Array<{ x: number; y: number; surfaceMm: number; contributingCells: number; widthScale: number }>): void {
   if (path.length === 0) return;
   const points: Array<{ x: number; y: number; progress: number }> = [{ x: path[0]!.x, y: path[0]!.y, progress: 0 }];
   for (let index = 0; index < path.length - 1; index += 1) {
@@ -1020,8 +1179,14 @@ function drawSmoothedRiverPath(graphics: Phaser.GameObjects.Graphics, path: Arra
     const fraction = clamp(progress - leftIndex, 0, 1);
     return path[leftIndex]!.widthScale + (path[rightIndex]!.widthScale - path[leftIndex]!.widthScale) * fraction;
   };
-  const widthAt = (surfaceMm: number, progress: number): number => {
-    const flowWidth = clamp(7 + Math.sqrt(Math.max(0, surfaceMm - NATURAL_SCENARIO.terrain.riverSurfaceWaterMm)) * 0.66, 7, 28);
+  const catchmentAt = (progress: number): number => {
+    const leftIndex = Math.min(path.length - 1, Math.floor(progress));
+    const rightIndex = Math.min(path.length - 1, leftIndex + 1);
+    const fraction = clamp(progress - leftIndex, 0, 1);
+    return path[leftIndex]!.contributingCells + (path[rightIndex]!.contributingCells - path[leftIndex]!.contributingCells) * fraction;
+  };
+  const widthAt = (progress: number): number => {
+    const flowWidth = clamp(6.5 + Math.sqrt(Math.max(1, catchmentAt(progress))) * 0.42, 7, 30);
     return clamp(flowWidth * widthScaleAt(progress), 6, 35);
   };
   const stroke = (bank: boolean): void => {
@@ -1030,7 +1195,7 @@ function drawSmoothedRiverPath(graphics: Phaser.GameObjects.Graphics, path: Arra
       const end = points[index + 1]!;
       const progress = (start.progress + end.progress) * 0.5;
       const surfaceMm = surfaceAt(progress);
-      const width = widthAt(surfaceMm, progress) + (bank ? 1.4 : 0);
+      const width = widthAt(progress) + (bank ? 1.4 : 0);
       const color = bank ? 0x52675e : waterDepthColor(surfaceMm);
       const alpha = bank ? 0.14 : 0.9;
       graphics.lineStyle(width, color, alpha);
@@ -1040,18 +1205,37 @@ function drawSmoothedRiverPath(graphics: Phaser.GameObjects.Graphics, path: Arra
     }
     if (points.length === 1) {
       const surfaceMm = path[0]!.surfaceMm;
-      const width = widthAt(surfaceMm, 0) + (bank ? 1.4 : 0);
+      const width = widthAt(0) + (bank ? 1.4 : 0);
       graphics.fillStyle(bank ? 0x52675e : waterDepthColor(surfaceMm), bank ? 0.14 : 0.9);
       graphics.fillCircle(points[0]!.x, points[0]!.y, width * 0.5);
     } else {
       const last = points[points.length - 1]!;
-      const width = widthAt(surfaceAt(last.progress), last.progress) + (bank ? 1.4 : 0);
+      const width = widthAt(last.progress) + (bank ? 1.4 : 0);
       graphics.fillStyle(bank ? 0x52675e : waterDepthColor(surfaceAt(last.progress)), bank ? 0.14 : 0.9);
       graphics.fillCircle(last.x, last.y, width * 0.5);
     }
   };
   stroke(true);
   stroke(false);
+}
+
+function drawRiverConfluencePools(
+  graphics: Phaser.GameObjects.Graphics,
+  world: NaturalWorldEntity,
+  isRiver: boolean[],
+  upstreamCount: Uint8Array,
+  contributingCells: number[],
+): void {
+  for (const cell of world.cells) {
+    if (!isRiver[cell.index] || (upstreamCount[cell.index] ?? 0) < 2) continue;
+    const diameter = clamp(36 + Math.sqrt(contributingCells[cell.index] as number) * 1.05, 44, 78);
+    const x = (cell.x + 0.5) * CELL_SIZE;
+    const y = (cell.y + 0.5) * CELL_SIZE;
+    graphics.fillStyle(0x52675e, 0.2);
+    graphics.fillEllipse(x, y, diameter * 1.18, diameter * 0.88);
+    graphics.fillStyle(waterDepthColor(cell.water.surfaceMm), 0.86);
+    graphics.fillEllipse(x, y, diameter, diameter * 0.72);
+  }
 }
 
 function drawWaterGlints(graphics: Phaser.GameObjects.Graphics, x: number, y: number, surfaceMm: number, cellIndex: number): void {
@@ -1088,7 +1272,7 @@ function drawRiverBeds(graphics: Phaser.GameObjects.Graphics, world: NaturalWorl
     graphics.lineStyle(width, bedColor, bedAlpha);
     graphics.fillStyle(bedColor, bedAlpha);
     graphics.fillCircle(x, y, width * 0.5);
-    if (downstream !== undefined && (downstream.terrain.waterBody === 'river' || downstream.terrain.waterBody === 'lake')
+    if (!active && downstream !== undefined && (downstream.terrain.waterBody === 'river' || downstream.terrain.waterBody === 'lake')
       && cell.index < downstream.index) {
       graphics.lineBetween(x, y, (downstream.x + 0.5) * CELL_SIZE, (downstream.y + 0.5) * CELL_SIZE);
     }

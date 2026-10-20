@@ -1,4 +1,5 @@
 import type { NaturalWorldCellState, NaturalWorldEntity } from '../core/natural/types';
+import { buildLandformElevationField } from '../core/natural/topography';
 import type { AsterraTerrain } from './asterra/engine.js';
 
 export type TerrainSurface = 'loam' | 'sand' | 'clay' | 'rock' | 'upland' | 'highland' | 'wetland' | 'woodland' | 'meadow' | 'dryland' | 'desert';
@@ -18,8 +19,8 @@ export const TERRAIN_SURFACE_COLORS: Record<TerrainSurface, number> = {
   desert: 0xc89a54,
 };
 
-export function terrainSurface(cell: NaturalWorldCellState, minimum: number, maximum: number): TerrainSurface {
-  const relative = (cell.terrain.elevationM - minimum) / Math.max(1, maximum - minimum);
+export function terrainSurface(cell: NaturalWorldCellState, minimum: number, maximum: number, landformElevationM = cell.terrain.elevationM): TerrainSurface {
+  const relative = (landformElevationM - minimum) / Math.max(1, maximum - minimum);
   if (cell.terrain.soilType === 'rock' || cell.terrain.exposedRock) return 'rock';
   if (relative > 0.88) return 'highland';
   if (relative > 0.74) return 'upland';
@@ -33,9 +34,20 @@ export function terrainSurface(cell: NaturalWorldCellState, minimum: number, max
   return 'loam';
 }
 
-export function terrainContext(world: NaturalWorldEntity): { minimumElevation: number; maximumElevation: number } {
+export type TerrainContext = { minimumElevation: number; maximumElevation: number; landformElevations: number[] };
+
+export function terrainContext(world: NaturalWorldEntity): TerrainContext {
   const elevations = world.cells.map((cell) => cell.terrain.elevationM);
-  return { minimumElevation: Math.min(...elevations), maximumElevation: Math.max(...elevations) };
+  return {
+    minimumElevation: Math.min(...elevations),
+    maximumElevation: Math.max(...elevations),
+    landformElevations: buildLandformElevationField(world.width, world.height, elevations),
+  };
+}
+
+export function terrainSurfaceField(world: NaturalWorldEntity, minimum: number, maximum: number): TerrainSurface[] {
+  const landforms = buildLandformElevationField(world.width, world.height, world.cells.map((cell) => cell.terrain.elevationM));
+  return world.cells.map((cell) => terrainSurface(cell, minimum, maximum, landforms[cell.index] as number));
 }
 
 /** Maps the project's displayed surface to the closest original ASTERRA palette family. */

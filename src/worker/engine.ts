@@ -1,4 +1,4 @@
-import { MAX_RESPONSE_BYTES, MAX_WORLD_BYTES, PROTOCOL_VERSION, SAVE_SCHEMA_VERSION } from '../core/constants';
+import { MAX_RESPONSE_BYTES, MAX_WORLD_BYTES, MAX_WORLD_STATE_BYTES, PROTOCOL_VERSION, SAVE_SCHEMA_VERSION } from '../core/constants';
 import { canonicalStringify, cloneJson, utf8ByteLength } from '../core/canonical-json';
 import { ContractError, StepFaultError } from '../core/errors';
 import { assertSystemSchedules, createEmptyWorld, stepWorld, toSaveDocument, worldFromSave } from '../core/world';
@@ -9,6 +9,12 @@ import { validateWorkerRequest } from './protocol';
 type EngineOptions = {
   systems?: readonly TickSystem[];
   createWorldId?: () => string;
+  /**
+   * `post-message` lends the immutable world snapshot to the worker entrypoint,
+   * which immediately passes it to postMessage (the browser makes the copy).
+   * Standalone callers retain the default caller-owned deep copy.
+   */
+  snapshotOwnership?: 'caller' | 'post-message';
 };
 
 type FaultState = { faulted: true; diagnostic: FaultDiagnostic } | null;
@@ -20,11 +26,13 @@ export class WorkerEngine {
   private highestRequestId = 0;
   private generatedWorldNumber = 0;
   private readonly systemsOverride: readonly TickSystem[] | undefined;
+  private readonly snapshotOwnership: 'caller' | 'post-message';
   private systems: readonly TickSystem[] = [];
   private readonly makeWorldId: () => string;
 
   constructor(options: EngineOptions = {}) {
     this.systemsOverride = options.systems;
+    this.snapshotOwnership = options.snapshotOwnership ?? 'caller';
     this.makeWorldId = options.createWorldId ?? (() => {
       this.generatedWorldNumber += 1;
       return `world-${this.generatedWorldNumber.toString(36)}`;
@@ -86,6 +94,7 @@ export class WorkerEngine {
       ? createNaturalWorld(request.seed, systems)
       : createEmptyWorld({ scenarioId: request.scenarioId, scenarioVersion: request.scenarioVersion, seed: request.seed, config: request.config, systems });
     if (world.scenarioVersion !== request.scenarioVersion) throw new ContractError('INVALID_SCENARIO', `Versão do cenário não suportada: ${request.scenarioId}@${request.scenarioVersion}.`);
+    if (encodedSize(world) > MAX_WORLD_STATE_BYTES) throw new ContractError('WORLD_STATE_TOO_LARGE', 'O cenário inicial excede o limite de bytes definido para o estado lógico.');
     const worldId = this.makeWorldId();
     this.world = world;
     this.worldId = worldId;
@@ -138,7 +147,8 @@ export class WorkerEngine {
 
   private snapshot(request: Extract<WorkerRequest, { type: 'GET_SNAPSHOT' }>): WorkerResponse {
     this.requireWorld(request.worldId);
-    const snapshot = cloneJson(this.world as WorldState);
+    const world = this.world as WorldState;
+    const snapshot = this.snapshotOwnership === 'post-message' ? world : cloneJson(world);
     const response = {
       protocolVersion: PROTOCOL_VERSION,
       requestId: request.requestId,
@@ -147,9 +157,6 @@ export class WorkerEngine {
       snapshot,
       ...(this.fault === null ? {} : { diagnostics: { faulted: true as const, ...this.fault.diagnostic } }),
     };
-    if (encodedSize(response) > MAX_RESPONSE_BYTES) {
-      return this.error(request.requestId, request.protocolVersion, 'RESPONSE_TOO_LARGE', 'O snapshot excede o limite de resposta.', false, snapshot.tick, this.worldId ?? undefined);
-    }
     return response;
   }
 
@@ -172,6 +179,7 @@ export class WorkerEngine {
     const save = request.save as SaveDocument;
     if (encodedSize(save) > MAX_WORLD_BYTES) throw new ContractError('INVALID_SAVE', 'O save excede o limite de bytes definido para o mundo.');
     const world = worldFromSave(save);
+    if (encodedSize(world) > MAX_WORLD_STATE_BYTES) throw new ContractError('INVALID_SAVE', 'O estado restaurado excede o limite de bytes definido para o mundo.');
     const systems = this.systemsOverride ?? systemsForScenario(world.scenarioId);
     if (systems === null || systems === undefined) throw new ContractError('INVALID_SAVE', `Cenário não suportado: ${world.scenarioId}@${world.scenarioVersion}.`);
     assertSystemSchedules(world, systems);
@@ -237,6 +245,10 @@ export class WorkerEngine {
   }
 
   private limitResponse(response: WorkerResponse, request: WorkerRequest): WorkerResponse {
+    // The protocol caps every accepted world/save at 8 MiB; a snapshot envelope
+    // is far smaller than the remaining 1 MiB response headroom. The worker's
+    // postMessage still performs the required structured clone for the client.
+    if (response.type === 'SNAPSHOT' && this.snapshotOwnership === 'post-message') return response;
     if (encodedSize(response) <= MAX_RESPONSE_BYTES) return response;
     if (response.type === 'ADVANCED') {
       const events = [...response.events];

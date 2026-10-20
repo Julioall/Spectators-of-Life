@@ -1,5 +1,6 @@
 import type { SimulationEvent, TickSystem, TickSystemContext, WorldState } from '../types';
 import { NATURAL_SCENARIO } from './parameters';
+import { naturalScenarioVersionAtLeast } from './versioning';
 import { updatePlantMatterTotals, updatePlantWaterTotal, updateVegetationMetrics } from './environment-systems';
 import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type PlantCohortState, type PlantSpeciesId, type TreeSpeciesId } from './types';
 
@@ -44,7 +45,7 @@ function updateVegetation(world: WorldState, tick: number, context: TickSystemCo
   let deathCells = 0;
   let activeCells = 0;
   let meanLimitation = 0;
-  const exposesChannelSeedbank = natural.scenarioVersion === '1.6.0' || natural.scenarioVersion === NATURAL_SCENARIO.scenarioVersion;
+  const exposesChannelSeedbank = naturalScenarioVersionAtLeast(natural.scenarioVersion, '1.6.0');
 
   for (const cell of natural.cells) {
     const cellResult = updateCellPlants(cell, elapsedDays, neighborhoodShade(natural, cell, treeCanopies), exposesChannelSeedbank);
