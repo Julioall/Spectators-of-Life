@@ -19,6 +19,23 @@ export const TERRAIN_SURFACE_COLORS: Record<TerrainSurface, number> = {
   desert: 0xc89a54,
 };
 
+const ALTITUDE_MAP_STOPS = [0x254d45, 0x467852, 0x719754, 0xa9a565, 0x9b7c68, 0xe0dec9] as const;
+export const ALTITUDE_MAP_OVERLAY_ALPHA = 0.48;
+
+/** Continuous hypsometric ramp for inspecting raw elevation over the natural map. */
+export function altitudeMapColor(relativeElevation: number): number {
+  const relative = Number.isFinite(relativeElevation) ? clamp(relativeElevation, 0, 1) : 0;
+  const scaled = relative * (ALTITUDE_MAP_STOPS.length - 1);
+  const startIndex = Math.min(ALTITUDE_MAP_STOPS.length - 2, Math.floor(scaled));
+  const fraction = scaled - startIndex;
+  const start = ALTITUDE_MAP_STOPS[startIndex]!;
+  const end = ALTITUDE_MAP_STOPS[startIndex + 1]!;
+  const red = mixChannel((start >>> 16) & 0xff, (end >>> 16) & 0xff, fraction);
+  const green = mixChannel((start >>> 8) & 0xff, (end >>> 8) & 0xff, fraction);
+  const blue = mixChannel(start & 0xff, end & 0xff, fraction);
+  return (red << 16) | (green << 8) | blue;
+}
+
 export function terrainSurface(cell: NaturalWorldCellState, minimum: number, maximum: number, landformElevationM = cell.terrain.elevationM): TerrainSurface {
   const relative = (landformElevationM - minimum) / Math.max(1, maximum - minimum);
   if (cell.terrain.soilType === 'rock' || cell.terrain.exposedRock) return 'rock';
@@ -57,4 +74,12 @@ export function asterraTerrainForSurface(surface: TerrainSurface, bedrock: Natur
   if (surface === 'wetland') return 'coast';
   if (surface === 'desert' || surface === 'dryland' || surface === 'sand') return 'dry';
   return 'grass';
+}
+
+function mixChannel(start: number, end: number, fraction: number): number {
+  return Math.round(start + (end - start) * fraction);
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.max(minimum, Math.min(maximum, value));
 }

@@ -42,6 +42,13 @@ const loadButton = requiredElement<HTMLButtonElement>('load-button');
 const loadInput = requiredElement<HTMLInputElement>('load-input');
 const performanceToggle = requiredElement<HTMLButtonElement>('performance-toggle');
 const performancePanel = requiredElement<HTMLElement>('performance-panel');
+const terrainLightingEnabled = requiredElement<HTMLInputElement>('terrain-lighting-enabled');
+const terrainSunAngle = requiredElement<HTMLInputElement>('terrain-sun-angle');
+const terrainSunAngleValue = requiredElement<HTMLOutputElement>('terrain-sun-angle-value');
+const terrainReliefStrength = requiredElement<HTMLInputElement>('terrain-relief-strength');
+const terrainReliefStrengthValue = requiredElement<HTMLOutputElement>('terrain-relief-strength-value');
+const altitudeMapToggle = requiredElement<HTMLButtonElement>('altitude-map-toggle');
+const altitudeMapLegend = requiredElement<HTMLElement>('altitude-map-legend');
 const performanceFpsOutput = requiredElement<HTMLElement>('performance-fps');
 const performancePhaserFpsOutput = requiredElement<HTMLElement>('performance-phaser-fps');
 const performanceFrameOutput = requiredElement<HTMLElement>('performance-frame');
@@ -111,6 +118,21 @@ saveButton.addEventListener('click', () => void exportSave());
 loadButton.addEventListener('click', () => loadInput.click());
 loadInput.addEventListener('change', () => void importSave());
 performanceToggle.addEventListener('click', () => setPerformanceEnabled(!performanceEnabled));
+terrainLightingEnabled.addEventListener('change', applyTerrainLightingControls);
+terrainSunAngle.addEventListener('input', () => {
+  terrainSunAngleValue.value = `${terrainSunAngle.value}°`;
+});
+terrainSunAngle.addEventListener('change', applyTerrainLightingControls);
+terrainReliefStrength.addEventListener('input', () => {
+  terrainReliefStrengthValue.value = terrainReliefStrength.value;
+});
+terrainReliefStrength.addEventListener('change', applyTerrainLightingControls);
+altitudeMapToggle.addEventListener('click', () => {
+  const visible = altitudeMapToggle.getAttribute('aria-pressed') !== 'true';
+  altitudeMapToggle.setAttribute('aria-pressed', String(visible));
+  altitudeMapLegend.hidden = !visible;
+  getFoundationScene()?.setAltitudeMapVisible(visible);
+});
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-map-layer]')) {
   button.addEventListener('click', () => {
     const layer = button.dataset['mapLayer'];
@@ -237,6 +259,14 @@ function updateSnapshot(snapshot: WorldState, _worldId: string, forceRender = fa
       },
     });
   }
+}
+
+function applyTerrainLightingControls(): void {
+  getFoundationScene()?.setTerrainLightingSettings({
+    enabled: terrainLightingEnabled.checked,
+    sunAngle: terrainSunAngle.valueAsNumber,
+    reliefStrength: terrainReliefStrength.valueAsNumber,
+  });
 }
 
 async function updateAfterAdvance(advanced: Extract<WorkerResponse, { type: 'ADVANCED' }>): Promise<void> {

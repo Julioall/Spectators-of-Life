@@ -270,6 +270,76 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 
 .map-layer-controls button:hover { filter: brightness(1.08); }
 
+.altitude-map-legend {
+  position: absolute;
+  z-index: 4;
+  top: 91px;
+  right: 17px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 1px solid rgb(216 195 148 / 46%);
+  background: rgb(26 42 29 / 88%);
+  box-shadow: 0 2px 8px rgb(9 18 11 / 25%);
+  color: #e4d7b6;
+  font: 8px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .06em;
+}
+
+.altitude-map-legend i {
+  width: 76px;
+  height: 7px;
+  border: 1px solid rgb(226 215 182 / 45%);
+  background: linear-gradient(90deg, #254d45, #467852, #719754, #a9a565, #9b7c68, #e0dec9);
+}
+
+.altitude-map-legend[hidden] { display: none; }
+
+.terrain-lighting-panel { position: relative; }
+.terrain-lighting-panel > summary {
+  display: grid;
+  width: 27px;
+  min-height: 27px;
+  place-items: center;
+  border: 1px solid #938055;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f3e7ca, #d9c69c);
+  color: #554a35;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  list-style: none;
+}
+.terrain-lighting-panel > summary::-webkit-details-marker { display: none; }
+.terrain-lighting-panel[open] > summary {
+  border-color: #d5c184;
+  background: linear-gradient(180deg, #9c8750, #79643a);
+  color: #fff4d7;
+}
+.terrain-lighting-panel > summary:hover { filter: brightness(1.08); }
+.terrain-lighting-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  width: 245px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgb(216 195 148 / 58%);
+  background: rgb(26 42 29 / 96%);
+  box-shadow: 0 5px 16px rgb(9 18 11 / 42%);
+  color: #f1e6c9;
+  font-size: 11px;
+}
+.terrain-lighting-toggle { display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+.terrain-lighting-toggle input { accent-color: #b69c63; }
+.terrain-lighting-range { display: grid; gap: 5px; }
+.terrain-lighting-range > span { display: flex; justify-content: space-between; gap: 8px; color: #e4d7b6; }
+.terrain-lighting-range output { color: #fff3d5; font-variant-numeric: tabular-nums; }
+.terrain-lighting-range input { width: 100%; margin: 0; accent-color: #b69c63; }
+.terrain-lighting-panel :focus-visible { outline: 2px solid #f1d18a; outline-offset: 2px; }
+
 .performance-panel {
   position: absolute;
   z-index: 7;
@@ -476,6 +546,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   .performance-panel { right: 8px; bottom: 44px; width: min(208px, calc(100vw - 16px)); padding: 8px 9px; }
   .map-layer-controls > span { display: none; }
   .map-layer-controls button { min-height: 25px; padding-inline: 6px; font-size: 8px; }
+  .terrain-lighting-panel > summary { width: 25px; min-height: 25px; }
+  .terrain-lighting-popover { width: min(245px, calc(100vw - 20px)); padding: 10px; font-size: 10px; }
   .setup-panel { top: 8px; left: 8px; }
   .world-details { bottom: 8px; left: 8px; width: min(250px, calc(100vw - 16px)); }
   .world-facts { gap: 4px; }

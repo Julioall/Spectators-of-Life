@@ -4,9 +4,16 @@ import type { NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, Plant
 import { NATURAL_SCENARIO } from '../core/natural/parameters';
 import { naturalScenarioVersionAtLeast } from '../core/natural/versioning';
 import { drawProceduralRock, generateProceduralRocks, ROCK_NATIVE_CELL_SIZE, treeBlockingCellsForRocks } from './procedural-rocks';
-import { TERRAIN_SURFACE_COLORS, terrainSurfaceField, type TerrainSurface } from './terrain-palette';
+import { ALTITUDE_MAP_OVERLAY_ALPHA, altitudeMapColor, TERRAIN_SURFACE_COLORS, terrainSurfaceField, type TerrainSurface } from './terrain-palette';
 import { hasNaturalLayerRevisionChanged, type NaturalLayerRevision } from './natural-layer-revision';
-import { reliefShadeForNeighbors } from './relief-shading';
+import {
+  applyTerrainLightingToImageData,
+  calculateTerrainLightingFactors,
+  createTerrainLightingDirtyMask,
+  DEFAULT_TERRAIN_LIGHTING_SETTINGS,
+  sanitizeTerrainLightingSettings,
+  type TerrainLightingSettings,
+} from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
 
 const CELL_SIZE = 40;
@@ -31,6 +38,7 @@ const RIVER_NEIGHBORS = [
   [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1],
 ] as const;
 const TREE_MATURE_WIDTH_CELLS = 4.4;
+const TERRAIN_LIGHTING_ELEVATION_EPSILON_M = 0.25;
 type MapLayers = { relief: boolean; water: boolean; vegetation: boolean; minerals: boolean; geology: boolean };
 type TreeSprites = Record<TreeSpeciesId, Phaser.GameObjects.Image | null>;
 type TilePoint = { x: number; y: number };
@@ -41,6 +49,8 @@ export type FoundationPerformanceHooks = {
 
 export class FoundationScene extends Phaser.Scene {
   private terrainImage: Phaser.GameObjects.Image | null = null;
+  private terrainTexture: Phaser.Textures.CanvasTexture | null = null;
+  private terrainSurfaces: TerrainSurface[] | null = null;
   private waterGraphics: Phaser.GameObjects.Graphics | null = null;
   private waterMotionGraphics: Phaser.GameObjects.Graphics | null = null;
   private plantGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -51,6 +61,9 @@ export class FoundationScene extends Phaser.Scene {
   private naturalWorld: NaturalWorldEntity | null = null;
   private mapKey: string | null = null;
   private reliefWorldKey: string | null = null;
+  private terrainElevationSnapshot: Float32Array | null = null;
+  private terrainLightingSettings: TerrainLightingSettings = { ...DEFAULT_TERRAIN_LIGHTING_SETTINGS };
+  private altitudeMapVisible = false;
   private geologyWorldKey: string | null = null;
   private dynamicLayerRevision: NaturalLayerRevision | null = null;
   private treeSprites: TreeSprites[] = [];
@@ -107,6 +120,8 @@ export class FoundationScene extends Phaser.Scene {
       this.naturalWorld = null;
       this.mapKey = null;
       this.reliefWorldKey = null;
+      this.terrainTexture = null;
+      this.terrainElevationSnapshot = null;
       this.geologyWorldKey = null;
       this.dynamicLayerRevision = null;
       this.waterMotionGraphics?.clear();
@@ -116,7 +131,9 @@ export class FoundationScene extends Phaser.Scene {
     const previousWorld = this.naturalWorld;
     const needsRebuild = this.mapKey !== worldKey || previousWorld?.width !== world.width || previousWorld?.height !== world.height;
     const revision = { worldKey, daysSimulated: world.daysSimulated };
-    const needsDynamicRefresh = forceRefresh || needsRebuild || hasNaturalLayerRevisionChanged(this.dynamicLayerRevision, revision);
+    const changedTerrainCells = needsRebuild ? null : significantlyChangedTerrainCells(world, this.terrainElevationSnapshot);
+    const terrainChanged = changedTerrainCells !== null;
+    const needsDynamicRefresh = forceRefresh || needsRebuild || terrainChanged || hasNaturalLayerRevisionChanged(this.dynamicLayerRevision, revision);
     this.naturalWorld = world;
     if (needsRebuild) {
       this.mapKey = worldKey;
@@ -124,6 +141,9 @@ export class FoundationScene extends Phaser.Scene {
       this.onCellSelected(null);
       this.cameraManuallyAdjusted = false;
       this.buildTerrain();
+    } else if (terrainChanged) {
+      this.renderTerrainTexture(createTerrainLightingDirtyMask(world.width, world.height, changedTerrainCells));
+      this.reliefWorldKey = null;
     }
     if (needsDynamicRefresh) {
       if (forceRefresh) {
@@ -140,6 +160,22 @@ export class FoundationScene extends Phaser.Scene {
   setLayers(layers: Partial<MapLayers>): void {
     this.layers = { ...this.layers, ...layers };
     this.updateDynamicLayers();
+  }
+
+  setAltitudeMapVisible(visible: boolean): void {
+    if (this.altitudeMapVisible === visible) return;
+    this.altitudeMapVisible = visible;
+    this.reliefWorldKey = null;
+    this.updateDynamicLayers();
+  }
+
+  setTerrainLightingSettings(settings: TerrainLightingSettings): void {
+    const next = sanitizeTerrainLightingSettings(settings);
+    if (next.enabled === this.terrainLightingSettings.enabled
+      && next.sunAngle === this.terrainLightingSettings.sunAngle
+      && next.reliefStrength === this.terrainLightingSettings.reliefStrength) return;
+    this.terrainLightingSettings = next;
+    this.renderTerrainTexture();
   }
 
   setOnCellSelected(handler: (index: number | null) => void): void {
@@ -160,19 +196,20 @@ export class FoundationScene extends Phaser.Scene {
     if (world === null) return;
     this.terrainImage?.destroy();
     this.terrainImage = null;
+    this.terrainTexture = null;
+    this.terrainSurfaces = null;
+    this.terrainElevationSnapshot = null;
     if (this.textures.exists(TERRAIN_TEXTURE_KEY)) this.textures.remove(TERRAIN_TEXTURE_KEY);
     this.destroyTreeSprites();
     this.destroyMineralSprites();
     const elevations = world.cells.map((cell) => cell.terrain.elevationM);
-    const minElevation = Math.min(...elevations);
-    const maxElevation = Math.max(...elevations);
+    const [minimum, maximum] = elevationRange(elevations);
+    this.terrainSurfaces = terrainSurfaceField(world, minimum, maximum);
     const texture = this.textures.createCanvas(TERRAIN_TEXTURE_KEY, world.width * CELL_SIZE, world.height * CELL_SIZE);
     if (texture === null) return;
-    const context = texture.getContext();
-    context.imageSmoothingEnabled = false;
-    drawTerrainTexture(context, world, minElevation, maxElevation, hashText(this.mapKey ?? 'natural-world'));
-    texture.refresh();
+    this.terrainTexture = texture;
     this.terrainImage = this.add.image(0, 0, TERRAIN_TEXTURE_KEY).setOrigin(0, 0).setDepth(0);
+    this.renderTerrainTexture();
     this.treeSprites = world.cells.map(emptyTreeSprites);
     const mapWidth = world.width * CELL_SIZE;
     const mapHeight = world.height * CELL_SIZE;
@@ -196,11 +233,36 @@ export class FoundationScene extends Phaser.Scene {
     }
   }
 
+  private renderTerrainTexture(dirtyCells?: Uint8Array): void {
+    const world = this.naturalWorld;
+    const texture = this.terrainTexture;
+    if (world === null || texture === null) return;
+    const elevations = world.cells.map((cell) => cell.terrain.elevationM);
+    const surfaces = this.terrainSurfaces ?? terrainSurfaceField(world, ...elevationRange(elevations));
+    this.terrainSurfaces = surfaces;
+    const factors = calculateTerrainLightingFactors(
+      world.width,
+      world.height,
+      world.cellSizeM,
+      elevations,
+      this.terrainLightingSettings,
+    );
+    texture.context.imageSmoothingEnabled = false;
+    drawTerrainTexture(texture.context, world, surfaces, hashText(this.mapKey ?? 'natural-world'), dirtyCells);
+    if (this.terrainLightingSettings.enabled) {
+      const imageData = texture.context.getImageData(0, 0, texture.width, texture.height);
+      applyTerrainLightingToImageData(imageData, world.width, world.height, CELL_SIZE, factors, dirtyCells);
+      texture.context.putImageData(imageData, 0, 0);
+    }
+    texture.refresh();
+    this.terrainElevationSnapshot = Float32Array.from(elevations);
+  }
+
   private drawRelief(): void {
     const world = this.naturalWorld;
     const graphics = this.reliefGraphics;
     if (world === null || graphics === null) return;
-    if (!this.layers.relief) {
+    if (!this.layers.relief && !this.altitudeMapVisible) {
       graphics.setVisible(false);
       return;
     }
@@ -216,22 +278,11 @@ export class FoundationScene extends Phaser.Scene {
     const range = Math.max(1, maximum - minimum);
     for (const cell of world.cells) {
       const relative = clamp((cell.terrain.elevationM - minimum) / range, 0, 1);
-      const center = cell.terrain.elevationM;
-      const west = neighborAt(world, cell.x, cell.y, -1, 0)?.terrain.elevationM ?? center;
-      const east = neighborAt(world, cell.x, cell.y, 1, 0)?.terrain.elevationM ?? center;
-      const north = neighborAt(world, cell.x, cell.y, 0, -1)?.terrain.elevationM ?? center;
-      const south = neighborAt(world, cell.x, cell.y, 0, 1)?.terrain.elevationM ?? center;
-      const shade = reliefShadeForNeighbors(west, east, north, south, world.cellSizeM);
       const x = cell.x * CELL_SIZE;
       const y = cell.y * CELL_SIZE;
-      graphics.fillStyle(reliefBandColor(relative), 0.28);
+      if (this.altitudeMapVisible) graphics.fillStyle(altitudeMapColor(relative), ALTITUDE_MAP_OVERLAY_ALPHA);
+      else graphics.fillStyle(reliefBandColor(relative), 0.28);
       graphics.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-      if (Math.abs(shade) >= 0.025) {
-        const shadeColor = shade > 0 ? 0xfff1cf : 0x202b29;
-        const shadeAlpha = clamp(0.05 + Math.abs(shade) * 0.22, 0.05, 0.21);
-        graphics.fillStyle(shadeColor, shadeAlpha);
-        graphics.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-      }
     }
     drawElevationContours(graphics, world, minimum, maximum);
     graphics.setVisible(true);
@@ -547,7 +598,13 @@ export class FoundationScene extends Phaser.Scene {
   private clearMap(): void {
     this.terrainImage?.destroy();
     this.terrainImage = null;
+    this.terrainTexture = null;
+    this.terrainSurfaces = null;
+    this.terrainElevationSnapshot = null;
     if (this.textures.exists(TERRAIN_TEXTURE_KEY)) this.textures.remove(TERRAIN_TEXTURE_KEY);
+    this.reliefGraphics?.clear();
+    this.reliefGraphics?.setVisible(false);
+    this.waterMotionGraphics?.clear();
     this.waterGraphics?.clear();
     this.plantGraphics?.clear();
     this.treeShadowGraphics?.clear();
@@ -587,9 +644,15 @@ function isTreeSpecies(speciesId: PlantSpeciesId): speciesId is TreeSpeciesId {
   return TREE_SPECIES.includes(speciesId as TreeSpeciesId);
 }
 
-function drawTerrainTexture(context: CanvasRenderingContext2D, world: NaturalWorldEntity, minElevation: number, maxElevation: number, visualSeed: number): void {
-  const surfaces = terrainSurfaceField(world, minElevation, maxElevation);
+function drawTerrainTexture(
+  context: CanvasRenderingContext2D,
+  world: NaturalWorldEntity,
+  surfaces: TerrainSurface[],
+  visualSeed: number,
+  dirtyCells?: Uint8Array,
+): void {
   for (const cell of world.cells) {
+    if (dirtyCells !== undefined && dirtyCells[cell.index] !== 1) continue;
     const x = cell.x * CELL_SIZE;
     const y = cell.y * CELL_SIZE;
     const surface = surfaces[cell.index] ?? 'loam';
@@ -599,27 +662,33 @@ function drawTerrainTexture(context: CanvasRenderingContext2D, world: NaturalWor
     drawSurfaceTexture(context, x, y, cell, surface, baseColor, visualSeed);
   }
   for (const cell of world.cells) {
+    if (dirtyCells !== undefined && dirtyCells[cell.index] !== 1) continue;
     const mask = terrainNeighborMask(cell, world, surfaces);
     drawTerrainTransitions(context, cell, world, surfaces, mask, visualSeed);
   }
-  drawElevationShading(context, world);
 }
 
-function drawElevationShading(context: CanvasRenderingContext2D, world: NaturalWorldEntity): void {
-  for (const cell of world.cells) {
-    const center = cell.terrain.elevationM;
-    const west = neighborAt(world, cell.x, cell.y, -1, 0)?.terrain.elevationM ?? center;
-    const east = neighborAt(world, cell.x, cell.y, 1, 0)?.terrain.elevationM ?? center;
-    const north = neighborAt(world, cell.x, cell.y, 0, -1)?.terrain.elevationM ?? center;
-    const south = neighborAt(world, cell.x, cell.y, 0, 1)?.terrain.elevationM ?? center;
-    const shade = reliefShadeForNeighbors(west, east, north, south, world.cellSizeM);
-    const alpha = clamp(Math.abs(shade) * 0.18, 0, 0.13);
-    if (alpha < 0.018) continue;
-    context.fillStyle = shade > 0
-      ? `rgba(255, 245, 213, ${alpha})`
-      : `rgba(24, 31, 25, ${alpha})`;
-    context.fillRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+function elevationRange(elevations: readonly number[]): [number, number] {
+  let minimum = Number.POSITIVE_INFINITY;
+  let maximum = Number.NEGATIVE_INFINITY;
+  for (const elevation of elevations) {
+    if (!Number.isFinite(elevation)) continue;
+    minimum = Math.min(minimum, elevation);
+    maximum = Math.max(maximum, elevation);
   }
+  return Number.isFinite(minimum) && Number.isFinite(maximum) ? [minimum, maximum] : [0, 0];
+}
+
+function significantlyChangedTerrainCells(world: NaturalWorldEntity, previous: Float32Array | null): number[] | null {
+  if (previous === null || previous.length !== world.cells.length) return world.cells.map((cell) => cell.index);
+  const changed: number[] = [];
+  for (let index = 0; index < world.cells.length; index += 1) {
+    const cell = world.cells[index];
+    const before = previous[index];
+    if (cell === undefined || before === undefined || !Number.isFinite(cell.terrain.elevationM)
+      || Math.abs(cell.terrain.elevationM - before) >= TERRAIN_LIGHTING_ELEVATION_EPSILON_M) changed.push(index);
+  }
+  return changed.length === 0 ? null : changed;
 }
 
 function reliefBandColor(relative: number): number {
