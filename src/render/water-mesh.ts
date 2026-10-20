@@ -1,5 +1,6 @@
 export type WaterRibbonPoint = { x: number; y: number; width: number };
 export type WaterMeshPoint = { x: number; y: number };
+export type WaterPathPoint = { x: number; y: number; progress: number };
 
 /**
  * Converts a cell-boundary contour into a stable organic shoreline. The
@@ -48,6 +49,35 @@ export function organicWaterContour(
       y: point.y + tangentX * offset,
     };
   });
+}
+
+/** Smooths an open river centerline while preserving its cumulative progress. */
+export function smoothOpenWaterPath(
+  points: readonly WaterPathPoint[],
+  iterations = 2,
+): WaterPathPoint[] {
+  if (points.length < 3 || iterations <= 0) return points.map((point) => ({ ...point }));
+  let smoothed = points.map((point) => ({ ...point }));
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const next: WaterPathPoint[] = [{ ...smoothed[0]! }];
+    for (let index = 0; index < smoothed.length - 1; index += 1) {
+      const current = smoothed[index]!;
+      const following = smoothed[index + 1]!;
+      next.push({
+        x: current.x * 0.75 + following.x * 0.25,
+        y: current.y * 0.75 + following.y * 0.25,
+        progress: current.progress * 0.75 + following.progress * 0.25,
+      });
+      next.push({
+        x: current.x * 0.25 + following.x * 0.75,
+        y: current.y * 0.25 + following.y * 0.75,
+        progress: current.progress * 0.25 + following.progress * 0.75,
+      });
+    }
+    next.push({ ...smoothed[smoothed.length - 1]! });
+    smoothed = next;
+  }
+  return smoothed;
 }
 
 /** Builds a filled, flow-aligned ribbon from a smoothed river centerline. */

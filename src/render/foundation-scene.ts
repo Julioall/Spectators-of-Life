@@ -26,7 +26,7 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
-import { buildWaterRibbon, organicWaterContour } from './water-mesh';
+import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from './water-mesh';
 
 const CELL_SIZE = 40;
 const MIN_ZOOM = 0.38;
@@ -458,11 +458,23 @@ export class FoundationScene extends Phaser.Scene {
           const progress = (phase * clamp(0.65 + Math.sqrt(Math.max(0, runoffOut)) * 0.24, 0.65, 1.35) + offset) % 1;
           const x = startX + (endX - startX) * progress;
           const y = startY + (endY - startY) * progress;
-          const length = 3.5 + coordinateNoise(seed, cell.x, cell.y, 1_207) * 3;
+          const length = permanentRiverFlow
+            ? 3.2 + coordinateNoise(seed, cell.x, cell.y, 1_207) * 2.2
+            : 2.2 + coordinateNoise(seed, cell.x, cell.y, 1_207) * 1.8;
           const directionLength = Math.max(1, Math.hypot(endX - startX, endY - startY));
           const dx = (endX - startX) / directionLength;
           const dy = (endY - startY) / directionLength;
-          graphics.lineStyle(1.2, 0xd1e6d8, permanentRiverFlow ? 0.24 : clamp(0.12 + Math.sqrt(runoffOut) * 0.045, 0.12, 0.28));
+          if (!permanentRiverFlow && cell.index % 11 !== 0) continue;
+          if (!permanentRiverFlow) {
+            graphics.fillStyle(0xd1e6d8, clamp(0.08 + Math.sqrt(runoffOut) * 0.02, 0.08, 0.16));
+            graphics.fillEllipse(x, y, 2.4, 1.4);
+            continue;
+          }
+          graphics.lineStyle(
+            1,
+            0xd1e6d8,
+            0.2,
+          );
           graphics.lineBetween(x - dx * length, y - dy * length, x + dx * length, y + dy * length);
         } else if (cell.terrain.waterBody === 'lake' && cell.water.surfaceMm > WATER_THRESHOLD_MM && cell.index % 19 === 0) {
           const offset = coordinateNoise(seed, cell.x, cell.y, 1_231);
@@ -1379,44 +1391,61 @@ function drawRunoffNetwork(
       }
     }
     if (path.length < 2) continue;
+    const maximumRunoff = path.reduce((maximum, cell) => Math.max(maximum, cell.water.lastFlows.runoffOutMm ?? 0), 0);
+    if (path.length < 4 && maximumRunoff < 0.85) continue;
 
-    const points: Array<{ x: number; y: number; flow: number }> = [];
-    for (let index = 0; index < path.length; index += 1) {
-      const cell = path[index]!;
-      const center = { x: (cell.x + 0.5) * CELL_SIZE, y: (cell.y + 0.5) * CELL_SIZE };
-      if (index === 0) points.push({ ...center, flow: cell.water.lastFlows.runoffOutMm ?? 0 });
-      if (index >= path.length - 1) continue;
-      const next = path[index + 1]!;
-      const nextCenter = { x: (next.x + 0.5) * CELL_SIZE, y: (next.y + 0.5) * CELL_SIZE };
-      points.push({
-        x: center.x * 0.75 + nextCenter.x * 0.25,
-        y: center.y * 0.75 + nextCenter.y * 0.25,
-        flow: cell.water.lastFlows.runoffOutMm ?? 0,
-      });
-      points.push({
-        x: center.x * 0.25 + nextCenter.x * 0.75,
-        y: center.y * 0.25 + nextCenter.y * 0.75,
-        flow: next.water.lastFlows.runoffOutMm ?? 0,
-      });
-      if (index === path.length - 2) points.push({ ...nextCenter, flow: next.water.lastFlows.runoffOutMm ?? 0 });
+    const points = smoothOpenWaterPath(
+      path.map((cell, index) => ({
+        x: (cell.x + 0.5) * CELL_SIZE,
+        y: (cell.y + 0.5) * CELL_SIZE,
+        progress: index,
+      })),
+      2,
+    );
+    const flowAt = (progress: number): number => {
+      const leftIndex = Math.min(path.length - 1, Math.floor(progress));
+      const rightIndex = Math.min(path.length - 1, leftIndex + 1);
+      const fraction = clamp(progress - leftIndex, 0, 1);
+      const left = path[leftIndex]!.water.lastFlows.runoffOutMm ?? 0;
+      const right = path[rightIndex]!.water.lastFlows.runoffOutMm ?? 0;
+      return left + (right - left) * fraction;
+    };
+    const widthAt = (progress: number, x: number, y: number): number => {
+      const widthVariation = 0.88 + coordinateNoise(
+        hashText(world.id),
+        Math.floor(x / CELL_SIZE),
+        Math.floor(y / CELL_SIZE),
+        2_441,
+      ) * 0.22;
+      return clamp((7 + Math.sqrt(Math.max(0, flowAt(progress))) * 1.8) * widthVariation, 7, 17);
+    };
+    const ribbonPoints = points.map((point) => ({
+      x: point.x,
+      y: point.y,
+      width: widthAt(point.progress, point.x, point.y),
+    }));
+    const bankMesh = buildWaterRibbon(ribbonPoints, 3.8);
+    const center = ribbonPoints[Math.floor(ribbonPoints.length / 2)]!;
+    const middleCell = path[Math.min(path.length - 1, Math.floor(points[Math.floor(points.length / 2)]!.progress))]!;
+    const depth = Math.max(20, waterDepthField[middleCell.index] ?? 0);
+    const color = shadeWaterColor(
+      waterDepthColor(depth),
+      sampleLightingAtWorldPoint(world, lightingFactors, center.x, center.y),
+    );
+    if (bankMesh.length >= 3) {
+      graphics.fillStyle(0x405d5a, 0.06);
+      graphics.fillPoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
+      graphics.lineStyle(0.7, 0x405d5a, 0.1);
+      graphics.strokePoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
     }
-
-    for (let index = 0; index < points.length - 1; index += 1) {
-      const start = points[index]!;
-      const end = points[index + 1]!;
-      const meanFlow = (start.flow + end.flow) * 0.5;
-      const midpointX = (start.x + end.x) * 0.5;
-      const midpointY = (start.y + end.y) * 0.5;
-      const widthVariation = 0.82 + coordinateNoise(hashText(world.id), Math.floor(midpointX / CELL_SIZE), Math.floor(midpointY / CELL_SIZE), 2_441) * 0.34;
-      const width = clamp((2.8 + Math.sqrt(Math.max(0, meanFlow)) * 1.25) * widthVariation, 2.8, 8.5);
-      const depth = Math.max(20, waterDepthField[path[Math.min(path.length - 1, Math.floor(index / 2))]!.index] ?? 0);
-      const color = shadeWaterColor(waterDepthColor(depth), sampleLightingAtWorldPoint(world, lightingFactors, midpointX, midpointY));
-      graphics.lineStyle(width + 1.2, 0x405d5a, 0.16);
-      graphics.lineBetween(start.x, start.y, end.x, end.y);
-      graphics.fillStyle(color, 0.5);
-      graphics.lineStyle(width, color, 0.5);
-      graphics.lineBetween(start.x, start.y, end.x, end.y);
-    }
+    const waterMesh = buildWaterRibbon(ribbonPoints);
+    graphics.fillStyle(color, 0.22);
+    graphics.fillPoints(waterMesh as unknown as Phaser.Math.Vector2[], true);
+    graphics.lineStyle(0.8, 0xd1e6d8, 0.05);
+    graphics.beginPath();
+    graphics.moveTo(points[0]!.x, points[0]!.y);
+    for (let index = 1; index < points.length; index += 1) graphics.lineTo(points[index]!.x, points[index]!.y);
+    graphics.strokePath();
   }
 }
 
@@ -1444,8 +1473,19 @@ function drawLakeRiverConnections(
     const y = (river.y + 0.5) * CELL_SIZE;
     const width = clamp(6.5 + Math.sqrt(Math.max(1, contributingCells[riverIndex] as number)) * 0.42, 7, 30);
     const color = shadeWaterColor(waterDepthColor(waterDepthField[riverIndex] ?? river.water.surfaceMm), sampleLightingAtWorldPoint(world, lightingFactors, x, y));
-    graphics.lineStyle(width, color, 0.9);
-    graphics.lineBetween(mouth.x, mouth.y, x, y);
+    const connection = smoothOpenWaterPath([
+      { x: mouth.x, y: mouth.y, progress: 0 },
+      { x, y, progress: 1 },
+    ], 2);
+    const ribbon = connection.map((point) => ({ x: point.x, y: point.y, width }));
+    const bankMesh = buildWaterRibbon(ribbon, 2.2);
+    graphics.fillStyle(0x405d5a, 0.12);
+    graphics.fillPoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
+    graphics.lineStyle(0.8, 0x405d5a, 0.18);
+    graphics.strokePoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
+    const waterMesh = buildWaterRibbon(ribbon);
+    graphics.fillStyle(color, 0.82);
+    graphics.fillPoints(waterMesh as unknown as Phaser.Math.Vector2[], true);
     graphics.fillStyle(color, 0.9);
     graphics.fillCircle(mouth.x, mouth.y, width * 0.5);
   }
@@ -1481,17 +1521,10 @@ function drawSmoothedRiverPath(
   lightingFactors: ArrayLike<number>,
 ): void {
   if (path.length === 0) return;
-  const points: Array<{ x: number; y: number; progress: number }> = [{ x: path[0]!.x, y: path[0]!.y, progress: 0 }];
-  for (let index = 0; index < path.length - 1; index += 1) {
-    const start = path[index]!;
-    const end = path[index + 1]!;
-    points.push({ x: start.x * 0.75 + end.x * 0.25, y: start.y * 0.75 + end.y * 0.25, progress: index + 0.25 });
-    points.push({ x: start.x * 0.25 + end.x * 0.75, y: start.y * 0.25 + end.y * 0.75, progress: index + 0.75 });
-  }
-  if (path.length > 1) {
-    const last = path[path.length - 1]!;
-    points.push({ x: last.x, y: last.y, progress: path.length - 1 });
-  }
+  const points = smoothOpenWaterPath(
+    path.map((point, index) => ({ x: point.x, y: point.y, progress: index })),
+    2,
+  );
 
   const surfaceAt = (progress: number): number => {
     const leftIndex = Math.min(path.length - 1, Math.floor(progress));
@@ -1512,11 +1545,11 @@ function drawSmoothedRiverPath(
     return path[leftIndex]!.contributingCells + (path[rightIndex]!.contributingCells - path[leftIndex]!.contributingCells) * fraction;
   };
   const widthAt = (progress: number): number => {
-    const flowWidth = clamp(6.5 + Math.sqrt(Math.max(1, catchmentAt(progress))) * 0.42, 7, 30);
-    return clamp(flowWidth * widthScaleAt(progress), 6, 35);
+    const flowWidth = clamp(9 + Math.sqrt(Math.max(1, catchmentAt(progress))) * 0.5, 9, 34);
+    return clamp(flowWidth * widthScaleAt(progress), 8, 40);
   };
   const ribbonPoints = points.map((point) => ({ x: point.x, y: point.y, width: widthAt(point.progress) }));
-  const bankMesh = buildWaterRibbon(ribbonPoints, 1.5);
+  const bankMesh = buildWaterRibbon(ribbonPoints, 3.2);
   if (bankMesh.length >= 3) {
     const bankColor = shadeWaterColor(0x52675e, sampleLightingAtWorldPoint(
       world,
@@ -1524,30 +1557,27 @@ function drawSmoothedRiverPath(
       ribbonPoints[Math.floor(ribbonPoints.length / 2)]!.x,
       ribbonPoints[Math.floor(ribbonPoints.length / 2)]!.y,
     ));
-    graphics.fillStyle(bankColor, 0.15);
+    graphics.fillStyle(bankColor, 0.2);
     graphics.fillPoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
+    graphics.lineStyle(0.9, bankColor, 0.32);
+    graphics.strokePoints(bankMesh as unknown as Phaser.Math.Vector2[], true);
   }
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const start = points[index]!;
-    const end = points[index + 1]!;
-    const midpointX = (start.x + end.x) * 0.5;
-    const midpointY = (start.y + end.y) * 0.5;
-    const surfaceMm = surfaceAt((start.progress + end.progress) * 0.5);
-    const color = shadeWaterColor(
-      waterDepthColor(surfaceMm),
-      sampleLightingAtWorldPoint(world, lightingFactors, midpointX, midpointY),
-    );
-    const mesh = buildWaterRibbon([ribbonPoints[index]!, ribbonPoints[index + 1]!]);
-    if (mesh.length < 3) continue;
-    graphics.fillStyle(color, 0.9);
-    graphics.fillPoints(mesh as unknown as Phaser.Math.Vector2[], true);
+  const center = ribbonPoints[Math.floor(ribbonPoints.length / 2)]!;
+  const color = shadeWaterColor(
+    waterDepthColor(surfaceAt(points[Math.floor(points.length / 2)]!.progress)),
+    sampleLightingAtWorldPoint(world, lightingFactors, center.x, center.y),
+  );
+  const waterMesh = buildWaterRibbon(ribbonPoints);
+  if (waterMesh.length >= 3) {
+    graphics.fillStyle(color, 0.92);
+    graphics.fillPoints(waterMesh as unknown as Phaser.Math.Vector2[], true);
   }
-  if (points.length === 1) {
-    const point = ribbonPoints[0]!;
-    const color = shadeWaterColor(waterDepthColor(path[0]!.surfaceMm), sampleLightingAtWorldPoint(world, lightingFactors, point.x, point.y));
-    const mesh = buildWaterRibbon([point]);
-    graphics.fillStyle(color, 0.9);
-    graphics.fillPoints(mesh as unknown as Phaser.Math.Vector2[], true);
+  if (points.length > 1) {
+    graphics.lineStyle(1.05, 0xd1e6d8, 0.2);
+    graphics.beginPath();
+    graphics.moveTo(points[0]!.x, points[0]!.y);
+    for (let index = 1; index < points.length; index += 1) graphics.lineTo(points[index]!.x, points[index]!.y);
+    graphics.strokePath();
   }
 }
 

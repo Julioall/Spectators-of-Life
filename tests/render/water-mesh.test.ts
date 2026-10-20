@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWaterRibbon, organicWaterContour } from '../../src/render/water-mesh';
+import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from '../../src/render/water-mesh';
 
 describe('malha visual de água', () => {
   it('cria margens perpendiculares ao eixo do fluxo e preserva largura', () => {
@@ -30,5 +30,17 @@ describe('malha visual de água', () => {
     expect(first.length).toBeGreaterThan(contour.length);
     expect(first.some((point) => point.x !== 0 && point.x !== 40 && point.y !== 0 && point.y !== 40)).toBe(true);
     expect(organicWaterContour(contour, 1234, 6, 3)).not.toEqual(first);
+  });
+
+  it('suaviza o caminho aberto do rio sem perder o progresso', () => {
+    const path = smoothOpenWaterPath([
+      { x: 0, y: 0, progress: 0 },
+      { x: 20, y: 40, progress: 1 },
+      { x: 60, y: 30, progress: 2 },
+    ], 2);
+    expect(path[0]).toEqual({ x: 0, y: 0, progress: 0 });
+    expect(path.at(-1)).toEqual({ x: 60, y: 30, progress: 2 });
+    expect(path.length).toBeGreaterThan(3);
+    expect(path.every((point, index) => index === 0 || point.progress >= path[index - 1]!.progress)).toBe(true);
   });
 });

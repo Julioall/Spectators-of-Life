@@ -33,6 +33,11 @@ renderização de rios que não pareça uma coleção de tiles quadrados.
   alta frequência. A mesma semente visual e amplitude são usadas na máscara de
   sombreamento para evitar halos quadrados; o agrupamento continua sendo
   derivado da conectividade 4-vizinhos do estado.
+- Desenhar rios permanentes e runoff como faixas contínuas ao longo de um
+  centro de fluxo suavizado, com margens translúcidas que recebem a mesma
+  iluminação do relevo. Reflexos animados ficam reservados aos canais
+  permanentes; runoff usa pontos discretos para não transformar cada célula em
+  um risco independente.
 
 ## Consequências e limites
 
@@ -42,7 +47,8 @@ Rios úmidos e íngremes podem iniciar antes, enquanto áreas secas e células
   margens deixam de repetir retângulos por célula, mas a forma orgânica é uma
   projeção visual: a malha não altera a conectividade nem é um solver de águas
   rasas, portanto não calcula velocidade, tensão de cisalhamento ou meandros
-  físicos.
+  físicos. Runoff fraco e muito curto pode ficar abaixo do limiar visual para
+  preservar a leitura das bacias.
   A calibração continua dependente da resolução de 250 m e dos parâmetros do
   cenário; as simplificações e a ausência de validação hidrológica de campo
   permanecem explícitas.
@@ -52,5 +58,5 @@ Rios úmidos e íngremes podem iniciar antes, enquanto áreas secas e células
 A síntese aplicada do SciSpace/Consensus, com citações preservadas, está em
 [pesquisa de hidrologia e malha de água](../research/2026-10-20-hidrologia-malha-agua-consensus.md).
 Os invariantes headless cobrem contribuição derivada e limiar adaptativo em
-`tests/core/flow-routing.test.ts`; a geometria de faixa e o contorno orgânico
-determinístico são verificados em `tests/render/water-mesh.test.ts`.
+`tests/core/flow-routing.test.ts`; a geometria de faixa, o contorno orgânico e
+a suavização de centro aberto são verificados em `tests/render/water-mesh.test.ts`.
