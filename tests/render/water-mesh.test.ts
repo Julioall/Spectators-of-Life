@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWaterRibbon } from '../../src/render/water-mesh';
+import { buildWaterRibbon, organicWaterContour } from '../../src/render/water-mesh';
 
 describe('malha visual de água', () => {
   it('cria margens perpendiculares ao eixo do fluxo e preserva largura', () => {
@@ -18,5 +18,17 @@ describe('malha visual de água', () => {
     const point = [{ x: 12, y: 18, width: 8 }];
     expect(buildWaterRibbon(point)).toEqual(buildWaterRibbon(point));
     expect(buildWaterRibbon(point)).toHaveLength(4);
+  });
+
+  it('suaviza uma margem em grade sem alterar sua forma entre execuções', () => {
+    const contour = [
+      { x: 0, y: 0 }, { x: 40, y: 0 }, { x: 40, y: 40 }, { x: 0, y: 40 },
+    ];
+    const first = organicWaterContour(contour, 1234, 2, 3);
+    const second = organicWaterContour(contour, 1234, 2, 3);
+    expect(first).toEqual(second);
+    expect(first.length).toBeGreaterThan(contour.length);
+    expect(first.some((point) => point.x !== 0 && point.x !== 40 && point.y !== 0 && point.y !== 40)).toBe(true);
+    expect(organicWaterContour(contour, 1234, 6, 3)).not.toEqual(first);
   });
 });

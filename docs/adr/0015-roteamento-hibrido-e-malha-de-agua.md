@@ -28,14 +28,21 @@ renderização de rios que não pareça uma coleção de tiles quadrados.
   e confluência. A geometria é criada em `src/render/water-mesh.ts` como
   projeção descartável. A animação continua em camada separada e usa o fluxo
   real para orientar reflexos.
+- Transformar os contornos celulares de lagos, rios, poças e leitos secos em
+  margens orgânicas por suavização de Chaikin e ruído determinístico de baixa e
+  alta frequência. A mesma semente visual e amplitude são usadas na máscara de
+  sombreamento para evitar halos quadrados; o agrupamento continua sendo
+  derivado da conectividade 4-vizinhos do estado.
 
 ## Consequências e limites
 
 Rios úmidos e íngremes podem iniciar antes, enquanto áreas secas e células
   maiores exigem mais área contribuinte. A contribuição múltipla melhora a
-  leitura de margens e alargamentos sem dispersar a rede autoritativa. A malha
-  visual elimina a aparência de linhas isoladas, mas não é um solver de águas
-  rasas: não calcula velocidade, tensão de cisalhamento ou meandros físicos.
+  leitura de margens e alargamentos sem dispersar a rede autoritativa. As
+  margens deixam de repetir retângulos por célula, mas a forma orgânica é uma
+  projeção visual: a malha não altera a conectividade nem é um solver de águas
+  rasas, portanto não calcula velocidade, tensão de cisalhamento ou meandros
+  físicos.
   A calibração continua dependente da resolução de 250 m e dos parâmetros do
   cenário; as simplificações e a ausência de validação hidrológica de campo
   permanecem explícitas.
@@ -45,5 +52,5 @@ Rios úmidos e íngremes podem iniciar antes, enquanto áreas secas e células
 A síntese aplicada do SciSpace/Consensus, com citações preservadas, está em
 [pesquisa de hidrologia e malha de água](../research/2026-10-20-hidrologia-malha-agua-consensus.md).
 Os invariantes headless cobrem contribuição derivada e limiar adaptativo em
-`tests/core/flow-routing.test.ts`; a geometria de faixa determinística é
-verificada em `tests/render/water-mesh.test.ts`.
+`tests/core/flow-routing.test.ts`; a geometria de faixa e o contorno orgânico
+determinístico são verificados em `tests/render/water-mesh.test.ts`.

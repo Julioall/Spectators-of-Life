@@ -1,6 +1,55 @@
 export type WaterRibbonPoint = { x: number; y: number; width: number };
 export type WaterMeshPoint = { x: number; y: number };
 
+/**
+ * Converts a cell-boundary contour into a stable organic shoreline. The
+ * smoothing is purely visual and uses a separate seed so it cannot affect the
+ * simulation or save data.
+ */
+export function organicWaterContour(
+  points: readonly WaterMeshPoint[],
+  visualSeed: number,
+  amplitude = 1.6,
+  iterations = 3,
+): WaterMeshPoint[] {
+  if (points.length < 3) return points.map((point) => ({ ...point }));
+  let smoothed = points.map((point) => ({ ...point }));
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const next: WaterMeshPoint[] = [];
+    for (let index = 0; index < smoothed.length; index += 1) {
+      const current = smoothed[index]!;
+      const following = smoothed[(index + 1) % smoothed.length]!;
+      next.push({
+        x: current.x * 0.75 + following.x * 0.25,
+        y: current.y * 0.75 + following.y * 0.25,
+      });
+      next.push({
+        x: current.x * 0.25 + following.x * 0.75,
+        y: current.y * 0.25 + following.y * 0.75,
+      });
+    }
+    smoothed = next;
+  }
+
+  return smoothed.map((point, index) => {
+    const previous = smoothed[(index - 1 + smoothed.length) % smoothed.length]!;
+    const following = smoothed[(index + 1) % smoothed.length]!;
+    let tangentX = following.x - previous.x;
+    let tangentY = following.y - previous.y;
+    const length = Math.hypot(tangentX, tangentY);
+    if (length < 1e-6) return point;
+    tangentX /= length;
+    tangentY /= length;
+    const coarseNoise = deterministicNoise(visualSeed, Math.floor(index / 4), 19);
+    const fineNoise = deterministicNoise(visualSeed, index, 37);
+    const offset = (coarseNoise * 0.72 + fineNoise * 0.28) * amplitude;
+    return {
+      x: point.x - tangentY * offset,
+      y: point.y + tangentX * offset,
+    };
+  });
+}
+
 /** Builds a filled, flow-aligned ribbon from a smoothed river centerline. */
 export function buildWaterRibbon(points: readonly WaterRibbonPoint[], edgePadding = 0): WaterMeshPoint[] {
   if (points.length === 0) return [];
@@ -38,4 +87,11 @@ export function buildWaterRibbon(points: readonly WaterRibbonPoint[], edgePaddin
     right.push({ x: current.x - normalX, y: current.y - normalY });
   }
   return [...left, ...right.reverse()];
+}
+
+function deterministicNoise(seed: number, index: number, salt: number): number {
+  let value = (seed ^ Math.imul(index + salt * 17, 0x45d9f3b) ^ Math.imul(salt - index * 11, 0x27d4eb2d)) >>> 0;
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  return ((value ^ (value >>> 16)) >>> 0) / 0x1_0000_0000 * 2 - 1;
 }

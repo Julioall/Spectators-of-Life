@@ -26,7 +26,7 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
-import { buildWaterRibbon } from './water-mesh';
+import { buildWaterRibbon, organicWaterContour } from './water-mesh';
 
 const CELL_SIZE = 40;
 const MIN_ZOOM = 0.38;
@@ -988,7 +988,12 @@ function drawLakeSurfaces(
       const depthFraction = maximumDepth === 0 ? 0 : layer / maximumDepth;
       const visualDepthMm = 40 + (centerDepthMm - 40) * depthFraction;
       for (const contour of traceLakeContours(layerCells, world.width, world.height)) {
-        const smooth = smoothClosedPolygon(contour, 3);
+        const smooth = organicWaterContour(
+          contour,
+          organicContourSeed(world, component, layer),
+          layer === 0 ? 6 : 3.4,
+          3,
+        );
         const color = shadeWaterColor(waterDepthColor(visualDepthMm), averageCellField(
           component.filter((cell) => layerCells.has(cell.index)),
           lightingFactors,
@@ -1041,7 +1046,7 @@ function drawRiverSurfaces(
     const surface = averageCellField(component, waterDepthField);
     const lightFactor = averageCellField(component, lightingFactors);
     for (const contour of contours) {
-      const smooth = smoothClosedPolygon(contour, 3);
+      const smooth = organicWaterContour(contour, organicContourSeed(world, component, 401), 4.2, 3);
       graphics.fillStyle(shadeWaterColor(waterDepthColor(surface), lightFactor), 0.86);
       graphics.fillPoints(smooth as unknown as Phaser.Math.Vector2[], true);
       graphics.lineStyle(1.1, 0xa3b09a, 0.18);
@@ -1073,9 +1078,9 @@ function drawWaterSurfaceMask(context: CanvasRenderingContext2D, world: NaturalW
       ephemeralWaterIndices.add(cell.index);
     }
   }
-  fillWaterComponentMask(context, lakeIndices, world);
-  fillWaterComponentMask(context, riverIndices, world);
-  fillWaterComponentMask(context, ephemeralWaterIndices, world);
+  fillWaterComponentMask(context, lakeIndices, world, 0, 6);
+  fillWaterComponentMask(context, riverIndices, world, 401, 4.2);
+  fillWaterComponentMask(context, ephemeralWaterIndices, world, 809, 6);
 }
 
 function drawEphemeralWaterSurfaces(
@@ -1107,7 +1112,7 @@ function drawEphemeralWaterSurfaces(
     const surfaceMm = averageCellField(component, waterDepthField, 0);
     const color = shadeWaterColor(waterDepthColor(surfaceMm), averageCellField(component, lightingFactors));
     for (const contour of traceLakeContours(indices, world.width, world.height)) {
-      const smooth = smoothClosedPolygon(contour, 3);
+      const smooth = organicWaterContour(contour, organicContourSeed(world, component, 809), 6, 3);
       graphics.fillStyle(color, clamp(0.36 + Math.log1p(surfaceMm) * 0.035, 0.38, 0.64));
       graphics.fillPoints(smooth as unknown as Phaser.Math.Vector2[], true);
       graphics.lineStyle(1, 0xb5c7b5, 0.12);
@@ -1119,10 +1124,19 @@ function drawEphemeralWaterSurfaces(
   }
 }
 
-function fillWaterComponentMask(context: CanvasRenderingContext2D, indices: Set<number>, world: NaturalWorldEntity): void {
+function fillWaterComponentMask(
+  context: CanvasRenderingContext2D,
+  indices: Set<number>,
+  world: NaturalWorldEntity,
+  salt: number,
+  amplitude: number,
+): void {
   if (indices.size === 0) return;
+  let firstIndex = Number.POSITIVE_INFINITY;
+  for (const index of indices) firstIndex = Math.min(firstIndex, index);
+  const visualSeed = hashText(world.id) ^ Math.imul(Number.isFinite(firstIndex) ? firstIndex : 0, 31) ^ salt;
   for (const contour of traceLakeContours(indices, world.width, world.height)) {
-    const smooth = smoothClosedPolygon(contour, 3);
+    const smooth = organicWaterContour(contour, visualSeed, amplitude, 3);
     fillCanvasPolygon(context, smooth, true);
   }
 }
@@ -1219,19 +1233,10 @@ function traceLakeContours(cellIndices: Set<number>, width: number, height: numb
   return contours;
 }
 
-function smoothClosedPolygon(points: TilePoint[], iterations: number): TilePoint[] {
-  let result = points;
-  for (let iteration = 0; iteration < iterations; iteration += 1) {
-    const smoothed: TilePoint[] = [];
-    for (let index = 0; index < result.length; index += 1) {
-      const current = result[index]!;
-      const next = result[(index + 1) % result.length]!;
-      smoothed.push({ x: current.x * 0.75 + next.x * 0.25, y: current.y * 0.75 + next.y * 0.25 });
-      smoothed.push({ x: current.x * 0.25 + next.x * 0.75, y: current.y * 0.25 + next.y * 0.75 });
-    }
-    result = smoothed;
-  }
-  return result;
+function organicContourSeed(world: NaturalWorldEntity, component: NaturalWorldCellState[], salt: number): number {
+  let firstIndex = Number.POSITIVE_INFINITY;
+  for (const cell of component) firstIndex = Math.min(firstIndex, cell.index);
+  return hashText(world.id) ^ Math.imul(Number.isFinite(firstIndex) ? firstIndex : 0, 31) ^ salt;
 }
 
 function drawRiverNetwork(
@@ -1609,16 +1614,26 @@ function drawRiverBeds(graphics: Phaser.GameObjects.Graphics, world: NaturalWorl
 }
 
 function drawDryLakeBeds(graphics: Phaser.GameObjects.Graphics, world: NaturalWorldEntity): void {
-  for (const cell of world.cells) {
-    if (cell.terrain.waterBody !== 'lake' || cell.water.surfaceMm > WATER_THRESHOLD_MM) continue;
-    const x = cell.x * CELL_SIZE;
-    const y = cell.y * CELL_SIZE;
-    const moisture = clamp(cell.water.soilMm / Math.max(1, cell.water.capacityMm), 0, 1);
+  const dryCells = world.cells.filter((cell) => cell.terrain.waterBody === 'lake' && cell.water.surfaceMm <= WATER_THRESHOLD_MM);
+  for (const component of connectedWaterComponents(dryCells, world)) {
+    const indices = new Set(component.map((cell) => cell.index));
+    const moisture = component.length === 0
+      ? 0
+      : component.reduce((sum, cell) => sum + clamp(cell.water.soilMm / Math.max(1, cell.water.capacityMm), 0, 1), 0) / component.length;
     const color = mixColor(0x766f5b, 0x526452, moisture);
-    graphics.fillStyle(color, 0.34);
-    graphics.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-    if (cell.index % 3 === 0) {
-      graphics.lineStyle(0.7, 0x4c4b3f, 0.26);
+    const seed = organicContourSeed(world, component, 1_307);
+    for (const contour of traceLakeContours(indices, world.width, world.height)) {
+      const smooth = organicWaterContour(contour, seed, 5, 3);
+      graphics.fillStyle(color, 0.34);
+      graphics.fillPoints(smooth as unknown as Phaser.Math.Vector2[], true);
+      graphics.lineStyle(0.8, 0x4c4b3f, 0.24);
+      graphics.strokePoints(smooth as unknown as Phaser.Math.Vector2[], true);
+    }
+    for (const cell of component) {
+      if (cell.index % 3 !== 0) continue;
+      const x = cell.x * CELL_SIZE;
+      const y = cell.y * CELL_SIZE;
+      graphics.lineStyle(0.7, 0x4c4b3f, 0.22);
       graphics.lineBetween(x + 5, y + CELL_SIZE * 0.62, x + CELL_SIZE - 5, y + CELL_SIZE * 0.62);
     }
   }
