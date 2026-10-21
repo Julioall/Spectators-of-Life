@@ -1,4 +1,4 @@
-import type {PlantSpeciesId,PlantStageId,PlantCohortState,TreeSpeciesId} from '../../modules/biosphere/flora/domain/plant-state';
+import type {PlantCohortState} from '../../modules/biosphere/flora/domain/plant-state';
 export type {PlantSpeciesId,PlantStageId,PlantCohortState,TreeSpeciesId} from '../../modules/biosphere/flora/domain/plant-state';
 import type { EntityState, NaturalScenarioVersion, WorldState } from '../types';
 
