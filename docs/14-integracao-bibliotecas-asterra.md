@@ -38,3 +38,8 @@
 
 ## Próximas extrações
 Mover render de árvores, copas, sombra, arbustos e Rocks para seus módulos específicos, e integrar os pacotes externos ASTERRA como técnicas gráficas. Não duplicar lógica biológica para satisfazer o aspecto visual.
+
+## Renderizadores de árvores e arbustos
+- `src/modules/biosphere/flora/rendering/trees/trees.ts`: seleção de estágio visual, atlas e sombra das árvores.
+- `src/modules/biosphere/flora/rendering/shrubs/shrubs.ts`: desenho das moitas a partir das coortes.
+- Nenhuma das duas bibliotecas avança a simulação ou modifica o ciclo de vida.
