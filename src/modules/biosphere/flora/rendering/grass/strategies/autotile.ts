@@ -1,7 +1,7 @@
 /** ASTERRA: pure visual projection of already-simulated grass cohorts.
  * The Web Worker remains the only source of ecological truth. */
 export type GrassSample = Readonly<{biomassGPerM2:number;wetland:boolean;blocked:boolean}>;
-export type GrassAutotile = {
+export type GrassTileFrame = {
   width:number;height:number;detail:number;states:Uint8Array;masks:Uint8Array;
 };
 export const GRASS_NEIGHBORS:readonly (readonly [number,number])[] = [
@@ -21,9 +21,9 @@ function smoothNoise(seed:number,x:number,y:number,step:number):number{
  return (a+(b-a)*u)*(1-v)+(c+(d-c)*u)*v;
 }
 /** Never creates coverage on a cell without living grass biomass. */
-export function generateGrassAutotile(
+export function generateGrassTileFrame(
  cells:readonly GrassSample[],width:number,height:number,seed:number,detail=4
-):GrassAutotile{
+):GrassTileFrame{
  if(!Number.isInteger(width)||width<=0||!Number.isInteger(height)||height<=0
    ||cells.length!==width*height||!Number.isInteger(detail)||detail<1||detail>8)
    throw new RangeError('Invalid ASTERRA grass grid');

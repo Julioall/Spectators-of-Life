@@ -1,58 +1,40 @@
-# Bibliotecas ASTERRA — integração ao Spectators-of-Life
+# Arquitetura ASTERRA — Flora como módulo biológico
 
-## Limites e módulos
-- Wind: fluxo procedural reutilizável; não conhece plantas.
-- Leaves: morfologia, ciclo foliar e cache; usado por Vegetation e Trees.
-- Vegetation: gramíneas, rasteiras e arbustos; usa Leaves e Wind.
-- Trees: árvores; usa Leaves.
-- Rocks: geologia visual; independente.
+## Regra principal
+**Módulos representam sistemas naturais. Renderers apresentam o estado, não são sistemas ecológicos.**
 
-**Leaves e Vegetation devem permanecer separados** para que
-o gerador foliar possa ser compartilhado por árvores e arbustos.
+- Flora/Domain: espécies, coortes, saúde, estágios.
+- Flora/Simulation: fotossíntese, crescimento, competição, água/nutrientes, reprodução, morte.
+- Flora/Contracts: estado ambiental, eventos e snapshots.
+- Flora/Rendering: estratégias de desenhar árvores, arbustos, folhas e **Grass**.
 
-## Implementado nesta branch
-A biblioteca interna src/lib/asterra/vegetation/grass-autotile.ts
-representa visualmente a cobertura com autotile 8-direções, usando
-biomassa já simulada pelo Core F2. A imagem pixel art é composta em
-src/render/asterra-grass-overlay.ts, separada da cena.
-A FoundationScene orquestra apenas o adaptador.
+**Grass** é o submódulo de renderização. **Autotile é uma estratégia interna de Grass**, não uma biblioteca nem submódulo biológico. O sistema poderá trocar autotile por malhas, sprites, GPU ou LOD sem alterar contratos ou simulação.
 
-O módulo substitui os três círculos representando gramíneas, mantendo
-a renderização de arbustos e árvores existente. Não adiciona outra
-simulação de germinação, dispersão, competição ou mortalidade.
+**Folhas (Leaves)** continua uma biblioteca de geometria independente, compartilhável entre árvores e arbustos. Envelhecimento, doença, danos e queda das folhas pertencem à biologia da Flora; a biblioteca foliar apenas representa seus efeitos visuais.
 
-## Pacote ASTERRA v0.2.0
-A distribuição completa continua disponível no ZIP separado
-ASTERRA_Bibliotecas_Modulares_JS_v0.2.0_Completo.zip.
-Para incorporar os cinco pacotes, copiar packages/ para
-vendor/asterra-libs/packages, registrar os workspaces npm, lockfile,
-licenças e revisar os exports antes de migrar imports. Não adicionar
-dependência de pasta inexistente.
+## Arquivos principais
+- `src/modules/biosphere/flora/domain/plant-state.ts`
+- `src/modules/biosphere/flora/domain/species.ts`
+- `src/modules/biosphere/flora/simulation/flora-system.ts`
+- `src/modules/biosphere/flora/contracts/flora-environment.ts`
+- `src/modules/biosphere/flora/contracts/flora-snapshot.ts`
+- `src/modules/biosphere/flora/contracts/flora-events.ts`
+- `src/modules/biosphere/flora/rendering/grass/grass.ts`
+- `src/modules/biosphere/flora/rendering/grass/strategies/autotile.ts`
+- `src/modules/biosphere/flora/rendering/grass/adapters/phaser/grass-renderer.ts`
 
-## Verificação
-Executar npm run check, testes determinísticos, comparação de saves,
-e benchmarks P50/P95 do Phaser. Confirmar que ativar/desativar a
-cobertura não altera o estado do Worker. O autotile é puro e não
-requer Phaser nos testes headless.
+## Outras bibliotecas
+- Atmosphere/Wind: vento ambiental; Flora/Rendering responde aos campos de vento
+- Geosphere/Rocks: rochas, minerais e solo; renderizador geológico separado
+- Flora/Rendering/Trees e Flora/Rendering/Shrubs: etapa de extração do código da FoundationScene
+- Biosphere/Fauna: módulo futuro; consulta contratos, sem importar classes gráficas da Flora
 
-## Limites desta primeira integração
-Os geradores completos Leaves, Trees, Wind e Rocks ainda não foram
-substituídos pelos pacotes v0.2.0 dentro da cena. Recomendação:
-migrá-los gradualmente, mantendo compatibilidade com os assets
-e perfis atuais, em mudanças menores que possam ser revertidas.
+## Regras
+1. Web Worker é fonte da verdade: render nunca avança tick e não grava biomassa.
+2. Vegetação nasce em coortes simuladas; o gramado visual é projeção, sem criar população fantasma.
+3. A biblioteca pode funcionar sem Phaser, Canvas, DOM e câmera.
+4. Eventos comunicam domínios; evitar dependências circulares.
+5. Como a aplicação é um experimento, não há camadas extras de compatibilidade com saves antigos.
 
-## Instalação opcional dos cinco pacotes completos
-
-Depois de descompactar o kit ASTERRA v0.2.0 na raiz do jogo
-(vendor/asterra-libs/packages/asterra-*), execute:
-
-```bash
-node scripts/install-asterra-libraries.mjs
-npm install
-npm run check
-```
-
-O instalador verifica todas as pastas antes de alterar package.json.
-Comite package-lock.json e valide licenças/proveniência. Somente os
-imports já validados devem migrar dos módulos do jogo para os pacotes
-externos. O Core continua independente de Canvas e Phaser.
+## Próximas extrações
+Mover render de árvores, copas, sombra, arbustos e Rocks para seus módulos específicos, e integrar os pacotes externos ASTERRA como técnicas gráficas. Não duplicar lógica biológica para satisfazer o aspecto visual.

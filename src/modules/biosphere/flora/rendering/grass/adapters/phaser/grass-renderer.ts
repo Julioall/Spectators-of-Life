@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import type {NaturalWorldEntity} from '../core/natural/types';
-import {generateGrassAutotile,grassHash,type GrassSample} from '../lib/asterra/vegetation/grass-autotile';
+import type {FloraSnapshot} from '../../../../contracts/flora-snapshot';
+import {Grass,type GrassSample} from '../../grass';
+import {grassHash} from '../../strategies/autotile';
 
 const TEXTURE_KEY='asterra-vegetation-autotile';
 const DETAIL=4,PIXELS_PER_TILE=3;
@@ -9,14 +10,14 @@ const WET_PALETTE=[0x425e39,0x567746,0x698b50,0x8aa56a] as const;
 const css=(color:number)=>'#'+color.toString(16).padStart(6,'0');
 
 /** Visual-only Phaser bridge. Never advances or mutates the ecological simulation. */
-export class AsterraGrassOverlay {
+export class GrassRenderer {
  private image:Phaser.GameObjects.Image|null=null;
  private texture:Phaser.Textures.CanvasTexture|null=null;
- private lastWorld:NaturalWorldEntity|null=null;
+ private lastWorld:FloraSnapshot|null=null;
  private lastBlocked:Set<number>|null=null;
  private lastSeed=-1;
  constructor(private readonly scene:Phaser.Scene,private readonly cellSize:number){}
- sync(world:NaturalWorldEntity,seed:number,blocked:Set<number>,visible:boolean):void{
+ sync(world:FloraSnapshot,seed:number,blocked:Set<number>,visible:boolean):void{
    if(!visible){this.image?.setVisible(false);return;}
    const w=world.width*DETAIL*PIXELS_PER_TILE,h=world.height*DETAIL*PIXELS_PER_TILE;
    if(this.texture===null||this.texture.width!==w||this.texture.height!==h){
@@ -36,7 +37,7 @@ export class AsterraGrassOverlay {
        blocked:blocked.has(cell.index)||cell.terrain.exposedRock||
          ((water==='lake'||water==='river')&&cell.water.surfaceMm>=8)};
    });
-   const grid=generateGrassAutotile(samples,world.width,world.height,seed,DETAIL);
+   const grid=Grass.renderData(samples,world.width,world.height,seed,DETAIL);
    const ctx=this.texture!.getContext();
    ctx.clearRect(0,0,w,h);ctx.imageSmoothingEnabled=false;
    for(let y=0;y<grid.height;y++)for(let x=0;x<grid.width;x++){

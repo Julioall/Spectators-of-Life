@@ -26,7 +26,7 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
-import { AsterraGrassOverlay } from './asterra-grass-overlay';
+import { GrassRenderer } from '../modules/biosphere/flora/rendering/grass/adapters/phaser/grass-renderer';
 import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from './water-mesh';
 
 const CELL_SIZE = 40;
@@ -70,7 +70,7 @@ export class FoundationScene extends Phaser.Scene {
   private waterSurfaceImage: Phaser.GameObjects.Image | null = null;
   private waterMotionGraphics: Phaser.GameObjects.Graphics | null = null;
   private plantGraphics: Phaser.GameObjects.Graphics | null = null;
-  private grassOverlay: AsterraGrassOverlay | null = null;
+  private grassRenderer: GrassRenderer | null = null;
   private treeShadowGraphics: Phaser.GameObjects.Graphics | null = null;
   private reliefGraphics: Phaser.GameObjects.Graphics | null = null;
   private geologyGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -112,7 +112,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterGraphics = this.add.graphics().setDepth(2.25);
     this.waterMotionGraphics = this.add.graphics().setDepth(2.32);
     this.plantGraphics = this.add.graphics().setDepth(2);
-    this.grassOverlay = new AsterraGrassOverlay(this, CELL_SIZE);
+    this.grassRenderer = new GrassRenderer(this, CELL_SIZE);
     this.treeShadowGraphics = this.add.graphics().setDepth(2.5);
     this.reliefGraphics = this.add.graphics().setDepth(0.55);
     this.geologyGraphics = this.add.graphics().setDepth(0.65);
@@ -499,7 +499,7 @@ export class FoundationScene extends Phaser.Scene {
     graphics.clear();
     const hasGeomorphology = naturalScenarioVersionAtLeast(world.scenarioVersion, '1.6.0');
     this.treeShadowGraphics?.clear();
-    this.grassOverlay?.sync(world, hashText(this.mapKey ?? 'natural-world'), this.rockTreeBlockedCells, this.layers.vegetation);
+    this.grassRenderer?.sync(world, hashText(this.mapKey ?? 'natural-world'), this.rockTreeBlockedCells, this.layers.vegetation);
     for (const cell of world.cells) {
       const waterBody = cell.terrain.waterBody ?? 'none';
       const rockBlocksCell = this.rockTreeBlockedCells.has(cell.index);
@@ -692,7 +692,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterMotionGraphics?.clear();
     this.waterGraphics?.clear();
     this.plantGraphics?.clear();
-    this.grassOverlay?.dispose();
+    this.grassRenderer?.dispose();
     this.treeShadowGraphics?.clear();
     this.geologyGraphics?.clear();
     this.selectionGraphics?.clear();
