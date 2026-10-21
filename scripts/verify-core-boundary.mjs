@@ -14,7 +14,12 @@ function collect(directory) {
   }
 }
 
-collect(coreRoot);
+for (const directory of [
+  coreRoot,
+  join(repositoryRoot, 'src', 'modules', 'biosphere', 'flora', 'domain'),
+  join(repositoryRoot, 'src', 'modules', 'biosphere', 'flora', 'simulation'),
+  join(repositoryRoot, 'src', 'modules', 'biosphere', 'flora', 'contracts'),
+]) collect(directory);
 const forbidden = [
   { pattern: /\bMath\.random\s*\(/, name: 'Math.random' },
   { pattern: /\bDate\.now\s*\(/, name: 'Date.now' },
@@ -36,5 +41,5 @@ if (failures.length > 0) {
   console.error(`Violação de fronteira do core:\n${failures.join('\n')}`);
   process.exitCode = 1;
 } else {
-  console.log(`Fronteira headless aprovada: ${files.length} arquivos do core sem APIs de browser, relógio ou render.`);
+  console.log(`Fronteira headless Core + Flora aprovada: ${files.length} arquivos do core sem APIs de browser, relógio ou render.`);
 }

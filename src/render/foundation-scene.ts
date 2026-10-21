@@ -1,7 +1,5 @@
 import Phaser from 'phaser';
-import treeAtlasUrl from '../../data/assets/tree/Spritesheets/arvores_atlas_128.png?url';
-import type { NaturalWorldCellState, NaturalWorldEntity, PlantCohortState, PlantSpeciesId, TreeSpeciesId } from '../core/natural/types';
-import { NATURAL_SCENARIO } from '../core/natural/parameters';
+import type { NaturalWorldCellState, NaturalWorldEntity, PlantSpeciesId, TreeSpeciesId } from '../core/natural/types';
 import { naturalScenarioVersionAtLeast } from '../core/natural/versioning';
 import { drawProceduralRock, generateProceduralRocks, ROCK_NATIVE_CELL_SIZE, treeBlockingCellsForRocks } from './procedural-rocks';
 import {
@@ -26,6 +24,8 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
+import { GrassRenderer, Trees, Shrubs, type TreeSprites } from '../modules/biosphere/flora/rendering';
+import { FLORA_TREE_SPECIES, isFloraTree } from '../modules/biosphere/flora';
 import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from './water-mesh';
 
 const CELL_SIZE = 40;
@@ -35,7 +35,6 @@ const TERRAIN_TEXTURE_KEY = 'natural-terrain-map';
 const WATER_SURFACE_TEXTURE_KEY = 'natural-water-surface-shading';
 const WATER_SURFACE_PIXELS_PER_CELL = 10;
 const WATER_SURFACE_SHADING_ALPHA = 0.56;
-const TREE_ATLAS_KEY = 'natural-tree-atlas';
 const WATER_THRESHOLD_MM = 10;
 const WATER_DEPTH_STOPS = [
   { depth: 0, color: 0x748d84 },
@@ -50,10 +49,8 @@ const WATER_DEPTH_STOPS = [
 const RIVER_NEIGHBORS = [
   [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1],
 ] as const;
-const TREE_MATURE_WIDTH_CELLS = 4.4;
 const TERRAIN_LIGHTING_ELEVATION_EPSILON_M = 0.25;
 type MapLayers = { relief: boolean; water: boolean; vegetation: boolean; minerals: boolean; geology: boolean };
-type TreeSprites = Record<TreeSpeciesId, Phaser.GameObjects.Image | null>;
 type TilePoint = { x: number; y: number };
 export type FoundationPerformanceHooks = {
   onDynamicLayersMs?: (elapsedMs: number) => void;
@@ -69,6 +66,7 @@ export class FoundationScene extends Phaser.Scene {
   private waterSurfaceImage: Phaser.GameObjects.Image | null = null;
   private waterMotionGraphics: Phaser.GameObjects.Graphics | null = null;
   private plantGraphics: Phaser.GameObjects.Graphics | null = null;
+  private grassRenderer: GrassRenderer | null = null;
   private treeShadowGraphics: Phaser.GameObjects.Graphics | null = null;
   private reliefGraphics: Phaser.GameObjects.Graphics | null = null;
   private geologyGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -101,7 +99,7 @@ export class FoundationScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.spritesheet(TREE_ATLAS_KEY, treeAtlasUrl, { frameWidth: 128, frameHeight: 128 });
+    Trees.preload(this);
   }
 
   create(): void {
@@ -110,6 +108,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterGraphics = this.add.graphics().setDepth(2.25);
     this.waterMotionGraphics = this.add.graphics().setDepth(2.32);
     this.plantGraphics = this.add.graphics().setDepth(2);
+    this.grassRenderer = new GrassRenderer(this, CELL_SIZE);
     this.treeShadowGraphics = this.add.graphics().setDepth(2.5);
     this.reliefGraphics = this.add.graphics().setDepth(0.55);
     this.geologyGraphics = this.add.graphics().setDepth(0.65);
@@ -230,7 +229,7 @@ export class FoundationScene extends Phaser.Scene {
     this.terrainTexture = texture;
     this.terrainImage = this.add.image(0, 0, TERRAIN_TEXTURE_KEY).setOrigin(0, 0).setDepth(0);
     this.renderTerrainTexture();
-    this.treeSprites = world.cells.map(emptyTreeSprites);
+    this.treeSprites = world.cells.map(Trees.emptySprites);
     const mapWidth = world.width * CELL_SIZE;
     const mapHeight = world.height * CELL_SIZE;
     this.cameras.main.setBounds(-mapWidth * 0.45, -mapHeight * 0.45, mapWidth * 1.9, mapHeight * 1.9);
@@ -496,6 +495,7 @@ export class FoundationScene extends Phaser.Scene {
     graphics.clear();
     const hasGeomorphology = naturalScenarioVersionAtLeast(world.scenarioVersion, '1.6.0');
     this.treeShadowGraphics?.clear();
+    this.grassRenderer?.sync(world, hashText(this.mapKey ?? 'natural-world'), this.rockTreeBlockedCells, this.layers.vegetation);
     for (const cell of world.cells) {
       const waterBody = cell.terrain.waterBody ?? 'none';
       const rockBlocksCell = this.rockTreeBlockedCells.has(cell.index);
@@ -503,85 +503,16 @@ export class FoundationScene extends Phaser.Scene {
       const groundcoverAllowed = !rockBlocksCell && (treesAllowed || (hasGeomorphology && cell.water.surfaceMm < 8));
       const sprites = this.treeSprites[cell.index];
       const trees = new Map<TreeSpeciesId, NaturalWorldCellState['plants'][number]>();
-      for (const plant of cell.plants) if (isTreeSpecies(plant.speciesId)) trees.set(plant.speciesId, plant);
-      for (const speciesId of TREE_SPECIES) {
+      for (const plant of cell.plants) if (isFloraTree(plant.speciesId)) trees.set(plant.speciesId, plant);
+      for (const speciesId of FLORA_TREE_SPECIES) {
         const plant = trees.get(speciesId);
-        this.updateTreeSprite(sprites, speciesId, plant, cell, this.layers.vegetation && treesAllowed);
+        Trees.update(this, world, sprites, speciesId, plant, cell, this.layers.vegetation && treesAllowed, CELL_SIZE);
       }
       if (!this.layers.vegetation || !groundcoverAllowed) continue;
-      for (const speciesId of TREE_SPECIES) this.drawTreeShadow(trees.get(speciesId), cell, speciesId);
-      const grass = cohort(cell, 'grass');
+      for (const speciesId of FLORA_TREE_SPECIES) Trees.shadow(this.treeShadowGraphics, trees.get(speciesId), cell, speciesId, CELL_SIZE);
       const shrub = cohort(cell, 'shrub');
-      const cx = (cell.x + 0.5) * CELL_SIZE;
-      const cy = (cell.y + 0.5) * CELL_SIZE;
-      if (grass !== undefined && grass.biomassGPerM2 > 1 && cell.water.surfaceMm < 5) {
-        const grassAmount = clamp(grass.biomassGPerM2 / 240, 0.2, 1);
-        const nudge = (cell.index * 17 % 9) - 4;
-        graphics.fillStyle(0xc1cf78, 0.34 + grassAmount * 0.32);
-        graphics.fillCircle(cx - 8 + nudge * 0.35, cy + 5, 1.4 + grassAmount);
-        graphics.fillCircle(cx + 7 - nudge * 0.25, cy + 8, 1.3 + grassAmount * 0.8);
-        graphics.fillStyle(0x657c42, 0.56);
-        graphics.fillCircle(cx + nudge * 0.3, cy + 10, 1.2 + grassAmount * 0.5);
-      }
-      if (shrub !== undefined && shrub.biomassGPerM2 > 2 && cell.water.surfaceMm < 7) {
-        const radius = clamp(4 + Math.sqrt(shrub.biomassGPerM2) * 0.22, 4, 10);
-        graphics.fillStyle(0x526f38, 0.88);
-        graphics.fillCircle(cx + 7, cy + 5, radius);
-        graphics.fillStyle(0x819453, 0.85);
-        graphics.fillCircle(cx + 5, cy + 2, radius * 0.62);
-        graphics.fillStyle(0xc2d275, 0.52);
-        graphics.fillCircle(cx + 5, cy + 1, radius * 0.24);
-      }
+      Shrubs.draw(graphics, cell, shrub, CELL_SIZE);
     }
-  }
-
-  private updateTreeSprite(sprites: TreeSprites | undefined, speciesId: TreeSpeciesId, plant: NaturalWorldCellState['plants'][number] | undefined, cell: NaturalWorldCellState, visible: boolean): void {
-    if (sprites === undefined) return;
-    const world = this.naturalWorld;
-    if (plant === undefined || !visible || plant.biomassGPerM2 < 0.5 || world === null) {
-      sprites[speciesId]?.setVisible(false);
-      return;
-    }
-    let sprite = sprites[speciesId];
-    if (sprite === null) {
-      sprite = this.add.image((cell.x + 0.5) * CELL_SIZE, (cell.y + 1) * CELL_SIZE, TREE_ATLAS_KEY);
-      sprite.setOrigin(0.5, 123 / 128);
-      sprites[speciesId] = sprite;
-    }
-    const profile = NATURAL_SCENARIO.plants.find((candidate) => candidate.id === speciesId)!;
-    const growthFrame = clamp(Math.ceil(plant.ageDays / profile.maturityDays * 8), 1, 8);
-    const stressed = plantStress(plant) < 0.12;
-    const deadStanding = plant.stage === 'senescent'
-      && plant.biomassGPerM2 < profile.initialBiomassGPerM2 * 0.12
-      && stressed;
-    const row = TREE_SPECIES.indexOf(speciesId);
-    const frame = row * 12 + (deadStanding || plant.stage === 'senescent' ? 8 : growthFrame - 1);
-    // Atlas growth frames already encode the tree's changing size; keep one scale
-    // so saplings stay small and mature canopies occupy several map cells.
-    const scale = CELL_SIZE * TREE_MATURE_WIDTH_CELLS / 128;
-    const depth = worldObjectDepth(cell.y + 1, world.height);
-    sprite.setPosition((cell.x + 0.5) * CELL_SIZE, (cell.y + 1) * CELL_SIZE)
-      .setDepth(depth)
-      .setFrame(frame)
-      .setScale(scale)
-      .setVisible(true)
-      .setAlpha(deadStanding ? 0.92 : clamp(0.74 + Math.sqrt(plant.biomassGPerM2 / profile.maximumBiomassGPerM2) * 0.26, 0.78, 1));
-  }
-
-  private drawTreeShadow(plant: NaturalWorldCellState['plants'][number] | undefined, cell: NaturalWorldCellState, speciesId: TreeSpeciesId): void {
-    const graphics = this.treeShadowGraphics;
-    if (!this.layers.vegetation || graphics === null || plant === undefined || plant.biomassGPerM2 < 0.5) return;
-    const profile = NATURAL_SCENARIO.plants.find((candidate) => candidate.id === speciesId)!;
-    const stage = clamp(Math.ceil(plant.ageDays / profile.maturityDays * 8), 1, 8);
-    const stressed = plantStress(plant) < 0.12;
-    const deadStanding = plant.stage === 'senescent'
-      && plant.biomassGPerM2 < profile.initialBiomassGPerM2 * 0.12
-      && stressed;
-    const width = CELL_SIZE * (deadStanding ? 0.7 : 0.42 + (stage / 8) * (TREE_MATURE_WIDTH_CELLS - 0.42));
-    const x = (cell.x + 0.5) * CELL_SIZE;
-    const y = (cell.y + 1) * CELL_SIZE - 4;
-    graphics.fillStyle(0x18251b, deadStanding ? 0.07 : 0.08 + stage * 0.008);
-    graphics.fillEllipse(x, y, width, width * 0.24);
   }
 
   private drawMinerals(): void {
@@ -697,6 +628,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterMotionGraphics?.clear();
     this.waterGraphics?.clear();
     this.plantGraphics?.clear();
+    this.grassRenderer?.dispose();
     this.treeShadowGraphics?.clear();
     this.geologyGraphics?.clear();
     this.selectionGraphics?.clear();
@@ -723,15 +655,6 @@ export class FoundationScene extends Phaser.Scene {
     this.mineralSpritesWorldKey = null;
     this.rockTreeBlockedCells.clear();
   }
-}
-
-const TREE_SPECIES: TreeSpeciesId[] = ['oak', 'pine', 'birch', 'autumnal', 'willow'];
-function emptyTreeSprites(): TreeSprites {
-  return { oak: null, pine: null, birch: null, autumnal: null, willow: null };
-}
-
-function isTreeSpecies(speciesId: PlantSpeciesId): speciesId is TreeSpeciesId {
-  return TREE_SPECIES.includes(speciesId as TreeSpeciesId);
 }
 
 function drawTerrainTexture(
@@ -1700,12 +1623,6 @@ function hashText(value: string): number {
 
 function cohort(cell: NaturalWorldCellState, speciesId: PlantSpeciesId): NaturalWorldCellState['plants'][number] | undefined {
   return cell.plants.find((plant) => plant.speciesId === speciesId);
-}
-
-function plantStress(plant: PlantCohortState): number {
-  if (plant.stress !== undefined) return plant.stress;
-  const factors = plant.limitingFactors;
-  return factors === undefined ? 1 : Math.min(factors.water, factors.nitrogen, factors.temperature, factors.light);
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

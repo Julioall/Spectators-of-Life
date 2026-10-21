@@ -1,11 +1,12 @@
-import type { SimulationEvent, TickSystem, TickSystemContext, WorldState } from '../types';
-import { NATURAL_SCENARIO } from './parameters';
-import { naturalScenarioVersionAtLeast } from './versioning';
-import { updatePlantMatterTotals, updatePlantWaterTotal, updateVegetationMetrics } from './environment-systems';
-import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type PlantCohortState, type PlantSpeciesId, type TreeSpeciesId } from './types';
+import {FLORA_TREE_SPECIES} from '../domain/species';
+import type { SimulationEvent, TickSystem, TickSystemContext, WorldState } from '../../../../core/types';
+import { NATURAL_SCENARIO } from '../../../../core/natural/parameters';
+import { naturalScenarioVersionAtLeast } from '../../../../core/natural/versioning';
+import { updatePlantMatterTotals, updatePlantWaterTotal, updateVegetationMetrics } from '../../../../core/natural/environment-systems';
+import { getNaturalWorld, type NaturalWorldCellState, type NaturalWorldEntity, type PlantCohortState, type PlantSpeciesId, type TreeSpeciesId } from '../../../../core/natural/types';
 
 const PLANT_PROFILES = new Map(NATURAL_SCENARIO.plants.map((profile) => [profile.id, profile]));
-const TREE_SPECIES = new Set<TreeSpeciesId>(['oak', 'pine', 'birch', 'autumnal', 'willow']);
+const TREE_SPECIES = new Set<TreeSpeciesId>(FLORA_TREE_SPECIES);
 const SHADE_NEIGHBORS = Array.from({ length: 7 * 7 }, (_, index) => {
   const dx = index % 7 - 3;
   const dy = Math.floor(index / 7) - 3;
@@ -13,7 +14,7 @@ const SHADE_NEIGHBORS = Array.from({ length: 7 * 7 }, (_, index) => {
   return { dx, dy, weight: distance === 0 || distance > 3.6 ? 0 : 0.62 * Math.pow(1 - distance / 4.2, 1.6) };
 }).filter((neighbor) => neighbor.weight > 0);
 
-export const VEGETATION_SYSTEM: TickSystem = {
+export const FLORA_SYSTEM: TickSystem = {
   id: 'vegetation:plant-dynamics',
   order: 40,
   periodTicks: NATURAL_SCENARIO.world.ticksPerDay,

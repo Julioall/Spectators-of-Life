@@ -4,10 +4,10 @@ import type { TickSystem, WorldState } from '../types';
 import { generateNaturalWorld } from './generation';
 import { ENVIRONMENT_SYSTEMS, updateMineralMetrics, updateVegetationMetrics } from './environment-systems';
 import { NATURAL_SCENARIO } from './parameters';
-import { VEGETATION_SYSTEM } from './vegetation-system';
+import { FLORA_SYSTEM } from '../../modules/biosphere/flora';
 import { toNaturalWorldEntity } from './types';
 
-export const NATURAL_SYSTEMS: readonly TickSystem[] = [...ENVIRONMENT_SYSTEMS, VEGETATION_SYSTEM];
+export const NATURAL_SYSTEMS: readonly TickSystem[] = [...ENVIRONMENT_SYSTEMS, FLORA_SYSTEM];
 
 export function createNaturalWorld(seed: string, systems: readonly TickSystem[] = NATURAL_SYSTEMS): WorldState {
   const world = createEmptyWorld({

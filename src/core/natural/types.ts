@@ -1,35 +1,14 @@
+import type {PlantCohortState} from '../../modules/biosphere/flora/domain/plant-state';
+export type {PlantSpeciesId,PlantStageId,PlantCohortState,TreeSpeciesId} from '../../modules/biosphere/flora/domain/plant-state';
 import type { EntityState, NaturalScenarioVersion, WorldState } from '../types';
 
 export type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter';
 export type SoilTypeId = 'sand' | 'loam' | 'clay' | 'rock';
 export type BedrockId = 'granite' | 'basalt' | 'sedimentary';
 export type HabitatId = 'upland' | 'woodland' | 'meadow' | 'wetland' | 'dryland' | 'desert';
-export type TreeSpeciesId = 'oak' | 'pine' | 'birch' | 'autumnal' | 'willow';
-export type PlantSpeciesId = 'grass' | 'shrub' | TreeSpeciesId;
-export type PlantStageId = 'seedling' | 'sapling' | 'juvenile' | 'mature' | 'senescent';
 export type MineralId = 'stone' | 'copper' | 'iron' | 'silver' | 'gold';
 export type MineralSizeClass = 'trace' | 'small' | 'medium' | 'large';
 export type WaterBodyId = 'none' | 'lake' | 'river';
-
-export type PlantCohortState = {
-  speciesId: PlantSpeciesId;
-  stage: PlantStageId;
-  densityPerM2: number;
-  biomassGPerM2: number;
-  nitrogenGPerM2: number;
-  seedBankMatterGPerM2: number;
-  seedBankNitrogenGPerM2: number;
-  ageDays: number;
-  /** Menor fator de crescimento do último dia, usado apenas pela renderização. */
-  stress?: number;
-  /** Forma de save legada, aceita durante a migração para o campo compacto `stress`. */
-  limitingFactors?: {
-    water: number;
-    nitrogen: number;
-    temperature: number;
-    light: number;
-  };
-};
 
 export type MineralDepositState = {
   resourceId: MineralId;
