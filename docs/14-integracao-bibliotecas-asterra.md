@@ -40,3 +40,19 @@ Os geradores completos Leaves, Trees, Wind e Rocks ainda não foram
 substituídos pelos pacotes v0.2.0 dentro da cena. Recomendação:
 migrá-los gradualmente, mantendo compatibilidade com os assets
 e perfis atuais, em mudanças menores que possam ser revertidas.
+
+## Instalação opcional dos cinco pacotes completos
+
+Depois de descompactar o kit ASTERRA v0.2.0 na raiz do jogo
+(vendor/asterra-libs/packages/asterra-*), execute:
+
+```bash
+node scripts/install-asterra-libraries.mjs
+npm install
+npm run check
+```
+
+O instalador verifica todas as pastas antes de alterar package.json.
+Comite package-lock.json e valide licenças/proveniência. Somente os
+imports já validados devem migrar dos módulos do jogo para os pacotes
+externos. O Core continua independente de Canvas e Phaser.
