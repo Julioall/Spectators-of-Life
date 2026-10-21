@@ -24,10 +24,8 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
-import { GrassRenderer } from '../modules/biosphere/flora/rendering/grass/adapters/phaser/grass-renderer';
-import { Trees, type TreeSprites } from '../modules/biosphere/flora/rendering/trees/trees';
-import { Shrubs } from '../modules/biosphere/flora/rendering/shrubs/shrubs';
-import { FLORA_TREE_SPECIES, isFloraTree } from '../modules/biosphere/flora/domain/species';
+import { GrassRenderer, Trees, Shrubs, type TreeSprites } from '../modules/biosphere/flora/rendering';
+import { FLORA_TREE_SPECIES, isFloraTree } from '../modules/biosphere/flora';
 import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from './water-mesh';
 
 const CELL_SIZE = 40;
