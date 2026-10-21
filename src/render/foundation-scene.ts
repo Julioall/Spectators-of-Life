@@ -26,6 +26,7 @@ import {
   type TerrainLightingSettings,
 } from './terrain-lighting';
 import { worldObjectDepth } from './z-order';
+import { AsterraGrassOverlay } from './asterra-grass-overlay';
 import { buildWaterRibbon, organicWaterContour, smoothOpenWaterPath } from './water-mesh';
 
 const CELL_SIZE = 40;
@@ -69,6 +70,7 @@ export class FoundationScene extends Phaser.Scene {
   private waterSurfaceImage: Phaser.GameObjects.Image | null = null;
   private waterMotionGraphics: Phaser.GameObjects.Graphics | null = null;
   private plantGraphics: Phaser.GameObjects.Graphics | null = null;
+  private grassOverlay: AsterraGrassOverlay | null = null;
   private treeShadowGraphics: Phaser.GameObjects.Graphics | null = null;
   private reliefGraphics: Phaser.GameObjects.Graphics | null = null;
   private geologyGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -110,6 +112,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterGraphics = this.add.graphics().setDepth(2.25);
     this.waterMotionGraphics = this.add.graphics().setDepth(2.32);
     this.plantGraphics = this.add.graphics().setDepth(2);
+    this.grassOverlay = new AsterraGrassOverlay(this, CELL_SIZE);
     this.treeShadowGraphics = this.add.graphics().setDepth(2.5);
     this.reliefGraphics = this.add.graphics().setDepth(0.55);
     this.geologyGraphics = this.add.graphics().setDepth(0.65);
@@ -496,6 +499,7 @@ export class FoundationScene extends Phaser.Scene {
     graphics.clear();
     const hasGeomorphology = naturalScenarioVersionAtLeast(world.scenarioVersion, '1.6.0');
     this.treeShadowGraphics?.clear();
+    this.grassOverlay?.sync(world, hashText(this.mapKey ?? 'natural-world'), this.rockTreeBlockedCells, this.layers.vegetation);
     for (const cell of world.cells) {
       const waterBody = cell.terrain.waterBody ?? 'none';
       const rockBlocksCell = this.rockTreeBlockedCells.has(cell.index);
@@ -510,19 +514,10 @@ export class FoundationScene extends Phaser.Scene {
       }
       if (!this.layers.vegetation || !groundcoverAllowed) continue;
       for (const speciesId of TREE_SPECIES) this.drawTreeShadow(trees.get(speciesId), cell, speciesId);
-      const grass = cohort(cell, 'grass');
       const shrub = cohort(cell, 'shrub');
       const cx = (cell.x + 0.5) * CELL_SIZE;
       const cy = (cell.y + 0.5) * CELL_SIZE;
-      if (grass !== undefined && grass.biomassGPerM2 > 1 && cell.water.surfaceMm < 5) {
-        const grassAmount = clamp(grass.biomassGPerM2 / 240, 0.2, 1);
-        const nudge = (cell.index * 17 % 9) - 4;
-        graphics.fillStyle(0xc1cf78, 0.34 + grassAmount * 0.32);
-        graphics.fillCircle(cx - 8 + nudge * 0.35, cy + 5, 1.4 + grassAmount);
-        graphics.fillCircle(cx + 7 - nudge * 0.25, cy + 8, 1.3 + grassAmount * 0.8);
-        graphics.fillStyle(0x657c42, 0.56);
-        graphics.fillCircle(cx + nudge * 0.3, cy + 10, 1.2 + grassAmount * 0.5);
-      }
+      // Grass is visualised by the ASTERRA autotile overlay, from the existing cohorts.
       if (shrub !== undefined && shrub.biomassGPerM2 > 2 && cell.water.surfaceMm < 7) {
         const radius = clamp(4 + Math.sqrt(shrub.biomassGPerM2) * 0.22, 4, 10);
         graphics.fillStyle(0x526f38, 0.88);
@@ -697,6 +692,7 @@ export class FoundationScene extends Phaser.Scene {
     this.waterMotionGraphics?.clear();
     this.waterGraphics?.clear();
     this.plantGraphics?.clear();
+    this.grassOverlay?.dispose();
     this.treeShadowGraphics?.clear();
     this.geologyGraphics?.clear();
     this.selectionGraphics?.clear();
