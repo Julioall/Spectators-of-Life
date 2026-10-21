@@ -1,0 +1,3 @@
+export interface RockEngineOptions { canvasFactory?: (width: number, height: number) => HTMLCanvasElement | OffscreenCanvas; }
+export interface RockEngine { version: string; generate(options?: Record<string, unknown>): any; createDeposit(options?: Record<string, unknown>): any; renderSprite(deposit: any, options?: Record<string, unknown>): HTMLCanvasElement | OffscreenCanvas; renderWorld(world: any, options?: Record<string, unknown>): HTMLCanvasElement | OffscreenCanvas; makeTileAtlas(options?: Record<string, unknown>): any; normalize(options?: Record<string, unknown>): any; depositSize(deposit: any): { w: number; h: number }; catalogs: Record<string, string[]>; [key: string]: any; }
+export declare function createRockEngine(options?: RockEngineOptions): RockEngine;

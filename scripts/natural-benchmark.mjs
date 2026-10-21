@@ -41,7 +41,24 @@ if (childIndex === -1) {
       server.ssrLoadModule('/src/core/natural/scenario.ts'),
       server.ssrLoadModule('/src/core/constants.ts'),
     ]);
-    const engine = new WorkerEngine({ snapshotOwnership: 'post-message' });
+    let collectSystemTimings = false;
+    const systemSamples = new Map();
+    const profiledSystems = NATURAL_SYSTEMS.map((system) => ({
+      ...system,
+      run: (...args) => {
+        const startedAt = performance.now();
+        try {
+          return system.run(...args);
+        } finally {
+          if (collectSystemTimings) {
+            const samples = systemSamples.get(system.id) ?? [];
+            samples.push(performance.now() - startedAt);
+            systemSamples.set(system.id, samples);
+          }
+        }
+      },
+    }));
+    const engine = new WorkerEngine({ systems: profiledSystems, snapshotOwnership: 'post-message' });
     let requestId = 0;
     const send = (body) => engine.handle({ protocolVersion: 1, requestId: ++requestId, ...body });
     const ready = send({
@@ -61,7 +78,9 @@ if (childIndex === -1) {
     let finalSnapshot;
     for (let day = 0; day < warmupDays + measuredDays; day += 1) {
       const stepStartedAt = performance.now();
+      collectSystemTimings = day >= warmupDays;
       const advanced = send({ type: 'STEP', worldId: ready.worldId, ticks: ticksPerDay });
+      collectSystemTimings = false;
       const stepRoundTripMs = performance.now() - stepStartedAt;
       if (advanced.type !== 'ADVANCED') throw new Error(`STEP natural falhou no dia ${day + 1}: ${JSON.stringify(advanced)}.`);
       if (day >= warmupDays) {
@@ -151,7 +170,7 @@ if (childIndex === -1) {
         v8: process.versions.v8,
         arch: process.arch,
       },
-      methodology: `Seed fixa ${seed}; ${warmupDays} dias de aquecimento e ${measuredDays} dias medidos, cada dia com STEP(${ticksPerDay}). Simulação vem de diagnostics.durationMs dentro do WorkerEngine; snapshot inclui handler mais structuredClone para representar a cópia de postMessage. Render Phaser é medido no painel do navegador, com último tempo e P50/P95 em janela móvel de até 120 frames.`,
+      methodology: `Seed fixa ${seed}; ${warmupDays} dias de aquecimento e ${measuredDays} dias medidos, cada dia com STEP(${ticksPerDay}). Simulação vem de diagnostics.durationMs dentro do WorkerEngine; systemsMsPerDay mede cada sistema natural dentro do STEP sem alterar estado ou ordem. Snapshot inclui handler mais structuredClone para representar a cópia de postMessage. Render Phaser é medido no painel do navegador, com último tempo e P50/P95 em janela móvel de até 120 frames.`,
       scenario: {
         id: constants.NATURAL_SCENARIO_ID,
         version: constants.NATURAL_SCENARIO_VERSION,
@@ -165,6 +184,9 @@ if (childIndex === -1) {
       },
       measurements: {
         simulationMsPerDay: summarize(simulationSamples),
+        systemsMsPerDay: Object.fromEntries([...systemSamples]
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([systemId, samples]) => [systemId, summarize(samples)])),
         stepRoundTripMsPerDay: summarize(stepRoundTripSamples),
         snapshotHandlerMs: summarize(snapshotHandlerSamples),
         snapshotTransferCloneMs: summarize(snapshotTransferSamples),

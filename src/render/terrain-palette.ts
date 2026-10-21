@@ -1,7 +1,7 @@
 import type { NaturalWorldCellState, NaturalWorldEntity } from '../core/natural/types';
 import { buildLandformElevationField } from '../core/natural/topography';
 import { sampleCellFieldBilinear, smoothCellField } from './terrain-lighting';
-import type { AsterraTerrain } from './asterra/engine.js';
+import type { RockTerrain } from '../modules/geosphere/rendering/rocks/legacy-engine.js';
 
 export type TerrainSurface = 'loam' | 'sand' | 'clay' | 'rock' | 'upland' | 'highland' | 'wetland' | 'woodland' | 'meadow' | 'dryland' | 'desert';
 
@@ -109,8 +109,8 @@ export function terrainSurfaceField(world: NaturalWorldEntity, minimum: number, 
   return world.cells.map((cell) => terrainSurface(cell, minimum, maximum, landforms[cell.index] as number));
 }
 
-/** Maps the project's displayed surface to the closest original ASTERRA palette family. */
-export function asterraTerrainForSurface(surface: TerrainSurface, bedrock: NaturalWorldCellState['terrain']['bedrock']): AsterraTerrain {
+/** Maps the project's displayed surface to the closest original rock-palette family. */
+export function rockTerrainForSurface(surface: TerrainSurface, bedrock: NaturalWorldCellState['terrain']['bedrock']): RockTerrain {
   if (bedrock === 'basalt') return 'volcanic';
   if (surface === 'rock' || surface === 'highland' || surface === 'upland') return 'mountain';
   if (surface === 'wetland') return 'coast';

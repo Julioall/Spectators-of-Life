@@ -1,14 +1,14 @@
-import type { MineralDepositState, MineralId, NaturalWorldCellState, NaturalWorldEntity } from '../core/natural/types';
+import type { MineralDepositState, MineralId, NaturalWorldCellState, NaturalWorldEntity } from '../../../../core/natural/types';
 import {
   TILE, biomeProfiles, chooseRarity, drawOutcrop, footprintAt, hash, outcropSize,
   rarityProfiles, rng, sizeProfile, weightedChoice,
-  type AsterraBiome, type AsterraDeposit, type AsterraFamily, type AsterraGeology, type AsterraMaterial, type AsterraSettings,
-  type AsterraSizeProfile, type AsterraTerrain,
-} from './asterra/engine.js';
-import { createAsterraSettings } from './asterra/settings';
-import { asterraTerrainForSurface, terrainContext, terrainSurface, TERRAIN_SURFACE_COLORS, type TerrainContext as SurfaceTerrainContext } from './terrain-palette';
+  type RockBiome, type RockDeposit, type RockFamily, type RockGeology, type RockMaterial, type RockSettings,
+  type RockSizeProfile, type RockTerrain,
+} from './legacy-engine.js';
+import { createRockSettings } from './legacy-settings';
+import { rockTerrainForSurface, terrainContext, terrainSurface, TERRAIN_SURFACE_COLORS, type TerrainContext as SurfaceTerrainContext } from '../../../../render/terrain-palette';
 
-export { TILE as ROCK_NATIVE_CELL_SIZE } from './asterra/engine.js';
+export { TILE as ROCK_NATIVE_CELL_SIZE } from './legacy-engine.js';
 export type RockFootprint = { x: number; y: number; width: number; height: number };
 export type ProceduralRock = {
   resourceId: MineralId;
@@ -16,8 +16,8 @@ export type ProceduralRock = {
   xCell: number;
   yCell: number;
   footprint: RockFootprint;
-  deposit: AsterraDeposit;
-  settings: AsterraSettings;
+  deposit: RockDeposit;
+  settings: RockSettings;
   /** Escala visual da formação original; a simulação continua usando a pegada nativa. */
   visualScale: number;
   raster: { width: number; height: number; anchorX: number; anchorY: number };
@@ -61,7 +61,7 @@ export function rockTouchesWater(world: NaturalWorldEntity, rock: Pick<Procedura
   return false;
 }
 
-const MATERIALS: Record<MineralId, AsterraMaterial> = {
+const MATERIALS: Record<MineralId, RockMaterial> = {
   stone: 'pedra', copper: 'cobre', iron: 'ferro', silver: 'prata', gold: 'ouro',
 };
 type ProtectedOreMaterial = 'cobre' | 'ferro' | 'prata' | 'ouro';
@@ -82,7 +82,7 @@ const PLACEMENT_OFFSETS = [
   [0, 0], [0, -1], [1, 0], [-1, 0], [0, 1],
   [1, -1], [-1, -1], [1, 1], [-1, 1], [0, -2], [0, 2], [2, 0], [-2, 0],
 ] as const;
-const CADENCE: Record<AsterraBiome, { oreCellsPerRock: number; surfaceCellsPerRock: number; maxSurfaceChance: number }> = {
+const CADENCE: Record<RockBiome, { oreCellsPerRock: number; surfaceCellsPerRock: number; maxSurfaceChance: number }> = {
   temperate: { oreCellsPerRock: 10, surfaceCellsPerRock: 6, maxSurfaceChance: 0.52 },
   desert: { oreCellsPerRock: 13, surfaceCellsPerRock: 7, maxSurfaceChance: 0.42 },
   alpine: { oreCellsPerRock: 8, surfaceCellsPerRock: 5, maxSurfaceChance: 0.68 },
@@ -103,7 +103,7 @@ type RockCandidate = {
 
 type TerrainContext = SurfaceTerrainContext;
 
-/** Adapts exposed world deposits to original ASTERRA descriptors without touching world state. */
+/** Adapts exposed world deposits to original rock-engine descriptors without touching world state. */
 export function generateProceduralRocks(world: NaturalWorldEntity, visualSeed: number): ProceduralRock[] {
   const terrainContext = terrainContextFor(world);
   const ores = new Map<number, MineralDepositState>();
@@ -207,7 +207,7 @@ function addPlacement(
 ): boolean {
   const material = MATERIALS[resourceId];
   const biome = biomeFor(cell);
-  const settings = createAsterraSettings(
+  const settings = createRockSettings(
     biome,
     material,
     geologyFor(cell),
@@ -231,7 +231,7 @@ function addPlacement(
   const initialY = Math.max(0, Math.min(world.height - rect.h, cell.y + 1 - rect.h));
   let selected: {
     x: number; y: number; footprint: RockFootprint; nativeX: number; nativeY: number;
-    deposit: AsterraDeposit; raster: ProceduralRock['raster'];
+    deposit: RockDeposit; raster: ProceduralRock['raster'];
   } | undefined;
   for (const [offsetX, offsetY] of PLACEMENT_OFFSETS) {
     const x = Math.max(0, Math.min(world.width - rect.w, initialX + offsetX));
@@ -241,7 +241,7 @@ function addPlacement(
     // Same native-cell anchor and seed formula as depositData in the original engine.
     const nativeX = Math.round((x + rect.w * 0.5) * TILE);
     const nativeY = Math.round((y + rect.h) * TILE - 1);
-    const deposit: AsterraDeposit = {
+    const deposit: RockDeposit = {
       id: placements.length + 1, x: nativeX, y: nativeY,
       seed: hash(nativeX, nativeY, visualSeed + 87), grade, rarity,
       material, geology: geologyFor(cell), biome: settings.biome,
@@ -339,16 +339,16 @@ function candidateScore(candidate: RockCandidate, selected: RockCandidate[], vis
   return candidate.cohesion * 2.2 + candidate.cardinalNeighbors * 0.16 + spread * 0.16 + tie * 0.02;
 }
 
-function cadenceProfile(family: AsterraFamily, variant: number, requested: AsterraSizeProfile, cohesion: number): AsterraSizeProfile {
+function cadenceProfile(family: RockFamily, variant: number, requested: RockSizeProfile, cohesion: number): RockSizeProfile {
   if (requested.tier === 'macro' && cohesion < 0.48) return sizeProfile(family, 0.64, variant, () => 0, 0);
   if ((requested.tier === 'large' || requested.tier === 'macro') && cohesion < 0.22) return sizeProfile(family, 0.46, variant, () => 0.99, 0);
   return requested;
 }
 
 function progressionProfile(
-  family: AsterraFamily, variant: number, requested: AsterraSizeProfile, cohesion: number, transition: number,
+  family: RockFamily, variant: number, requested: RockSizeProfile, cohesion: number, transition: number,
   source: ProceduralRock['source'], role: PlacementRole, cell: NaturalWorldCellState, visualSeed: number,
-): { profile: AsterraSizeProfile; scale: number } {
+): { profile: RockSizeProfile; scale: number } {
   if (role === 'scatter') {
     const roll = rng(hash(cell.x, cell.y, visualSeed + 363))();
     return roll < 0.38
@@ -375,7 +375,7 @@ function progressionProfile(
   return { profile, scale: profile.tier === 'small' ? 0.82 : 1 };
 }
 
-function chooseRockFamily(random: () => number, biome: AsterraBiome, cell: NaturalWorldCellState): AsterraFamily {
+function chooseRockFamily(random: () => number, biome: RockBiome, cell: NaturalWorldCellState): RockFamily {
   const families = biomeProfiles[biome].families;
   const dryLocale = biome === 'desert' || biome === 'volcanic'
     || cell.terrain.habitat === 'desert' || cell.terrain.habitat === 'dryland';
@@ -384,7 +384,7 @@ function chooseRockFamily(random: () => number, biome: AsterraBiome, cell: Natur
   return weightedChoice(random, rounded.length > 0 ? rounded : families);
 }
 
-function isPointedFamily(family: AsterraFamily): boolean {
+function isPointedFamily(family: RockFamily): boolean {
   return family === 'shard' || family === 'column';
 }
 
@@ -451,7 +451,7 @@ export function rockRegionAffinityForCell(world: NaturalWorldEntity, cell: Natur
   return Math.min(1, structural * 0.72 + patch * 0.28 + gravel * 0.22);
 }
 
-function forcedProfile(family: AsterraFamily, variant: number, tier: 'small' | 'normal' | 'large'): AsterraSizeProfile {
+function forcedProfile(family: RockFamily, variant: number, tier: 'small' | 'normal' | 'large'): RockSizeProfile {
   if (tier === 'small') return sizeProfile(family, 0.35, variant, () => 0.99, 0);
   if (tier === 'large') return sizeProfile(family, 0.64, variant, () => 0, 0);
   return sizeProfile(family, 0.50, variant, () => 0, 0);
@@ -512,13 +512,13 @@ function terrainContextFor(world: NaturalWorldEntity): TerrainContext {
   return terrainContext(world);
 }
 
-function terrainPaletteFor(cell: NaturalWorldCellState, context: TerrainContext): AsterraTerrain {
+function terrainPaletteFor(cell: NaturalWorldCellState, context: TerrainContext): RockTerrain {
   const surface = terrainSurface(cell, context.minimumElevation, context.maximumElevation, context.landformElevations[cell.index]);
-  return asterraTerrainForSurface(surface, cell.terrain.bedrock);
+  return rockTerrainForSurface(surface, cell.terrain.bedrock);
 }
 
 /** Envelope adds transparent room for the original drawOutcrop satellites and burial. */
-export function rockRasterBounds(deposit: AsterraDeposit): ProceduralRock['raster'] {
+export function rockRasterBounds(deposit: RockDeposit): ProceduralRock['raster'] {
   const size = outcropSize(deposit);
   const anchorX = Math.ceil(size.w * 0.68 + 8);
   const anchorY = Math.ceil(size.h * 0.87 + 8);
@@ -546,12 +546,12 @@ export function mossMultiplierForHabitat(habitat: NaturalWorldCellState['terrain
 
 /**
  * Ambientizes only the geological base of a gray terrain. Ore colors and green moss
- * remain intact so a gold, copper, iron or silver vein keeps its ASTERRA identity.
+ * remain intact so a gold, copper, iron or silver vein keeps its original palette identity.
  */
 export function ambientRockColor(
   color: readonly [number, number, number],
-  terrain: AsterraTerrain,
-  material: AsterraMaterial | 'mixed',
+  terrain: RockTerrain,
+  material: RockMaterial | 'mixed',
 ): [number, number, number] {
   if (terrain !== 'mountain' && terrain !== 'volcanic') return [...color] as [number, number, number];
   if (material !== 'pedra' && isProtectedOreColor(color, material)) return [...color] as [number, number, number];
@@ -588,7 +588,7 @@ function applyAmbientRockPalette(context: CanvasRenderingContext2D, rock: Proced
   context.putImageData(image, 0, 0);
 }
 
-function isProtectedOreColor(color: readonly [number, number, number], material: AsterraMaterial | 'mixed'): boolean {
+function isProtectedOreColor(color: readonly [number, number, number], material: RockMaterial | 'mixed'): boolean {
   const palette = material === 'cobre' || material === 'ferro' || material === 'prata' || material === 'ouro'
     ? ORE_PALETTES[material]
     : undefined;
@@ -603,7 +603,7 @@ function isMossColor(color: readonly [number, number, number]): boolean {
   return color[1] > color[0] + 7 && color[1] > color[2] + 2;
 }
 
-function biomeFor(cell: NaturalWorldCellState): AsterraBiome {
+function biomeFor(cell: NaturalWorldCellState): RockBiome {
   if (cell.terrain.habitat === 'desert' || cell.terrain.habitat === 'dryland') return 'desert';
   if (cell.terrain.habitat === 'upland') return 'alpine';
   if (cell.terrain.bedrock === 'basalt') return 'volcanic';
@@ -611,7 +611,7 @@ function biomeFor(cell: NaturalWorldCellState): AsterraBiome {
   return 'temperate';
 }
 
-function geologyFor(cell: NaturalWorldCellState): AsterraGeology {
+function geologyFor(cell: NaturalWorldCellState): RockGeology {
   return cell.terrain.bedrock === 'sedimentary' ? 'sandstone' : cell.terrain.bedrock;
 }
 

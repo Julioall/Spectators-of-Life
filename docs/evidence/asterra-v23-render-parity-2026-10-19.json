@@ -3,7 +3,7 @@
   "source": "data/assets/rocks/asterra/ASTERRA_Gerador_Rochas_v2.3.html",
   "sourceSha256": "a1faf76ec44cb6ea9e48bd180c09a4a2ec579a58c37f188e32631e01c73a3704",
   "engineSha256": "10bf0b027ad22c9277811a02fb0c81f02cf09a3f808837aecfc530f4ea7e31d2",
-  "harness": "tests/render/asterra-visual.html",
+  "harness": "tests/render/rocks-engine-visual.html",
   "reference": "Original HTML loaded in a same-origin iframe; its drawOutcrop function called directly.",
   "actual": "drawProceduralRock adapter used by FoundationScene, preserving original coordinates and native pixels.",
   "caseCount": 40,

@@ -1,0 +1,1280 @@
+/**  Rocks v2.3 procedural engine isolated as library. No embedded image sprites. */
+export function createRockEngine({canvasFactory} = {}) {
+  const makeCanvas = canvasFactory || ((width,height) => {
+    if(typeof OffscreenCanvas!=='undefined') return new OffscreenCanvas(width,height);
+    if(typeof document!=='undefined') {const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;return canvas;}
+    throw new Error('Rasterização de rochas requer canvasFactory no Node.js.');
+  });
+const TILE=16,W=320,H=224,GRID_W=W/TILE,GRID_H=H/TILE;
+const palettes={
+ grass:{soil:['#829469','#89996f','#8f9d72','#788d63','#9fa681'],rock:['#4a4033','#685844','#88745a','#a18d6d','#bba37f'],halo:['#70654f','#7d7158','#8c7d62']},
+ dry:{soil:['#9c9975','#a9a17d','#b5a986','#90896a','#c1ae86'],rock:['#574938','#76614b','#93785b','#ad906f','#c1a17f'],halo:['#846b52','#95795d','#a68768']},
+ mountain:{soil:['#7d806d','#8f917d','#9d9c87','#6f7362','#ada893'],rock:['#4c473f','#665f54','#80776b','#9a8f82','#b3a796'],halo:['#726b61','#80786c','#90877a']},
+ volcanic:{soil:['#463f3d','#55504d','#625b56','#393635','#7a726b'],rock:['#2f2d2d','#44403f','#5b5553','#756e6b','#9e9690'],halo:['#403a39','#4f4945','#615955']},
+ coast:{soil:['#b5ab86','#c7b895','#d8c7a4','#a09473','#ead9b7'],rock:['#6b665b','#8b8473','#aca28f','#c8bfaa','#e9dcc1'],halo:['#9a917d','#b0a68e','#c3b89f']}
+
+};
+const oreColors={
+ cobre:{dark:'#6f4a2f',base:'#b56f3a',light:'#d89658',dust:'#7b644d',accent:'#7a9a77',label:'Cobre'},
+ ferro:{dark:'#4e3d36',base:'#7a5b49',light:'#a1775e',dust:'#6d5c50',accent:'#8b4f38',label:'Ferro'},
+ prata:{dark:'#5f6368',base:'#8f98a1',light:'#c3ccd4',dust:'#707780',accent:'#d7dce1',label:'Prata'},
+ ouro:{dark:'#6c5822',base:'#b9931f',light:'#ebc94c',dust:'#8a7538',accent:'#fff0a0',label:'Ouro'},
+ quartzo:{dark:'#7d6f78',base:'#b9a7b6',light:'#eee4f1',dust:'#b9adb5',accent:'#f7f4ff',label:'Quartzo variado'},
+ quartzo_leitoso:{dark:'#857f84',base:'#cdc7cb',light:'#f7f4f7',dust:'#b4adb2',accent:'#ffffff',label:'Quartzo leitoso'},
+ quartzo_fume:{dark:'#4f474d',base:'#7e727c',light:'#b6a7b7',dust:'#665d65',accent:'#ddd2de',label:'Quartzo fumê'},
+ quartzo_roseo:{dark:'#7f6570',base:'#c89ab1',light:'#f1d2df',dust:'#a98393',accent:'#fff0f6',label:'Quartzo róseo'},
+ quartzo_hialino:{dark:'#74808b',base:'#bac8d3',light:'#eef7ff',dust:'#9eacb8',accent:'#ffffff',label:'Quartzo hialino'},
+ carvao:{dark:'#151618',base:'#2a2d31',light:'#51565c',dust:'#3a3c40',accent:'#747a82',label:'Carvão'},
+ enxofre:{dark:'#7f6a16',base:'#c8b11e',light:'#f4df51',dust:'#95873a',accent:'#fff58e',label:'Enxofre'},
+ gemas:{dark:'#204b4d',base:'#2d8f96',light:'#79e4e9',dust:'#35636b',accent:'#d0f7ff',label:'Gemas variadas'},
+ rubi:{dark:'#5a1c23',base:'#b6374b',light:'#ff6f87',dust:'#7a3a45',accent:'#ffd1d8',label:'Rubi'},
+ safira:{dark:'#162c58',base:'#2456b3',light:'#69a1ff',dust:'#33507c',accent:'#d8e8ff',label:'Safira'},
+ esmeralda:{dark:'#1b4b32',base:'#2a8b55',light:'#68db92',dust:'#355f48',accent:'#d4ffe7',label:'Esmeralda'},
+ ametista:{dark:'#4b2b63',base:'#8a54c6',light:'#ca8aff',dust:'#674c7d',accent:'#f0d9ff',label:'Ametista'}
+};
+const oreProfiles={
+ cobre:{exposure:1.08,thickness:1.15,pockets:1.25,branches:1.05,glint:.42},
+ ferro:{exposure:.95,thickness:1.05,pockets:1.10,branches:.95,glint:.22},
+ prata:{exposure:1.00,thickness:.95,pockets:1.05,branches:1.00,glint:.58},
+ ouro:{exposure:1.16,thickness:1.22,pockets:1.42,branches:1.18,glint:.76},
+ quartzo:{exposure:1.06,thickness:1.08,pockets:1.18,branches:1.02,glint:.82},
+ quartzo_leitoso:{exposure:1.02,thickness:1.10,pockets:1.16,branches:1.00,glint:.66},
+ quartzo_fume:{exposure:1.00,thickness:1.04,pockets:1.12,branches:1.00,glint:.74},
+ quartzo_roseo:{exposure:1.04,thickness:1.08,pockets:1.14,branches:1.02,glint:.78},
+ quartzo_hialino:{exposure:1.10,thickness:1.00,pockets:1.18,branches:1.04,glint:.92},
+ carvao:{exposure:.88,thickness:1.20,pockets:1.05,branches:.82,glint:.08},
+ enxofre:{exposure:1.28,thickness:1.16,pockets:1.46,branches:1.16,glint:.54},
+ gemas:{exposure:.86,thickness:.92,pockets:1.52,branches:1.24,glint:.94},
+ rubi:{exposure:.84,thickness:.92,pockets:1.42,branches:1.22,glint:.92},
+ safira:{exposure:.84,thickness:.94,pockets:1.42,branches:1.20,glint:.96},
+ esmeralda:{exposure:.84,thickness:.92,pockets:1.40,branches:1.18,glint:.93},
+ ametista:{exposure:.86,thickness:.94,pockets:1.46,branches:1.22,glint:.95}
+};
+const gemKeys=['rubi','safira','esmeralda','ametista'];
+const quartzKeys=['quartzo_leitoso','quartzo_fume','quartzo_roseo','quartzo_hialino'];
+const keys=['cobre','ferro','prata','ouro',...quartzKeys,'carvao','enxofre',...gemKeys];
+//  v2.3: perfis de raridade determinísticos, independentes da espécie mineral.
+const rarityProfiles={
+ normal:{label:'Normal',chance:.80,grade:[.30,.78],oreMultiplier:1.0,crystalCount:0,scale:1.00,detail:1.0},
+ rare:{label:'Raro',chance:.17,grade:[.70,.93],oreMultiplier:1.55,crystalCount:3,scale:1.09,detail:1.18},
+ epic:{label:'Épico',chance:.03,grade:[.87,1.00],oreMultiplier:2.10,crystalCount:6,scale:1.20,detail:1.40}
+};
+function chooseRarity(r,setting='mixed'){
+ if(rarityProfiles[setting])return setting;
+ const roll=r();let sum=0;
+ for(const key of ['normal','rare','epic']){sum+=rarityProfiles[key].chance;if(roll<sum)return key;}
+ return 'epic';
+}
+function rarityOf(d){return rarityProfiles[d.rarity]||rarityProfiles.normal;}
+
+const crystalMaterials=['quartzo',...quartzKeys,'enxofre',...gemKeys,'gemas'];
+function resolveMaterial(mat,r){if(mat==='gemas')return gemKeys[Math.floor(r()*gemKeys.length)]; if(mat==='quartzo')return quartzKeys[Math.floor(r()*quartzKeys.length)]; return mat;}
+// Amostras extraídas dos PNGs do pacote fornecido pelo usuário (128px, pixels opacos).
+// Escala escuro -> claro por faixas de luminosidade reais, sem clareamento artificial.
+const sourceRockPalettes={
+ pedra:['#483c30','#675a48','#7b6c55','#9f8c6e','#b4a080'],
+ cobre:['#372518','#553d2f','#684d3a','#8d674a','#aa8867'],
+ ferro:['#35241c','#513e32','#644e3f','#856953','#a0886d'],
+ ouro:['#3c2d1c','#574431','#70573b','#95754d','#b29667'],
+ prata:['#352d27','#51463c','#685c4e','#8f816d','#ab9b82'],
+ quartzo:['#564b54','#7a6e78','#a89bab','#cdc0cc','#efe6f2'],
+ quartzo_leitoso:['#817b80','#aba3a9','#cac2c8','#e2dde1','#faf8fb'],
+ quartzo_fume:['#433d42','#5f5760','#7d727c','#a79aa8','#d9d0da'],
+ quartzo_roseo:['#6a5560','#917280','#be97aa','#e0bfcc','#f6e0e8'],
+ quartzo_hialino:['#68717a','#909ba5','#b8c5cf','#dbe6ef','#f7fcff'],
+ carvao:['#151618','#222529','#31363b','#484e54','#686e75'],
+ enxofre:['#5e5319','#84711c','#af9820','#d7c336','#efe06d'],
+ gemas:['#1f3d41','#265b60','#2e7b82','#43aab1','#87e5eb'],
+ rubi:['#43161b','#6f2230','#a33347','#d54d65','#ff93a5'],
+ safira:['#14274b','#1d4288','#2860c4','#5c90e8','#9dc2ff'],
+ esmeralda:['#173e2a','#206643','#2b8e5c','#57c982','#95efb4'],
+ ametista:['#3d244f','#65408b','#8f5dc0','#bb87ec','#e3c8ff']
+};
+oreColors.pedra={dark:'#483c30',base:'#675a48',light:'#9f8c6e',dust:'#675a48',accent:'#9f8c6e',label:'Pedra comum'};
+oreProfiles.pedra={exposure:0,thickness:0,pockets:0,branches:0,glint:0};
+function oreTier(g){return g<.48?'baixo':(g<.72?'medio':'alto');}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hash(a,b,c=0){let h=Math.imul(a|0,374761393)^Math.imul(b|0,668265263)^Math.imul(c|0,1442695041);h=Math.imul(h^(h>>>13),1274126177);return(h^(h>>>16))>>>0}
+function rand(a,b,c=0){return hash(a,b,c)/4294967296}
+function rng(seed){let v=seed>>>0;return()=>{v=(v+0x6d2b79f5)>>>0;let t=v;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296}}
+const smooth=t=>t*t*(3-2*t);
+function noise(x,y,seed){const xi=Math.floor(x),yi=Math.floor(y),tx=smooth(x-xi),ty=smooth(y-yi);
+ const a=rand(xi,yi,seed),b=rand(xi+1,yi,seed),c=rand(xi,yi+1,seed),d=rand(xi+1,yi+1,seed);
+ return(a+(b-a)*tx)*(1-ty)+(c+(d-c)*tx)*ty}
+function fbm(x,y,seed){return .57*noise(x,y,seed)+.28*noise(x*2.1,y*2.1,seed+19)+.15*noise(x*4.3,y*4.3,seed+47)}
+const rgb=s=>[parseInt(s.slice(1,3),16),parseInt(s.slice(3,5),16),parseInt(s.slice(5,7),16)];
+const mix=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(v*(1-t)+b[i]*t)).join(',')})`;
+const biomeProfiles={
+ temperate:{label:'Pradaria temperada',soil:'grass',geologies:[['granite',5],['slate',2],['limestone',2],['sandstone',1]],families:[['round',3],['block',4],['wedge',2],['plate',2],['column',1],['shard',1],['cluster',3],['vein',1]],moss:1.0,rockCover:.27},
+ desert:{label:'Deserto e cânions',soil:'dry',geologies:[['sandstone',7],['limestone',2],['granite',1]],families:[['plate',5],['block',4],['wedge',4],['shard',1],['cluster',2],['round',1]],moss:.18,rockCover:.18},
+ alpine:{label:'Montanhas alpinas',soil:'mountain',geologies:[['granite',5],['slate',3],['limestone',1],['basalt',1]],families:[['block',4],['column',3],['shard',4],['wedge',3],['cluster',2],['plate',1]],moss:.44,rockCover:.46},
+ volcanic:{label:'Terreno vulcânico',soil:'volcanic',geologies:[['basalt',6],['tuff',4]],families:[['column',6],['shard',3],['block',2],['cluster',4],['wedge',2]],moss:.14,rockCover:.62},
+ coastal:{label:'Costa rochosa',soil:'coast',geologies:[['limestone',5],['sandstone',3],['granite',2]],families:[['round',5],['plate',5],['block',2],['wedge',3],['cluster',3]],moss:.78,rockCover:.27}
+};
+function weightedChoice(r,items){const total=items.reduce((v,it)=>v+it[1],0);let roll=r()*total;for(const [name,weight] of items){roll-=weight;if(roll<0)return name;}return items[items.length-1][0];}
+const shapeFamilies=['round','block','wedge','plate','column','shard','cluster','vein'];
+const shapeLabels={round:'Cascalho',block:'Bloco',wedge:'Bloco lascado',plate:'Laje',column:'Monólito',shard:'Espigão monolítico',cluster:'Cascalho agrupado',vein:'Afloramento mineral'};
+const familyScale={round:[1.02,.98],block:[1.18,1.06],wedge:[1.08,1.0],plate:[1.26,.80],column:[1.12,1.18],shard:[.96,1.18],cluster:[1.28,.96],vein:[1.20,.60]};
+const VARIANT_COUNT=5;
+const variantNotes={round:['baixo','compacto','rachado','encorpado','grande'],block:['quadrado','pesado','alto','robusto','duplo'],wedge:['inclinado','baixo','afiado','quebrado','grande'],plate:['larga','estratificada','dupla','inclinada','grande'],column:['base larga','duas massas','robusta','truncada','monolítica'],shard:['compacto','duplo','oblíquo','largo','alto'],cluster:['denso','espalhado','central','baixo','grande'],vein:['exposto','duplo','embutido','fragmentado','amplo']};
+function chooseFamily(r){const roll=r(); if(roll<.12)return 'round'; if(roll<.31)return 'block'; if(roll<.47)return 'wedge'; if(roll<.63)return 'plate'; if(roll<.74)return 'column'; if(roll<.82)return 'shard'; if(roll<.95)return 'cluster'; return 'vein';}
+
+// Grade de ocupação real: uma célula recebe no máximo uma ocorrência; 0 significa livre.
+function makeOccupancyGrid(){return {tileSize:TILE,width:GRID_W,height:GRID_H,owner:Array(GRID_W*GRID_H).fill(0)};}
+function footprintAt(x,y,d){const bounds=outcropSize(d);const w=Math.max(d.tilesW||1,Math.ceil((bounds.w+4)/TILE));const h=Math.max(d.tilesH||1,Math.ceil((bounds.h*.91+3)/TILE));return {x,y,w,h};}
+function cellsForRect(rect){const cells=[];for(let cy=rect.y;cy<rect.y+rect.h;cy++)for(let cx=rect.x;cx<rect.x+rect.w;cx++)cells.push({x:cx,y:cy});return cells;}
+function canOccupy(grid,rect){if(rect.x<0||rect.y<0||rect.x+rect.w>grid.width||rect.y+rect.h>grid.height)return false;return cellsForRect(rect).every(({x,y})=>grid.owner[y*grid.width+x]===0);}
+function reserve(grid,rect,id){for(const {x,y} of cellsForRect(rect))grid.owner[y*grid.width+x]=id;}
+function depositData(s){
+ const r=rng(s.seed^0x192731),deposits=[],grid=makeOccupancyGrid();let attempts=0;
+ const biome=biomeProfiles[s.biome];
+ const target=Math.round(5+s.density*15);
+ // Gera sobre múltiplas faixas geológicas e exige espaço livre em todo o footprint.
+ const trends=[{x:W*.28,y:H*.39,angle:.28},{x:W*.72,y:H*.64,angle:-.36},{x:W*.50,y:H*.51,angle:.69}];
+ while(deposits.length<target&&attempts++<4200){
+  const trend=trends[attempts%3],t=r()*2-1;
+  let xx=trend.x+t*W*.34*Math.cos(trend.angle)+(r()-.5)*W*.25;
+  let yy=trend.y+t*H*.40*Math.sin(trend.angle)+(r()-.5)*H*.23;
+  const rarity=chooseRarity(r,s.rarity),tierInfo=rarityProfiles[rarity];
+  const grade=tierInfo.grade[0]+r()*(tierInfo.grade[1]-tierInfo.grade[0]);
+  const mat=resolveMaterial(s.material==='mixed'?keys[Math.floor(r()*keys.length)]:s.material,r);
+  const type=s.forma==='mixed'?weightedChoice(r,biome.families):s.forma;
+  const scale=familyScale[type]||[1,1];
+  const variant=hash(Math.round(xx),Math.round(yy),s.seed+191)%VARIANT_COUNT;
+  const profile=sizeProfile(type,grade,variant,r,Math.min(.95,s.macroRate*(rarity==='epic'?1.55:(rarity==='rare'?1.20:1))));
+  const geology=s.geology==='mixed'?weightedChoice(r,biome.geologies):s.geology;
+  const preview={family:type,grade,rarity,tier:profile.tier,tilesW:profile.tilesW,tilesH:profile.tilesH};
+  const pre=footprintAt(0,0,preview);
+  if(pre.w>GRID_W||pre.h>GRID_H)continue;
+  const col=Math.round(xx/TILE-pre.w*.5),row=Math.round(yy/TILE-pre.h*.64);
+  const rect={x:col,y:row,w:pre.w,h:pre.h};
+  if(!canOccupy(grid,rect))continue;
+  // Âncora no centro inferior do retângulo. O sprite cresce para cima.
+  const x=Math.round((col+pre.w*.5)*TILE),y=Math.round((row+pre.h)*TILE-1);
+  const id=deposits.length+1;reserve(grid,rect,id);
+  deposits.push({id,x,y,grade:+grade.toFixed(3),rarity,rarityLabel:tierInfo.label,material:mat,geology,biome:s.biome,
+    forma:type,family:type,variant,size:Math.round((12+grade*15)*scale[0]*profile.scale),
+    seed:hash(x,y,s.seed+87),heightBias:scale[1],tier:profile.tier,
+    tilesW:rect.w,tilesH:rect.h,macro:profile.macro,large:profile.large,
+    satellites:profile.satellites,sizeMul:profile.scale,footprint:rect,cells:cellsForRect(rect),
+    anchor:{cellX:col,cellY:row,pixelX:x,pixelY:y},blocksMovement:true});
+ }
+ return {deposits:deposits.sort((a,b)=>a.y-b.y),grid,attempts,target};
+}
+// 4-bit cardinal: Norte=1, Leste=2, Sul=4, Oeste=8.
+function makeTerrainGrid(s){
+ const biome=biomeProfiles[s.biome],cover=biome.rockCover;
+ const cells=Array(GRID_W*GRID_H).fill(false);
+ for(let y=0;y<GRID_H;y++)for(let x=0;x<GRID_W;x++){
+  const n=fbm(x/4.6,y/4.6,s.seed+611),detail=fbm(x/2.4,y/2.4,s.seed+735);
+  cells[y*GRID_W+x]=n*.83+detail*.17>0.75-cover*.45;
+ }
+ // Remover fragmentos isolados, mantendo manchas geológicas conectadas.
+ const prev=cells.slice();
+ for(let y=1;y<GRID_H-1;y++)for(let x=1;x<GRID_W-1;x++){
+  const i=y*GRID_W+x,count=[i-GRID_W,i+1,i+GRID_W,i-1].filter(k=>prev[k]).length;
+  if(prev[i]&&count===0)cells[i]=false;
+  if(!prev[i]&&count>=3)cells[i]=true;
+ }
+ const masks=cells.map((rock,i)=>{
+  if(!rock)return -1;
+  const x=i%GRID_W,y=Math.floor(i/GRID_W);let mask=0;
+  if(y>0&&cells[i-GRID_W])mask|=1;
+  if(x<GRID_W-1&&cells[i+1])mask|=2;
+  if(y<GRID_H-1&&cells[i+GRID_W])mask|=4;
+  if(x>0&&cells[i-1])mask|=8;
+  return mask;
+ });
+ return {width:GRID_W,height:GRID_H,tileSize:TILE,rocky:cells,masks,maskBits:{N:1,E:2,S:4,W:8}};
+}
+function drawMaskTile(c,xx,yy,mask,s,tileSeed=0){
+ const palette=palettes[s.terrain],stone=palette.halo,soil=palette.soil;
+ c.save();c.imageSmoothingEnabled=false;
+ const r=rng(hash(mask,tileSeed,s.seed+880));
+ // Base de solo com pequenas variações naturais.
+ c.fillStyle=soil[1];c.fillRect(xx,yy,TILE,TILE);
+ for(let y=0;y<TILE;y+=2)for(let x=0;x<TILE;x+=2){
+  const n=fbm((xx+x)/9,(yy+y)/9,s.seed+tileSeed+31);
+  c.fillStyle=soil[n>.48?4:n>.18?2:n<-.28?3:0];
+  c.fillRect(xx+x,yy+y,2,2);
+ }
+ // Mancha rochosa central para indicar o tile pedregoso do autotile.
+ const core=[pt(xx+3,yy+4),pt(xx+12,yy+3),pt(xx+14,yy+7),pt(xx+13,yy+12),pt(xx+6,yy+14),pt(xx+2,yy+10)];
+ fillPoly(c,core,stone[1]);
+ c.globalAlpha=.45;fillPoly(c,[pt(xx+4,yy+5),pt(xx+11,yy+4),pt(xx+12,yy+7),pt(xx+10,yy+9),pt(xx+6,yy+10),pt(xx+4,yy+8)],stone[2]);c.globalAlpha=1;
+ // Pedrinhas/grãos orgânicos diferentes por tipo de terreno.
+ const pebbles=s.terrain==='grass'?7:s.terrain==='dry'?8:s.terrain==='coast'?9:s.terrain==='mountain'?8:s.terrain==='volcanic'?10:7;
+ for(let i=0;i<pebbles;i++){
+  const px=xx+1+Math.floor(r()*14),py=yy+1+Math.floor(r()*14),sz=r()>.76?2:1;
+  c.fillStyle=i%3===0?stone[0]:(i%3===1?stone[2]:soil[0]);
+  c.fillRect(px,py,sz,1+(sz>1&&r()>.6?1:0));
+ }
+ // Detalhes naturais por bioma/solo.
+ if(s.terrain==='grass'){
+  for(let i=0;i<4;i++){const gx=xx+2+Math.floor(r()*11),gy=yy+2+Math.floor(r()*11);c.fillStyle=soil[3];c.fillRect(gx,gy+1,1,2);if(r()>.42)c.fillRect(gx+1,gy,1,2);}
+ }else if(s.terrain==='dry'){
+  for(let i=0;i<4;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+3+Math.floor(r()*10);c.fillStyle=soil[4];c.fillRect(sx,sy,2,1);if(r()>.58)c.fillRect(sx+1,sy+1,1,1);}
+ }else if(s.terrain==='coast'){
+  for(let i=0;i<5;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+2+Math.floor(r()*12);c.fillStyle=soil[4];c.fillRect(sx,sy,1+(r()>.68?1:0),1);if(r()>.74){c.fillStyle=stone[2];c.fillRect(sx,sy+1,1,1);}}
+ }else if(s.terrain==='mountain'){
+  for(let i=0;i<4;i++){const sx=xx+2+Math.floor(r()*12),sy=yy+2+Math.floor(r()*12);c.fillStyle=stone[0];c.fillRect(sx,sy,1,2);if(r()>.54)c.fillRect(sx+1,sy+1,1,1);}
+ }else if(s.terrain==='volcanic'){
+  for(let i=0;i<6;i++){const sx=xx+1+Math.floor(r()*13),sy=yy+1+Math.floor(r()*13);c.fillStyle=r()>.5?stone[0]:soil[4];c.fillRect(sx,sy,1,1);if(r()>.78)c.fillRect(sx+1,sy,1,1);}
+ }
+ // Bordas irregulares onde não há continuação rochosa.
+ const trim=(side)=>{
+  c.fillStyle=soil[1];
+  for(let z=0;z<16;z++){
+   const inset=1+(rand(z>>1,mask,s.seed+tileSeed+201)>.48?1:0)+(rand(z>>2,mask,s.seed+tileSeed+811)>.86?1:0);
+   if(side==='N')c.fillRect(xx+z,yy,1,inset);
+   if(side==='S')c.fillRect(xx+z,yy+16-inset,1,inset);
+   if(side==='W')c.fillRect(xx,yy+z,inset,1);
+   if(side==='E')c.fillRect(xx+16-inset,yy+z,inset,1);
+  }
+  // reforço com pixels de transição nas quinas
+  c.globalAlpha=.55;c.fillStyle=soil[0];
+  if(side==='N')for(let z=1;z<15;z+=3)c.fillRect(xx+z,yy+1,1,1);
+  if(side==='S')for(let z=2;z<15;z+=3)c.fillRect(xx+z,yy+14,1,1);
+  if(side==='W')for(let z=1;z<15;z+=3)c.fillRect(xx+1,yy+z,1,1);
+  if(side==='E')for(let z=2;z<15;z+=3)c.fillRect(xx+14,yy+z,1,1);
+  c.globalAlpha=1;
+ };
+ if(!(mask&1))trim('N');if(!(mask&2))trim('E');if(!(mask&4))trim('S');if(!(mask&8))trim('W');
+ // Pequena sombra de contato da massa pedregosa no lado inferior.
+ c.globalAlpha=.25;c.fillStyle=stone[0];c.fillRect(xx+3,yy+12,9,1);c.globalAlpha=1;
+ c.restore();
+}
+function makeTileAtlas(s){const cv=makeCanvas(1,1);cv.width=4*TILE;cv.height=4*TILE;const c=cv.getContext('2d');c.imageSmoothingEnabled=false;
+ for(let mask=0;mask<16;mask++)drawMaskTile(c,(mask%4)*TILE,Math.floor(mask/4)*TILE,mask,s,mask);
+ return cv;
+}
+function drawAutoTerrain(c,tiles,s){const atlas=makeTileAtlas(s);c.save();c.imageSmoothingEnabled=false;
+ for(let y=0;y<tiles.height;y++)for(let x=0;x<tiles.width;x++){
+  const i=y*tiles.width+x,mask=tiles.masks[i];
+  if(mask>=0)c.drawImage(atlas,(mask%4)*TILE,Math.floor(mask/4)*TILE,TILE,TILE,x*TILE,y*TILE,TILE,TILE);
+ }
+ c.restore();}
+function drawOccupancyGrid(c,grid){
+ c.save();c.lineWidth=1;
+ for(let y=0;y<grid.height;y++)for(let x=0;x<grid.width;x++){
+  const id=grid.owner[y*grid.width+x];
+  c.fillStyle=id?'rgba(240,184,75,0.15)':'rgba(35,70,55,0.025)';
+  c.fillRect(x*TILE,y*TILE,TILE,TILE);
+  c.strokeStyle=id?'rgba(244,205,95,0.86)':'rgba(221,222,185,0.20)';
+  c.strokeRect(x*TILE+.5,y*TILE+.5,TILE,TILE);
+ }
+ c.restore();
+}
+function makeGround(s,ds,withGeology){const cv=makeCanvas(1,1);cv.width=W;cv.height=H;const c=cv.getContext('2d');const p=palettes[s.terrain];
+ const image=c.createImageData(W,H);const data=image.data;const soil=p.soil.map(rgb),halos=p.halo.map(rgb);
+ const points=withGeology?ds.map(d=>({...d,renderBounds:outcropSize(d)})):[];
+ for(let y=0;y<H;y++){for(let x=0;x<W;x++){
+  const v=fbm(x/37,y/37,s.seed+8),f=fbm(x/13,y/13,s.seed+201),grain=rand(x,y,s.seed+731);
+  let col=soil[v>.65?4:v>.54?2:v<.36?3:v<.46?0:1].slice();
+  let geology=0;
+  if(withGeology)for(const d of points){if(Math.abs(d.x-x)>Math.max(46,d.renderBounds.w*.73)||Math.abs(d.y-y)>Math.max(31,d.renderBounds.h*.69))continue;
+    const family=d.family||d.forma; const spread=family==='cluster'?1.55:family==='vein'?1.85:family==='plate'?1.75:family==='column'||family==='shard'?.95:1.25;
+    const tall=family==='column'||family==='shard'?1.22:family==='vein'?.52:family==='plate'?.70:1.0;
+    const tileX=(d.tilesW||1), tileY=(d.tilesH||1);
+    const dx=(x-d.x)/(d.size*spread*(0.82+tileX*.36)),dy=(y-d.y)/(d.size*.61*tall*(0.82+tileY*.34));
+    const ellipse=dx*dx+dy*dy; const edge=(fbm(x/11,y/11,d.seed)-.5)*.47;
+    if(ellipse<1.6+edge)geology=Math.max(geology,clamp((1.6+edge-ellipse)*.45,0,.60));}
+  if(geology){const hc=halos[v>.6?2:v<.43?0:1];col=col.map((k,i)=>Math.round(k*(1-geology)+hc[i]*geology));}
+  const speck=grain>.985?13:grain<.022?-10:0;
+  const drift=(f-.5)*13+speck;
+  let index=(y*W+x)*4;
+  for(let ch=0;ch<3;ch++)data[index+ch]=clamp(Math.round(col[ch]+drift),0,255);
+  data[index+3]=255;
+ }}c.putImageData(image,0,0);
+ const rand2=rng(s.seed+999);for(let i=0;i<185;i++){
+  let x=Math.floor(rand2()*W),y=Math.floor(rand2()*H);
+  c.fillStyle=rand2()>.5?'#778d5d':'#b1b18a';c.globalAlpha=.40+rand2()*.3;
+  c.fillRect(x,y,rand2()>.8?2:1,1);
+ }c.globalAlpha=1;
+ return cv}
+function polygonPath(c,pts){c.beginPath();pts.forEach((p,i)=>{if(i===0)c.moveTo(p[0],p[1]);else c.lineTo(p[0],p[1]);});c.closePath();}
+function bboxOf(pts){let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;for(const [x,y] of pts){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;}return{minX,maxX,minY,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};}
+function jitterPts(base,cx,by,sw,sh,r,jx=.09,jy=.11){return base.map(([x,y])=>[Math.round(cx+x*sw+(r()-.5)*sw*jx),Math.round(by+y*sh+(r()-.5)*sh*jy)]);}
+function subStone(baseType,cx,by,sw,sh,r){const bases={
+ round:[[-.96,.20],[-.88,-.16],[-.58,-.52],[-.10,-.82],[.38,-.76],[.82,-.30],[.96,.12],[.76,.56],[.28,.86],[-.34,.92],[-.80,.62]],
+ block:[[-1.0,.22],[-1.0,-.34],[-.72,-.82],[-.12,-.94],[.48,-.88],[.96,-.30],[.98,.28],[.54,.86],[-.22,.92],[-.86,.74]],
+ wedge:[[-1.0,.34],[-.82,-.08],[-.28,-.60],[.22,-.84],[.98,-.32],[.98,.08],[.24,.80],[-.56,.92]],
+ plate:[[-1.0,.28],[-.92,-.20],[-.46,-.50],[.14,-.62],[.82,-.46],[1.0,-.08],[.92,.26],[.26,.62],[-.58,.66]],
+ column:[[-1.0,.90],[-.88,.46],[-.54,-.42],[-.18,-.96],[.24,-.90],[.58,-.28],[.88,.34],[1.0,.90],[.54,.96],[-.58,.98]],
+ shard:[[-.80,.94],[-.72,.26],[-.30,-.44],[.08,-.98],[.50,-.48],[.72,.16],[.78,.92],[.08,.98]],
+ vein:[[-1.0,.34],[-.86,.02],[-.30,-.08],[.30,-.14],[.98,.02],[.86,.28],[.24,.42],[-.58,.46]]};
+ const jx=(baseType==='plate'||baseType==='vein')?0.05:0.08, jy=(baseType==='plate')?0.06:0.1;
+ return jitterPts(bases[baseType]||bases.round,cx,by,sw,sh,r,jx,jy);}
+
+function variantShape(family,variant){
+ const map={
+  round:[{scale:[.95,.88],extra:0,sub:'round'},{scale:[1.12,.90],extra:0,sub:'round'},{scale:[1.00,.98],extra:1,sub:'round'},{scale:[1.08,1.04],extra:0,sub:'block'},{scale:[1.26,1.08],extra:1,sub:'round'}],
+  block:[{scale:[1.0,.96],extra:0,sub:'block'},{scale:[1.10,1.04],extra:0,sub:'block'},{scale:[.96,1.14],extra:0,sub:'block'},{scale:[1.24,1.12],extra:0,sub:'block'},{scale:[1.18,1.00],extra:1,sub:'block'}],
+  wedge:[{scale:[1.00,.96],extra:0,sub:'wedge'},{scale:[1.12,.82],extra:0,sub:'wedge'},{scale:[.92,1.08],extra:0,sub:'shard'},{scale:[1.10,1.02],extra:1,sub:'wedge'},{scale:[1.25,1.05],extra:0,sub:'wedge'}],
+  plate:[{scale:[1.08,.70],extra:0,sub:'plate'},{scale:[1.16,.82],extra:1,sub:'plate'},{scale:[1.30,.66],extra:1,sub:'plate'},{scale:[1.18,.76],extra:0,sub:'wedge'},{scale:[1.42,.82],extra:0,sub:'plate'}],
+  column:[{scale:[1.02,1.06],extra:2,sub:'column'},{scale:[1.08,1.10],extra:2,sub:'column'},{scale:[1.16,1.18],extra:1,sub:'column'},{scale:[.98,.98],extra:2,sub:'column'},{scale:[1.24,1.26],extra:2,sub:'column'}],
+  shard:[{scale:[.92,1.04],extra:0,sub:'shard'},{scale:[1.00,1.08],extra:1,sub:'shard'},{scale:[.96,1.12],extra:0,sub:'wedge'},{scale:[1.08,.96],extra:0,sub:'shard'},{scale:[1.14,1.20],extra:1,sub:'shard'}],
+  cluster:[{scale:[1.00,.92],extra:3,sub:'cluster'},{scale:[1.12,.96],extra:4,sub:'cluster'},{scale:[1.08,.88],extra:3,sub:'cluster'},{scale:[1.18,.82],extra:4,sub:'cluster'},{scale:[1.32,.98],extra:5,sub:'cluster'}],
+  vein:[{scale:[1.00,.58],extra:0,sub:'vein'},{scale:[1.08,.54],extra:0,sub:'vein'},{scale:[1.02,.62],extra:1,sub:'vein'},{scale:[1.14,.56],extra:0,sub:'vein'},{scale:[1.24,.62],extra:1,sub:'vein'}]
+ };
+ return (map[family]||map.round)[variant%VARIANT_COUNT];
+}
+function pixelStairs(c,pts,color,alpha=1){c.fillStyle=color;c.globalAlpha=alpha;for(const [x,y,w,h] of pts)c.fillRect(x,y,w,h);c.globalAlpha=1;}
+function drawVeinPockets(c,box,ore,r,count=4){for(let i=0;i<count;i++){const x=Math.round(box.minX+2+r()*Math.max(3,box.w-4)),y=Math.round(box.minY+2+r()*Math.max(3,box.h-4));const w=1+(r()>.55?1:0),h=1+(r()>.65?1:0);c.fillStyle=r()>.72?ore.light:ore.base;c.fillRect(x,y,w,h);if(r()>.48){c.fillStyle=ore.dark;c.fillRect(x-1,y,1,1);}}}
+
+function sizeProfile(family,grade,variant,r,macroRate=.40){
+ let tier='normal';
+ if((grade>.72 && r()<(macroRate*.72)) || (grade>.91 && r()<macroRate)) tier='macro';
+ else if(grade>.58 && r()<.58+macroRate*.20) tier='large';
+ else if(grade<.40 && r()>.70) tier='small';
+ const map={
+  round:{small:[1,1,.88,0],normal:[1,1,1.0,0],large:[2,2,1.54,2],macro:[3,2,2.22,3]},
+  block:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,2,1.66,2],macro:[3,2,2.28,4]},
+  wedge:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,1,1.48,2],macro:[3,2,2.02,3]},
+  plate:{small:[1,1,.94,0],normal:[1,1,1.0,0],large:[2,1,1.74,2],macro:[3,2,2.34,4]},
+  column:{small:[1,1,.94,0],normal:[1,1,1.0,0],large:[2,2,1.62,3],macro:[3,3,2.22,5]},
+  shard:{small:[1,1,.92,0],normal:[1,1,1.0,0],large:[2,2,1.50,2],macro:[2,3,2.00,3]},
+  cluster:{small:[1,1,.94,0],normal:[1,1,1.0,1],large:[2,2,1.74,4],macro:[3,2,2.34,5]},
+  vein:{small:[1,1,.90,0],normal:[1,1,1.0,0],large:[2,1,1.66,2],macro:[3,1,2.26,3]}
+ };
+ const arr=(map[family]||map.round)[tier];
+ return {tier,tilesW:arr[0],tilesH:arr[1],scale:arr[2],satellites:arr[3],macro:tier==='macro',large:tier==='large'};
+}
+function sizeLabel(d){if(d.macro)return 'macro'; if(d.large)return 'grande'; return (d.tier==='small'?'pequena':'normal');}
+
+//  v0.6 — malha geológica 2.5D. Determinística, offline e renderizada em pixel art.
+const rockGeologies={
+ granite:{label:'Granito',colors:['#4b4136','#726452','#9e8f77','#c8b79a','#e9d8b8'],moss:'#7a8451'},
+ sandstone:{label:'Arenito',colors:['#53463a','#7d6b56','#ab9678','#d1ba9a','#ecdbbb'],moss:'#8b9150'},
+ basalt:{label:'Basalto',colors:['#3b342f','#5b534a','#7f7668','#a79d8d','#cfc3af'],moss:'#6f7d50'},
+ slate:{label:'Ardósia',colors:['#433c37','#665d54','#8d8275','#b2a695','#d8cab6'],moss:'#7a8552'},
+ limestone:{label:'Calcário',colors:['#5b5347','#857a68','#afa28d','#d4c5ab','#f0e1c5'],moss:'#7f8752'},
+ tuff:{label:'Tufo vulcânico',colors:['#473f39','#6a5f56','#92857a','#b8a797','#dccab7'],moss:'#6d7a4f'}
+};
+const geologyKeys=Object.keys(rockGeologies);
+const clamp01=v=>clamp(v,0,1);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const pt=(x,y)=>[Math.round(x),Math.round(y)];
+const between=(a,b,t)=>pt(lerp(a[0],b[0],t),lerp(a[1],b[1],t));
+
+function familyArchetype(f){
+ if(f==='plate')return 'slab';
+ if(f==='column'||f==='shard')return 'monolith';
+ if(f==='round'||f==='cluster')return 'gravel';
+ if(f==='vein')return 'outcrop';
+ return 'blocky';
+}
+function comboProfile(family,geology,material='pedra'){
+ const archetype=familyArchetype(family);
+ const key=archetype+'_'+(geology||'granite');
+ const base={detail:1,chip:1,band:0,vertical:0,speckle:0,bright:0,dark:0,width:1,height:1,weight:1,oreSignature:1};
+ const map={
+  slab_sandstone:{detail:1.12,chip:.82,band:1.55,width:1.16,height:.82,bright:.04,weight:1.08},
+  slab_limestone:{detail:1.08,chip:.86,band:1.34,width:1.12,height:.84,bright:.07,weight:1.06},
+  monolith_basalt:{detail:1.22,chip:1.08,vertical:1.62,width:.84,height:1.26,dark:.08,weight:1.16},
+  monolith_slate:{detail:1.18,chip:1.04,vertical:1.28,width:.88,height:1.20,dark:.04,weight:1.10},
+  gravel_granite:{detail:1.34,chip:1.34,speckle:1.55,width:1.10,height:.84,bright:.03,weight:1.02},
+  gravel_limestone:{detail:1.20,chip:1.22,speckle:1.12,width:1.08,height:.86,bright:.05,weight:1.00},
+  blocky_limestone:{detail:1.08,chip:.96,band:.92,width:1.04,height:1.06,bright:.06,weight:1.12},
+  blocky_granite:{detail:1.16,chip:1.04,speckle:1.18,width:1.02,height:1.08,weight:1.14},
+  outcrop_sandstone:{detail:1.30,chip:1.18,band:.96,width:1.12,height:.92,bright:.04,weight:1.10,oreSignature:1.18},
+  outcrop_basalt:{detail:1.28,chip:1.16,vertical:1.18,width:1.04,height:1.04,dark:.06,weight:1.14,oreSignature:1.18},
+  outcrop_granite:{detail:1.24,chip:1.14,speckle:1.10,width:1.06,height:1.0,weight:1.10,oreSignature:1.12},
+  outcrop_limestone:{detail:1.22,chip:1.10,band:.86,width:1.08,height:.96,bright:.05,weight:1.08,oreSignature:1.10}
+ };
+ const oreSig={cobre:1.10,ferro:1.00,prata:1.06,ouro:1.16,quartzo:1.02,quartzo_leitoso:1.04,quartzo_fume:1.06,quartzo_roseo:1.08,quartzo_hialino:1.12,carvao:.92,enxofre:1.14,gemas:1.22,rubi:1.34,safira:1.36,esmeralda:1.34,ametista:1.34,pedra:1};
+ return {...base,...(map[key]||{}),oreSignature:(map[key]?.oreSignature||1)*(oreSig[material]||1),archetype};
+}
+
+function fillPoly(c,vertices,color){polygonPath(c,vertices);c.fillStyle=color;c.fill();}
+function linePoly(c,vertices,color,width=1){if(vertices.length<2)return;c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(...vertices[0]);for(let i=1;i<vertices.length;i++)c.lineTo(...vertices[i]);c.stroke();}
+function geoColor(d,s){
+ const type=d.geology&&rockGeologies[d.geology]?d.geology:(s.geology==='mixed'?'granite':s.geology);
+ const geo=rockGeologies[type]||rockGeologies.granite;
+ if(s.paletteMode==='v14')return geo;
+ const source=sourceRockPalettes[d.material]||sourceRockPalettes.pedra;
+ // Identidade geológica sutil sem perder a paleta calibrada do material.
+ // Intensidade máxima +-11 canais RGB: as faces claras continuam no intervalo dos PNGs.
+ const shift={granite:[0,0,0],sandstone:[8,5,0],basalt:[-9,-8,-7],slate:[-4,-2,0],limestone:[8,7,5],tuff:[-6,-5,-4]}[type]||[0,0,0];
+ const colors=source.map(hex=>{
+   const c=rgb(hex).map((v,i)=>clamp(v+shift[i],0,255));
+   return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+ });
+ return {label:geo.label,colors,moss:geo.moss};
+}
+function jitterPoint(p,r,dx,dy){return pt(p[0]+(r()-.5)*dx,p[1]+(r()-.5)*dy);}
+
+// Desenhamos a face superior, os lados e as fraturas a partir dos MESMOS vértices.
+// Isto evita as "facetas" aleatórias projetadas sobre caixas retangulares.
+function makeRockMesh(cx,footY,width,height,family,variant,geology,material,s,r){
+ const variants=[{lean:-.07,round:1,peak:0},{lean:.13,round:.88,peak:-.09},{lean:-.19,round:.98,peak:.13},{lean:.03,round:1.10,peak:-.20},{lean:.22,round:.90,peak:.21}];
+ const v=variants[variant%5];
+ const settingsByFamily={
+  round:{top:.50,depth:.45,front:.48},block:{top:.43,depth:.57,front:.60},
+  wedge:{top:.43,depth:.52,front:.52},plate:{top:.53,depth:.42,front:.40},
+  column:{top:.24,depth:.74,front:.72},shard:{top:.30,depth:.73,front:.68},
+  cluster:{top:.43,depth:.53,front:.55},vein:{top:.49,depth:.34,front:.28}
+ };
+ const cfg=settingsByFamily[family]||settingsByFamily.block;
+ const archetype=familyArchetype(family);
+ const combo=comboProfile(family,geology,material||'pedra');
+ const crystalLike=crystalMaterials.includes(material);
+ const sulfurLike=material==='enxofre';
+ const coalLike=material==='carvao';
+ const gemLike=gemKeys.includes(material);
+ const quartzLike=(material==='quartzo'||quartzKeys.includes(material));
+ width*=combo.width||1; height*=combo.height||1;
+ const tw=width/2,ty=footY-height*cfg.depth,topH=height*cfg.top;
+ // Posição em perspectiva: contorno traseiro + borda dianteira da tampa.
+ const coord=[[-.98,.16],[-.88,-.22],[-.49,-.73],[.11,-.87],[.76,-.56],[.96,-.12],[.73,.27],[.17,.51],[-.56,.43]];
+ if(family==='block'){coord[1]=[-.94,-.35];coord[2]=[-.62,-.74];coord[3]=[.38,-.76];coord[4]=[.89,-.42];coord[6]=[.80,.38];coord[7]=[-.08,.56];}
+ if(family==='plate'||family==='vein'){coord[2]=[-.68,-.60];coord[3]=[.37,-.61];coord[6]=[.87,.38];coord[7]=[-.04,.62];}
+ if(family==='wedge'){coord[2]=[-.28,-.65];coord[3]=[.67,-1.04];coord[4]=[.86,-.57];coord[6]=[.60,.42];}
+ if(family==='shard'){coord[2]=[-.32,-.51];coord[3]=[.08,-1.68];coord[4]=[.50,-.72];coord[5]=[.68,-.06];coord[6]=[.62,.38];}
+ if(family==='column'||geology==='basalt'){coord[2]=[-.62,-.54];coord[3]=[.20,-.62];coord[4]=[.77,-.49];}
+ if(geology==='sandstone'||geology==='limestone'){coord[3][1]+=.12;coord[4][1]+=.13;}
+ if(geology==='tuff'){coord[2][1]+=.12;coord[4][0]+=.10;}
+ if(crystalLike){
+  coord[1]=[-.72,-.08];coord[2]=[-.34,-.56];coord[3]=[.02,-1.34];coord[4]=[.40,-.66];coord[5]=[.68,-.06];coord[6]=[.58,.22];coord[7]=[.02,.46];coord[8]=[-.54,.30];
+  if(family==='cluster'||family==='vein'){coord[2]=[-.58,-.72];coord[3]=[-.18,-1.08];coord[4]=[.10,-.62];coord[5]=[.34,-1.20];coord[6]=[.74,-.38];coord[7]=[.56,.24];coord[8]=[-.22,.40];}
+ }
+ if(gemLike){
+  coord[1]=[-.60,-.12];coord[2]=[-.34,-.70];coord[3]=[-.02,-1.42];coord[4]=[.28,-.78];coord[5]=[.54,-1.12];coord[6]=[.82,-.18];coord[7]=[.54,.18];coord[8]=[-.08,.44];
+  if(family==='cluster'||family==='vein'){coord[1]=[-.70,-.04];coord[2]=[-.46,-.62];coord[3]=[-.16,-1.18];coord[4]=[.04,-.72];coord[5]=[.30,-1.08];coord[6]=[.74,-.26];coord[7]=[.60,.18];coord[8]=[-.12,.40];}
+ }
+ if(quartzLike && !gemLike){coord[2][1]-=.04;coord[3][1]-=.10;coord[5][1]-=.06;coord[6][0]+=.04;}
+ if(sulfurLike){coord[1]=[-.80,-.06];coord[2]=[-.48,-.60];coord[3]=[-.12,-1.04];coord[4]=[.10,-.68];coord[5]=[.36,-1.18];coord[6]=[.82,-.28];coord[7]=[.56,.30];coord[8]=[-.34,.38];}
+ if(coalLike){coord[1]=[-.92,-.26];coord[2]=[-.60,-.56];coord[3]=[.20,-.68];coord[4]=[.82,-.44];coord[6]=[.76,.34];coord[7]=[.02,.56];}
+ if(crystalLike&&variant%5===2){coord[3][1]-=.20;coord[5][1]-=.18;coord[6][0]+=.06;}
+ if(crystalLike&&variant%5===4){coord[2][1]-=.10;coord[4][1]-=.16;coord[5][0]+=.06;}
+ if(gemLike&&variant%5===1){coord[3][1]-=.18;coord[5][1]-=.10;coord[7][0]+=.08;}
+ if(gemLike&&variant%5===3){coord[2][0]-=.06;coord[4][0]+=.08;coord[6][1]-=.05;}
+ // Ajustes fortes por família visual.
+ if(archetype==='slab'){
+  coord[1]=[-.96,-.22];coord[2]=[-.72,-.46];coord[3]=[.26,-.50];coord[4]=[.88,-.32];coord[5]=[1.00,-.02];coord[6]=[.92,.26];coord[7]=[.08,.54];coord[8]=[-.70,.44];
+ }
+ if(archetype==='monolith'){
+  coord[1]=[-.88,-.20];coord[2]=[-.40,-.66];coord[3]=[.04,-1.38];coord[4]=[.46,-.76];coord[5]=[.70,-.10];coord[6]=[.60,.32];coord[7]=[-.02,.52];coord[8]=[-.58,.40];
+ }
+ if(archetype==='gravel'){
+  coord[1]=[-.92,-.16];coord[2]=[-.56,-.42];coord[3]=[.08,-.48];coord[4]=[.70,-.34];coord[5]=[.90,-.04];coord[6]=[.76,.20];coord[7]=[.10,.42];coord[8]=[-.66,.34];
+ }
+ if(archetype==='outcrop'){
+  coord[1]=[-.94,-.22];coord[2]=[-.60,-.54];coord[3]=[.20,-.82];coord[4]=[.84,-.48];coord[5]=[.98,-.10];coord[6]=[.82,.24];coord[7]=[.04,.52];coord[8]=[-.64,.40];
+ }
+ if(archetype==='slab' && (geology==='sandstone'||geology==='limestone')){coord[2][1]+=.08;coord[3][1]+=.14;coord[4][1]+=.10;coord[6][1]-=.05;}
+ if(archetype==='monolith' && geology==='basalt'){coord[2][0]+=.06;coord[3][1]-=.18;coord[4][0]-=.08;coord[7][0]-=.08;}
+ if(archetype==='gravel' && geology==='granite'){coord[2][0]-=.10;coord[3][1]+=.06;coord[5][0]+=.06;coord[8][0]-=.08;}
+ if(archetype==='blocky' && geology==='limestone'){coord[1][1]-=.06;coord[3][1]+=.04;coord[4][0]+=.05;coord[8][1]+=.03;}
+ if(archetype==='outcrop'){coord[3][1]-=.10*combo.oreSignature;coord[4][0]+=.05*combo.oreSignature;}
+ // Perfis predefinidos produzem mudanças topológicas perceptíveis entre as 5 variações.
+ if(variant%5===1){coord[2][1]+=.19;coord[3][1]+=.24;coord[6][0]-=.12;}
+ if(variant%5===2){coord[3][1]-=.40;coord[3][0]-=.24;coord[4][0]-=.12;}
+ if(variant%5===3){coord[1][0]-=.06;coord[2][0]+=.22;coord[3][0]+=.24;coord[7][0]+=.17;}
+ if(variant%5===4){coord[2][0]-=.18;coord[4][0]+=.12;coord[4][1]-=.17;coord[7][0]-=.15;}
+ const top=coord.map(([x,y],i)=>{
+  const shift=(v.lean*(i>=2&&i<=4?1.0:.6)+(r()-.5)*.065)*tw;
+  const yy=y+(i===3?v.peak:0)+(r()-.5)*(geology==='basalt'?.10:.16);
+  return pt(cx+x*tw*v.round+shift,ty+yy*topH);
+ });
+ const front=[5,6,7,8,0];
+ const bottoms={};
+ for(const [j,i] of front.entries()){
+  const source=top[i];
+  // Mantemos as bases de colunas largas: a largura não encolhe verticalmente.
+  const spread=(gemLike?0.72:(crystalLike?0.82:(family==='column'?1.04:family==='shard'?1.14:1.0)));
+  const targetX=cx+(source[0]-cx)*spread+(r()-.5)*width*.065;
+  const bottomY=footY+(r()-.5)*height*.065+(j===0||j===4?-height*.075:0);
+  bottoms[i]=pt(targetX,bottomY);
+ }
+ const inner=pt(cx+(r()-.5)*width*.08,ty+topH*.11);
+ const silhouette=[top[0],top[1],top[2],top[3],top[4],top[5],bottoms[5],bottoms[6],bottoms[7],bottoms[8],bottoms[0]];
+ return{top,bottoms,front,inner,silhouette,cfg,width,height,footY,cx,ty,family,archetype,geology,combo};
+}
+
+function paintRockFacet(c,mesh,colors,r,fractures){
+ const {top,bottoms,inner,silhouette,front,archetype,combo}=mesh;
+ fillPoly(c,silhouette,colors[0]);
+ const faceColors=[colors[1],colors[2],colors[1],colors[2]];
+ const quads=[];
+ for(let j=0;j<front.length-1;j++){
+  const a=front[j],b=front[j+1];
+  const face=[top[a],top[b],bottoms[b],bottoms[a]];
+  fillPoly(c,face,faceColors[j]);quads.push(face);
+  // Subplanos internos: grandes faces recebem massas quebradas secundárias.
+  if(mesh.width>16){
+   const t0=between(top[a],top[b],.18+r()*.14), t1=between(top[a],top[b],.62+r()*.10);
+   const b0=between(bottoms[a],bottoms[b],.16+r()*.12), b1=between(bottoms[a],bottoms[b],.68+r()*.08);
+   const cutA=between(t0,b0,.28+r()*.12), cutB=between(t1,b1,.34+r()*.18);
+   fillPoly(c,[t0,t1,cutB,cutA],j%2===0?colors[2]:colors[3]);
+   if(r()>.42){
+    const insetA=between(cutA,b0,.52), insetB=between(cutB,b1,.48);
+    fillPoly(c,[cutA,cutB,insetB,insetA],j%2===0?colors[0]:colors[1]);
+    linePoly(c,[cutA,cutB],colors[1]);
+   }
+  }
+  // Cada face tem subdivisão coerente: novos vértices nas arestas compartilhadas.
+  if(r() < .24+fractures*.35 && mesh.width>14){
+   const v1=between(top[a],bottoms[a],.29+r()*.21),v2=between(top[b],bottoms[b],.44+r()*.25);
+   fillPoly(c,[top[a],top[b],v2,v1],j===0?colors[2]:colors[j===3?1:3]);
+   linePoly(c,[v1,v2],colors[1]);
+  }
+ }
+ // A tampa recebe poucas faces amplas. Todas se encontram na mesma junção central.
+ fillPoly(c,top,colors[3]);
+ fillPoly(c,[top[0],top[1],top[2],inner,top[8]],colors[3]);
+ fillPoly(c,[top[2],top[3],top[4],top[5],top[6],inner],colors[4]);
+ fillPoly(c,[inner,top[6],top[7],top[8]],colors[3]);
+ linePoly(c,[top[2],inner,top[6]],colors[2]);
+ // Subplanos no topo para quebrar superfícies chapadas.
+ if(mesh.width>18){
+  const ridgeA=between(top[1],inner,.44), ridgeB=between(top[3],inner,.52), ridgeC=between(top[6],inner,.48);
+  fillPoly(c,[top[1],top[2],ridgeB,ridgeA],colors[4]);
+  fillPoly(c,[top[5],top[6],ridgeC,inner],colors[3]);
+  linePoly(c,[ridgeA,inner,ridgeC],colors[2]);
+ }
+ if((archetype==='slab' || mesh.geology==='sandstone'||mesh.geology==='limestone') && (combo.band||0)>=0){
+  // Lajes e rochas sedimentares: estratos amplos e paralelos.
+  for(const [j,face] of quads.entries()){
+   const y=.30+(j%2)*.12;
+   linePoly(c,[between(face[0],face[3],y),between(face[1],face[2],y)],colors[j%2?0:1]);
+   linePoly(c,[between(face[0],face[3],.58),between(face[1],face[2],.60)],colors[1]);
+   if(mesh.height>18)linePoly(c,[between(face[0],face[3],.78),between(face[1],face[2],.80)],colors[0]);
+  }
+ }else if(archetype==='monolith' || mesh.geology==='basalt'||mesh.geology==='tuff'){
+  for(const face of quads){
+   const ta=between(face[0],face[1],.56),ba=between(face[3],face[2],.56);
+   linePoly(c,[ta,ba],colors[1]);
+   linePoly(c,[between(face[0],face[1],.24),between(face[3],face[2],.30)],colors[0]);
+   if(r()>.42)linePoly(c,[between(face[0],face[1],.76),between(face[3],face[2],.80)],colors[2]);
+  }
+ }else if(archetype==='gravel'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.40),between(face[1],face[2],.56)],colors[1]);
+   if(r()>.48)linePoly(c,[between(face[0],face[1],.42),between(face[3],face[2],.48)],colors[0]);
+  }
+ }else if(mesh.geology==='slate'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.22),between(face[1],face[2],.52)],colors[1]);
+   if(r()>.56)linePoly(c,[between(face[0],face[3],.58),between(face[1],face[2],.84)],colors[0]);
+  }
+ }else if(archetype==='outcrop'){
+  for(const face of quads){
+   linePoly(c,[between(face[0],face[3],.18),between(face[1],face[2],.40)],colors[0]);
+   linePoly(c,[between(face[0],face[3],.62),between(face[1],face[2],.72)],colors[1]);
+  }
+ }
+ return quads;
+}
+
+function fracturePath(mesh,r,index){
+ const top=mesh.top,lower=mesh.bottoms;
+ const origins=[2,6,7,5,8,3,4];const n=origins[index%origins.length];
+ const x=top[n];
+ let target;
+ if(n>=5||n===0)target=lower[n===0?0:n]||lower[7];
+ else target=top[7];
+ const through=between(x,target,.38+r()*.26),finish=between(x,target,.68+r()*.20);
+ const jitter=(r()-.5)*mesh.width*.075;
+ through[0]+=Math.round(jitter);finish[0]+=Math.round(jitter*.43);
+ return [x,through,finish];
+}
+function paintCracksAndMinerals(c,mesh,colors,ore,r,s,d){
+ c.save();polygonPath(c,mesh.silhouette);c.clip();
+ const profile=oreProfiles[d.material]||oreProfiles.cobre;
+ const richness=clamp((d.grade-.34)/.58,0,1); // 0 = discreto, 1 = afloramento rico
+ const intensity=.45+richness*.95;
+ const age=s.geologicalAge||0, erosion=s.erosion||0, weathering=s.weathering||0;
+ const coalPurity=s.coalPurity||0, coalDepth=s.coalDepth||0;
+ const coalBias=d.material==='carvao'?(1+coalPurity*.18+coalDepth*.22):1;
+ const exposure=s.mineralization*profile.exposure*intensity*(1+weathering*.22)*coalBias*rarityOf(d).oreMultiplier;
+ const fractureCount=Math.round((mesh.family==='vein'?3:1)+(d.macro?2:(d.large?1:0))+s.fractures*3.6+weathering*2.4+age*1.2-(erosion*1.0)+(d.variant%3===2?1:0));
+ const oreWidth=Math.max(1,Math.min(3,Math.round((mesh.width>82?2:1)*(profile.thickness*(.72+richness*.95+age*.10+(d.material==='carvao'?coalPurity*.18:0))))));
+ const branchChance=Math.min(.92,.18+richness*.48+weathering*.12)*profile.branches;
+ for(let i=0;i<fractureCount;i++){
+  const crack=fracturePath(mesh,r,i+(d.variant%4));
+  linePoly(c,crack,colors[0],1);
+  if(i%3===1||((d.large||d.macro)&&r()>.46))linePoly(c,[crack[1],pt(crack[1][0]+(r()-.5)*mesh.width*.20,crack[1][1]+mesh.height*(.08+r()*.06))],colors[1]);
+  const rich=((mesh.family==='vein'?.88:.18)+d.grade*.22)*exposure;
+  if(r()<rich){
+   const start=between(crack[0],crack[1],.20-r()*.05),mid=crack[1],end=between(crack[1],crack[2],.78+r()*.10);
+   const darkW=Math.max(1,oreWidth+(richness>.68?1:0));
+   // sombra/base do veio
+   linePoly(c,[start,mid,end],ore.dark,darkW);
+   // corpo principal do minério
+   linePoly(c,[between(start,mid,.05),mid,between(mid,end,.96)],ore.base,oreWidth);
+   // linha de brilho mais longa em rochas ricas
+   linePoly(c,[between(start,mid,.18),between(mid,end,.26+richness*.30)],ore.light,1);
+   // bifurcações aumentam conforme a riqueza
+   const branches=(mesh.family==='vein'?2:1)+(d.large?1:0)+(d.macro?1:0)+(richness>.45?1:0)+(richness>.78?1:0);
+   for(let b=0;b<branches;b++){
+    if(r()>branchChance)continue;
+    const pivot=between(start,end,.22+r()*.52),dir=r()>.5?1:-1;
+    const tip=pt(pivot[0]+dir*(mesh.width*(.04+r()*(.06+richness*.07))),pivot[1]-(mesh.height*(.02+r()*(.07+richness*.07))));
+    linePoly(c,[pivot,tip],ore.base,Math.max(1,oreWidth-1));
+    if(r()<profile.glint*(.45+richness*.7)){c.fillStyle=ore.light;c.fillRect(tip[0],tip[1],1+(richness>.72&&r()>.6?1:0),1);}
+   }
+   // bolsão principal em depósitos ricos
+   if(richness>.58 && r()<.72){
+    const pocket=between(start,end,.26+r()*.44);
+    c.fillStyle=ore.dark;c.fillRect(pocket[0],pocket[1],1+(oreWidth>1?1:0),1);
+    c.fillStyle=ore.base;c.fillRect(pocket[0]+1,pocket[1],1+(richness>.80?1:0),1);
+    if(richness>.74){c.fillStyle=ore.light;c.fillRect(pocket[0]+1,pocket[1]-1,1,1);} 
+   }
+   if(r()<profile.glint*(.30+richness*.72)){
+    c.fillStyle=ore.light;
+    c.fillRect(mid[0],mid[1],1+(oreWidth>1?1:0),1);
+   }
+   if(d.material==='cobre' && richness>.55 && r()>.46){c.fillStyle=ore.accent;c.fillRect(mid[0]+1,mid[1]+1,1,1);} 
+  }
+ }
+ if(d.material==='carvao'){
+  const seams=2+Math.round(coalDepth*3+coalPurity*2);
+  for(let i=0;i<seams;i++){
+   const yBase=Math.round(mesh.ty+mesh.height*(.24+.12*i+.08*r()));
+   const x0=Math.round(mesh.cx-mesh.width*(.30+.08*r())), x1=Math.round(mesh.cx+mesh.width*(.26+.10*r()));
+   c.strokeStyle=i%2===0?ore.light:ore.dark; c.lineWidth=1; c.beginPath(); c.moveTo(x0,yBase);
+   const midX=Math.round((x0+x1)/2), curve=Math.round((r()-.5)*mesh.height*.05);
+   c.lineTo(midX,yBase+curve); c.lineTo(x1,yBase+Math.round((r()-.5)*mesh.height*.04)); c.stroke();
+   if(r()>.45){c.strokeStyle=ore.base; c.beginPath(); c.moveTo(x0,yBase+1); c.lineTo(x1-1,yBase+1); c.stroke();}
+  }
+ }
+ // Bolsões expostos crescem com a riqueza do depósito.
+ const pockets=Math.round(s.mineralization*(mesh.family==='vein'?7:3)*(.55+richness*1.55)*d.grade*profile.pockets*rarityOf(d).oreMultiplier);
+ for(let i=0;i<pockets;i++){
+  const base=mesh.top[5+Math.floor(r()*4)],x=base[0]+Math.round((r()-.5)*mesh.width*.18),y=base[1]+Math.round(r()*mesh.height*(.16+.12*richness));
+  c.fillStyle=ore.dark;c.fillRect(x,y,1,1);
+  c.fillStyle=r()<profile.glint*(.50+richness*.5)?ore.light:ore.base;
+  c.fillRect(x+(r()>.62?1:0),y,1+(richness>.72&&r()>.72?1:0),1);
+  if(richness>.66){c.fillStyle=ore.base;c.fillRect(x,y+1,1,1);} 
+  if(d.material==='ouro'&&r()>.48){c.fillStyle=ore.accent;c.fillRect(x,y-1,1,1);} 
+  if(d.material==='prata'&&r()>.58){c.fillStyle=ore.accent;c.fillRect(x+1,y,1,1);} 
+  if((d.material==='quartzo'||d.material==='quartzo_leitoso'||d.material==='quartzo_fume'||d.material==='quartzo_roseo'||d.material==='quartzo_hialino')&&r()>.46){c.fillStyle=ore.light;c.fillRect(x+1,y-1,1,1);} 
+  if(d.material==='carvao'&&r()>.62){c.fillStyle=ore.dark;c.fillRect(x,y+1,1,1);} 
+  if(d.material==='enxofre'&&r()>.54){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1);} 
+  if(d.material==='gemas'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);} 
+  if(d.material==='rubi'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);}
+  if(d.material==='safira'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x+1,y,1,1);}
+  if(d.material==='esmeralda'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y,1,1); c.fillStyle=ore.light; c.fillRect(x,y,1,1);}
+  if(d.material==='ametista'&&r()>.42){c.fillStyle=ore.accent;c.fillRect(x+1,y-1,1,1); c.fillStyle=ore.light; c.fillRect(x,y+1,1,1);} 
+ }
+ if(d.material==='enxofre' || crystalMaterials.includes(d.material)){
+  const spikes=2+Math.round((d.grade+.2)*2)+(gemKeys.includes(d.material)?1:0);
+  for(let i=0;i<spikes;i++){
+   const base=mesh.top[2+Math.floor(r()*4)], h=Math.round(mesh.height*(.10+r()*.12)), dx=Math.round((r()-.5)*mesh.width*.10);
+   c.fillStyle=ore.base; c.fillRect(base[0]+dx,base[1]-h,1+((r()>.55||gemKeys.includes(d.material))?1:0),h);
+   c.fillStyle=ore.light; c.fillRect(base[0]+dx,base[1]-h,1,1);
+   if(gemKeys.includes(d.material) && r()>.38)c.fillRect(base[0]+dx+1,base[1]-Math.max(1,h-1),1,1);
+  }
+ }
+ c.restore();
+ linePoly(c,mesh.silhouette.concat([mesh.silhouette[0]]),colors[0]);
+ linePoly(c,[mesh.top[5],mesh.top[6],mesh.top[7],mesh.top[8],mesh.top[0]],colors[1]);
+}
+function paintMoss(c,mesh,geo,r,s){
+ if(s.moss<=0)return;
+ const top=mesh.top;
+ const mossPalettes={
+  temperate:['#2d3e1c','#466129','#5a7c34','#7ea34d','#a3c56f'],
+  coastal:['#31431e','#4b6630','#638544','#85aa5e','#aacc7c'],
+  alpine:['#334532','#4b6450','#66806a','#85a087','#abc0aa'],
+  volcanic:['#384021','#4d5d2f','#667841','#879a58','#adc173'],
+  desert:['#455020','#5a6a2a','#72853e','#8fa854','#b2c678']
+ };
+ const mp=mossPalettes[s.biome]||mossPalettes.temperate;
+ const dark=mp[1], base=mp[2], mid=mp[3], light=mp[4];
+ c.save();polygonPath(c,mesh.silhouette);c.clip();
+ const age=s.geologicalAge||0, erosion=s.erosion||0, weathering=s.weathering||0;
+ const patches=Math.max(1,Math.round(s.moss*7.2+age*2.1+weathering*.9-erosion*.35));
+ for(let j=0;j<patches;j++){
+  const ix=(j*2+Math.floor(r()*4))%5;
+  const a=between(top[ix],top[ix+1],r()*.34), b=between(top[ix],top[ix+1],.48+r()*.42);
+  const drift=Math.max(4,mesh.height*(.12+.14*r()));
+  const drop=Math.max(2,mesh.height*(.07+.10*r()));
+  const puffCount=2+Math.round(r()*3+age*2);
+  for(let p=0;p<puffCount;p++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+r()*drift*.72);
+   const rw=1+Math.round(r()*2), rh=1+Math.round(r()*2);
+   c.fillStyle=p%3===0?light:(p%2===0?mid:base);
+   c.fillRect(px-rw,py-rh,rw*2,rh*2);
+   if(r()>.42){c.fillStyle=base; c.fillRect(px-rw+1,py-rh+1,Math.max(1,rw),Math.max(1,rh));}
+  }
+  const skirt=[a,b,pt(b[0],b[1]+drop*.36),pt(lerp(a[0],b[0],.88),b[1]+drift*.34),pt(lerp(a[0],b[0],.66),a[1]+drift*.84),pt(lerp(a[0],b[0],.42),a[1]+drift),pt(lerp(a[0],b[0],.18),a[1]+drift*.62),pt(a[0],a[1]+drop*.42)];
+  fillPoly(c,skirt,base);
+  const minX=Math.round(Math.min(...skirt.map(p=>p[0]))), maxX=Math.round(Math.max(...skirt.map(p=>p[0])));
+  const minY=Math.round(Math.min(...skirt.map(p=>p[1]))), maxY=Math.round(Math.max(...skirt.map(p=>p[1])));
+  c.fillStyle=dark;
+  for(let yy=minY;yy<=maxY;yy++)for(let xx=minX;xx<=maxX;xx++) if(rand(xx,yy,mesh.cx+yy+21)<.08+.08*weathering && yy>minY && yy<maxY) c.fillRect(xx,yy,1,1);
+  c.fillStyle=mid;
+  for(let m=0;m<4+Math.round(age*4);m++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+1+r()*drift*.88);
+   c.fillRect(px,py,1+(r()>.55?1:0),1);
+  }
+  c.fillStyle=light;
+  for(let m=0;m<5+Math.round(age*4);m++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.min(a[1],b[1])+1+r()*drift*.60);
+   if(r()>.20)c.fillRect(px,py,1,1);
+  }
+  c.fillStyle=dark;
+  const fringes=3+Math.round(r()*4+age*2);
+  for(let f=0;f<fringes;f++){
+   const px=Math.round(lerp(a[0],b[0],r())), py=Math.round(Math.max(a[1],b[1])+drift*(.24+r()*.58));
+   c.fillRect(px,py,1,1+(r()>.35?1:0));
+  }
+ }
+ c.restore();
+}
+
+function paintBaseDebris(c,mesh,geo,r,s){
+ const foot=mesh.footY, cx=mesh.cx, archetype=mesh.archetype||familyArchetype(mesh.family);
+ c.save();
+ c.globalAlpha=.18+.16*s.surfaceDetail;
+ c.fillStyle=geo.colors[0];
+ c.beginPath();c.ellipse(cx,foot+1,Math.max(3,mesh.width*.30),Math.max(1.5,mesh.height*.045),0,0,Math.PI*2);c.fill();
+ c.globalAlpha=1;
+ const pebbles=Math.max(2,Math.round(2+s.surfaceDetail*5+(mesh.width>36?2:0)+(archetype==='gravel'?5:0)+(archetype==='outcrop'?2:0)+(s.erosion||0)*5+(s.geologicalAge||0)*2));
+ for(let i=0;i<pebbles;i++){
+  const px=Math.round(cx+(r()-.5)*mesh.width*.72), py=Math.round(foot-1+r()*3);
+  const ww=r()>.72?2:1, hh=r()>.78?2:1;
+  c.fillStyle=i%3===0?geo.colors[1]:(i%3===1?geo.colors[2]:geo.colors[0]);
+  c.fillRect(px,py,ww,hh);
+ }
+ c.restore();
+}
+
+function paintStone(c,{cx,footY,width,height,family,variant,d,s,seed}){
+ const r=rng(seed);const geo=geoColor(d,s),colors=geo.colors,ore=oreColors[d.material];
+ const mesh=makeRockMesh(cx,footY,width,height,family,variant,d.geology||s.geology,d.material,s,r);
+ // Sombra pertence ao sprite transparente e acompanha a largura da base.
+ c.save();c.fillStyle='#202321';c.globalAlpha=.23;c.beginPath();c.ellipse(cx+2,footY-1,width*.58,Math.max(2.2,height*.075),0,0,Math.PI*2);c.fill();c.globalAlpha=1;
+ paintRockFacet(c,mesh,colors,r,s.fractures);
+ paintCracksAndMinerals(c,mesh,colors,ore,r,s,d);
+ paintMoss(c,mesh,geo,r,s);
+ paintBaseDebris(c,mesh,geo,r,s);
+ c.restore();
+ return mesh;
+}
+// v2.2 - Rasterizador nativo com pixel art realista, inspirado no fluxo asset-based do index(9).html.
+// Trabalha com pixels discretos, preserva silhuetas e recorta detalhes internos.
+function makePixelCanvas(width,height){const cv=makeCanvas(1,1);cv.width=width;cv.height=height;return cv;}
+function pixelFinish(source,d,s){
+ if(s.pixelStyle==='original')return source;
+ const tier=d.tier||'normal';
+ const style=s.pixelStyle||'realistic';
+ const styleCfg={
+  realistic:{base:1.22,detailBoost:1.40,edge:0.82,cluster:1.34,cleanup:2,contrast:.56},
+  pixel:{base:1.78,detailBoost:1.10,edge:0.68,cluster:1.04,cleanup:1,contrast:.42},
+  detailed:{base:1.34,detailBoost:1.58,edge:0.76,cluster:1.28,cleanup:2,contrast:.62},
+  retro:{base:2.82,detailBoost:.62,edge:1.00,cluster:.72,cleanup:0,contrast:.56}
+ }[style]||{base:2.22,detailBoost:.90,edge:0.58,cluster:.92,cleanup:1,contrast:.36};
+ const gridFactor=s.pixelSize==='fine'?.82:(s.pixelSize==='coarse'?1.24:1);
+ const factor=styleCfg.base*gridFactor;
+ const w=Math.max(24,Math.round(source.width/factor)),h=Math.max(22,Math.round(source.height/factor));
+ const mini=makePixelCanvas(w,h),cx=mini.getContext('2d',{willReadFrequently:true});
+ cx.imageSmoothingEnabled=false;cx.drawImage(source,0,0,w,h);
+ const img=cx.getImageData(0,0,w,h),data=img.data;
+ const geo=geoColor(d,s),rocks=geo.colors.map(rgb),ore=oreColors[d.material];
+ const palette=[...rocks,rgb(geo.moss),rgb(ore.dark),rgb(ore.base),rgb(ore.light)];
+ const pixCount=w*h,kinds=new Int8Array(pixCount);
+ const seed=hash(d.seed,811,31),r=rng(seed),det=s.surfaceDetail,geology=d.geology||'granite',archetype=familyArchetype(d.family||d.forma||'round');
+ const combo=comboProfile(d.family||d.forma||'round',geology,d.material||'pedra');
+ const erosion=s.erosion||0, weathering=s.weathering||0, age=s.geologicalAge||0;
+ const quartzLike=(d.material==='quartzo'||(typeof quartzKeys!=='undefined'&&quartzKeys.includes(d.material)));
+ const gemLike=(typeof gemKeys!=='undefined'&&gemKeys.includes(d.material));
+ const famDetail=( {slab:1.06,monolith:1.22,gravel:1.34,blocky:1.12,outcrop:1.38}[archetype]||1 )*(combo.detail||1)*(1+weathering*.16+age*.10)*rarityOf(d).detail;
+ const famChip=( {slab:.82,monolith:1.10,gravel:1.30,blocky:1.0,outcrop:1.22}[archetype]||1 )*(combo.chip||1)*(1+weathering*.18+erosion*.08);
+ const scaleDistance=(a,b)=>{const dr=a[0]-b[0],dg=a[1]-b[1],db=a[2]-b[2];return dr*dr*.85+dg*dg*1.08+db*db*.72;};
+ for(let i=0;i<pixCount;i++){
+  const k=i*4,a=data[k+3];
+  if(a<115){
+   if(a<26){data[k]=data[k+1]=data[k+2]=data[k+3]=0;}
+   else {data[k]=20;data[k+1]=22;data[k+2]=23;data[k+3]=Math.round(Math.min(62,Math.max(30,a)));}
+   kinds[i]=-1;continue;
+  }
+  const actual=[data[k],data[k+1],data[k+2]];
+  let target=0,best=Infinity;
+  for(let j=0;j<palette.length;j++){const dist=scaleDistance(actual,palette[j]);if(dist<best){best=dist;target=j;}}
+  kinds[i]=target;
+  const c=palette[target];data[k]=c[0];data[k+1]=c[1];data[k+2]=c[2];data[k+3]=255;
+ }
+ const idx=(x,y)=>y*w+x;
+ const inb=(x,y)=>x>=0&&y>=0&&x<w&&y<h;
+ const isRock=(x,y)=>inb(x,y)&&kinds[idx(x,y)]>=0&&kinds[idx(x,y)]<=4;
+ const inner=(x,y)=>isRock(x,y)&&isRock(x-1,y)&&isRock(x+1,y)&&isRock(x,y-1)&&isRock(x,y+1);
+ const putKind=(x,y,v)=>{x|=0;y|=0;if(!inb(x,y))return false;const p=idx(x,y);if(kinds[p]<0||kinds[p]>4)return false;v=clamp(v,0,4)|0;kinds[p]=v;const k=p*4,c=rocks[v];data[k]=c[0];data[k+1]=c[1];data[k+2]=c[2];data[k+3]=255;return true;};
+ const putEdge=(x,y,color)=>{if(!inb(x,y))return;const p=idx(x,y);if(kinds[p]<0||kinds[p]>4)return;const k=p*4;for(let q=0;q<3;q++)data[k+q]=color[q];};
+
+ const modRGB=(x,y,dr,dg,db)=>{if(!inb(x,y))return;const p=idx(x,y),v=kinds[p];if(v<0)return;const k=p*4;data[k]=clamp(data[k]+dr,0,255);data[k+1]=clamp(data[k+1]+dg,0,255);data[k+2]=clamp(data[k+2]+db,0,255);};
+ const geoTint=(x,y,intensity=1)=>{
+  const p=idx(x,y),v=kinds[p]; if(v<0||v>4)return;
+  const broad=fbm(x/9.5,y/8.5,seed+901), medium=fbm(x/4.4,y/4.1,seed+921), grain=fbm(x/1.7,y/1.9,seed+947);
+  let dr=0,dg=0,db=0;
+  if(geology==='sandstone'||geology==='limestone'){
+    dr+=(broad*7 + medium*4 + grain*2)*intensity; dg+=(broad*5 + medium*3)*intensity; db+=(broad*2 - medium*1)*intensity;
+    if(((y+Math.floor(x*.35))%7===0)&& grain>.15){dr+=5*intensity;dg+=3*intensity;}
+  }else if(geology==='granite'){
+    dr+=(broad*4 + grain*3)*intensity; dg+=(medium*3)*intensity; db+=(grain*2-broad*1)*intensity;
+    if(grain>.48){dr+=3*intensity;db+=2*intensity;} else if(grain<-.44){dg+=2*intensity;}
+  }else if(geology==='basalt'){
+    dr+=(broad*2 - medium*2)*intensity; dg+=(broad*2 - medium*2)*intensity; db+=(broad*3 + medium*1)*intensity;
+    if(grain<-.42){dr-=5*intensity;dg-=4*intensity;db-=3*intensity;}
+  }else if(geology==='slate'){
+    const band=fbm((x+y*.55)/4.4,y/7.8,seed+963);
+    dr+=(band*2 + medium*2)*intensity; dg+=(band*2 + medium*2)*intensity; db+=(band*4 + grain*2)*intensity;
+  }else{
+    dr+=(broad*4 + medium*2)*intensity; dg+=(broad*3 + grain*1)*intensity; db+=(broad*2)*intensity;
+  }
+  modRGB(x,y,Math.round(dr),Math.round(dg),Math.round(db));
+ };
+ // Iluminação por planos: sombra de canto inferior direito, luz de canto superior esquerdo.
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),col=kinds[p];if(col<0||col>4)continue;
+  if(col>4)continue;
+  const topOpen=!isRock(x,y-1), leftOpen=!isRock(x-1,y), rightOpen=!isRock(x+1,y), bottomOpen=!isRock(x,y+1);
+  const broad=fbm(x/8.4,y/7.1,seed+31),medium=fbm(x/4.6,y/4.1,seed+211),small=fbm(x/2.2,y/2.0,seed+401);
+  const slope=(broad*.72+medium*.28);
+  let target=col;
+  if(topOpen||leftOpen)target+=1;
+  if(bottomOpen||rightOpen)target-=1;
+  if(style!=='retro'){
+   if(slope>.28+styleCfg.contrast*.16)target+=1;
+   else if(slope<-.34-styleCfg.contrast*.11)target-=1;
+   if(inner(x,y) && det>.08){
+    if(small>.62 && rand(x>>1,y>>1,seed+99)<det*.12*styleCfg.detailBoost)target+=1;
+    else if(small<-.58 && rand(x>>1,y>>1,seed+149)<det*.10*styleCfg.detailBoost)target-=1;
+   }
+  }
+  putKind(x,y,target);
+ }
+
+ // Macro-subplanos e manchas minerais: quebram superfícies muito lisas.
+ if(style!=='retro' && det>.08){
+  const planeCount=Math.round((w*h)*(.0012+.0018*det)*styleCfg.detailBoost);
+  for(let i=0;i<planeCount;i++){
+   const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+   if(!inner(x,y))continue;
+   const base=kinds[idx(x,y)]; if(base<1||base>3)continue;
+   const delta=(r()>.56?1:-1), shade=clamp(base+delta,0,4);
+   const len=2+Math.floor(r()*4)+(geology==='plate'?1:0), tall=2+Math.floor(r()*3);
+   const orient=geology==='slate'?'diag':(geology==='basalt'?'vert':(geology==='sandstone'||geology==='limestone'?'hori':'blob'));
+   for(let yy=0;yy<tall;yy++)for(let xx=0;xx<len;xx++){
+    let px=x+xx, py=y+yy;
+    if(orient==='diag')py=y+yy-Math.floor(xx*.45);
+    else if(orient==='vert'){px=x+Math.floor(yy*.34);py=y+xx;}
+    else if(orient==='hori'){px=x+xx;py=y+Math.floor(yy*.5);}
+    if(!inner(px,py))continue;
+    if((orient==='blob' && (xx+yy>len+tall-2) && r()>.35))continue;
+    putKind(px,py,shade);
+    if(r()>.72 && inner(px+1,py))putKind(px+1,py,base);
+   }
+  }
+ }
+
+ // Texturas guiadas pela geologia, sempre em pequenos clusters em vez de ruído solto.
+ const density=style==='retro'?.50:(style==='detailed'?1.28:(style==='realistic'?1.18:.92));
+ const n=Math.round(w*h*det*famDetail*styleCfg.cluster*density*(geology==='sandstone'?.0074:.0060));
+ for(let j=0;j<n;j++){
+  const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+  if(!inner(x,y))continue;
+  let base=kinds[idx(x,y)];if(base<=0||base>=4)continue;
+  const ix=clamp(base+(r()>.46?1:-1),0,4);
+  if(geology==='granite'){
+   putKind(x,y,ix); if(r()>.36)putKind(x+1,y,ix); if(r()>.60)putKind(x,y+1,Math.max(0,ix-1));
+   if(r()>.82){putKind(x+1,y+1,ix); if(inner(x+2,y+1))putKind(x+2,y+1,Math.max(0,ix-1));}
+  }else if(geology==='tuff'){
+   putKind(x,y,Math.max(0,ix-1)); if(r()>.42)putKind(x+1,y,ix); if(r()>.70)putKind(x,y+1,ix);
+   if(r()>.76 && inner(x+1,y+1))putKind(x+1,y+1,Math.max(0,ix-1));
+  }else if(geology==='sandstone'||geology==='limestone'){
+   const len=3+Math.floor(r()*Math.min(9,w*.18));
+   for(let t=0;t<len;t++)putKind(x+t,y+(t>4&&r()>.74?1:0),ix);
+   if(style!=='retro'&&r()>.52)for(let t=0;t<len-1;t++)putKind(x+t,y+1,Math.max(0,ix-1));
+   if(r()>.78)for(let t=1;t<len-2;t+=2)putKind(x+t,y-1,Math.min(4,ix+1));
+  }else if(geology==='basalt'){
+   const len=3+Math.floor(r()*Math.min(9,h*.18));
+   for(let t=0;t<len;t++)putKind(x+Math.floor(t/4),y+t,Math.max(0,ix-1));
+   if(style!=='retro'&&r()>.54)for(let t=1;t<len-1;t++)putKind(x+1,y+t,ix);
+   if(r()>.74)putKind(x-1,y+Math.floor(len*.5),Math.min(4,ix+1));
+  }else if(geology==='slate'){
+   const len=3+Math.floor(r()*6);
+   for(let t=0;t<len;t++)putKind(x+t,y-Math.floor(t*.44),ix);
+   if(style!=='retro'&&r()>.58)for(let t=0;t<len-1;t++)putKind(x+t,y+1-Math.floor(t*.44),Math.max(0,ix-1));
+   if(r()>.76)for(let t=1;t<len-1;t+=2)putKind(x+t,y-Math.floor(t*.44)-1,Math.min(4,ix+1));
+  }else{
+   const len=2+Math.floor(r()*5);
+   for(let t=0;t<len;t++)putKind(x+t,y-Math.floor(t*.28),ix);
+   if(style==='realistic'&&r()>.58)for(let t=0;t<len-1;t++)putKind(x+t,y+1-Math.floor(t*.28),Math.max(0,ix-1));
+  }
+ }
+ // Microfissuras: pequenos cortes escuros integrados à superfície.
+ if(style!=='retro' && det>.14){
+  const cracks=Math.round((w+h)*.085*det*famDetail*styleCfg.detailBoost);
+  for(let i=0;i<cracks;i++){
+   const x=2+Math.floor(r()*(w-4)), y=2+Math.floor(r()*(h-4));
+   if(!inner(x,y))continue;
+   const len=2+Math.floor(r()*4);
+   const dir=geology==='basalt'?'vert':(geology==='slate'?'diag':(r()>.52?'diag':'hori'));
+   for(let t=0;t<len;t++){
+    let px=x+t, py=y;
+    if(dir==='vert'){px=x+(t>2?1:0);py=y+t;}
+    else if(dir==='diag'){px=x+t;py=y-Math.floor(t*.55);}
+    if(!inner(px,py))continue;
+    const v=kinds[idx(px,py)]; if(v<0||v>4)continue;
+    putKind(px,py,Math.max(0,v-2));
+    if(r()>.68 && inner(px,py-1))putKind(px,py-1,Math.min(4,v+1));
+   }
+  }
+ }
+ // Lascas e quinas: quebra a monotonia sem perder legibilidade.
+ if(det>.10 && style!=='retro'){
+  const chips=Math.round((w+h)*.075*det*famChip*styleCfg.detailBoost);
+  for(let i=0;i<chips;i++){
+   const x=1+Math.floor(r()*(w-2)), y=1+Math.floor(r()*(h-2));
+   if(!isRock(x,y) || inner(x,y))continue;
+   const dark=!isRock(x,y+1)||!isRock(x+1,y);
+   const ref=Math.max(0,Math.min(4,(kinds[idx(x,y)]||2)+(dark?-1:1)));
+   putKind(x,y,ref);
+   if(r()>.52 && isRock(x+1,y))putKind(x+1,y,ref);
+   if(r()>.72 && isRock(x,y+1))putKind(x,y+1,Math.max(0,ref-1));
+   // pequeno lascado puxando a borda para dentro
+   if(r()>.78 && isRock(x-1,y) && !inner(x-1,y))putKind(x-1,y,Math.max(0,ref-1));
+  }
+  // Assentamento na base: reforça contato com o solo e peso da rocha.
+  for(let y=Math.floor(h*.72);y<h-1;y++)for(let x=1;x<w-1;x++){
+   if(!isRock(x,y))continue;
+   if(!isRock(x,y+1)||!isRock(x-1,y+1)||!isRock(x+1,y+1)){
+    const v=kinds[idx(x,y)];
+    if(rand(x,y,seed+1451)>.22)putKind(x,y,Math.max(0,v-1));
+    if(rand(x,y,seed+1459)>.76 && inb(x,y-1) && isRock(x,y-1))putKind(x,y-1,Math.max(0,v-1));
+   }
+  }
+ }
+ // Limpeza de clusters isolados para a arte ficar mais natural e menos ruidosa.
+ const smoothPasses=styleCfg.cleanup;
+ for(let pass=0;pass<smoothPasses;pass++){
+  const before=kinds.slice();
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=before[p]; if(v<0||v>4)continue;
+   const count=[0,0,0,0,0]; let rockN=0;
+   for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++){
+    if(!xx&&!yy)continue; const nv=before[idx(x+xx,y+yy)]; if(nv>=0&&nv<=4){count[nv]++; rockN++;}
+   }
+   if(rockN<3)continue;
+   let best=v,bestCount=count[v];
+   for(let c=0;c<5;c++) if(count[c]>bestCount){best=c;bestCount=count[c];}
+   if(best!==v && bestCount>=5) putKind(x,y,best);
+  }
+ }
+ // Bevel final / contorno seletivo.
+ const before=kinds.slice();
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),v=before[p]; if(v<0||v>4)continue;
+  const topOpen=!isRock(x,y-1)||!isRock(x-1,y-1), bottomOpen=!isRock(x,y+1)||!isRock(x+1,y+1);
+  if(topOpen){
+   if(style==='retro')putEdge(x,y,rocks[4]);
+   else if(rand(x>>1,y>>1,seed+601)>.28)putKind(x,y,Math.min(4,v+1));
+  }else if(bottomOpen){
+   if(style==='retro')putEdge(x,y,rocks[0]);
+   else if(rand(x>>1,y>>1,seed+677)>.34*styleCfg.edge)putKind(x,y,Math.max(0,v-1));
+  }
+ }
+ // Mantém minério e musgo legíveis, mas integra melhor à pedra.
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const p=idx(x,y),v=kinds[p];
+  if(v===5){ // musgo
+   const k=p*4; if(style==='retro'){data[k]=rgb(geo.moss)[0];data[k+1]=rgb(geo.moss)[1];data[k+2]=rgb(geo.moss)[2];}
+   else {
+    if(rand(x,y,seed+701)>.48){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+10,0,255);}
+    if(rand(x,y,seed+702)<.16){data[k]=clamp(data[k]-5,0,255);data[k+1]=clamp(data[k+1]-3,0,255);}
+    if(rand(x,y,seed+703)<.12){data[k+1]=clamp(data[k+1]+8,0,255);}
+   }
+  }else if(v>=6){
+   const k=p*4,profile=oreProfiles[d.material]||oreProfiles.cobre,richness=clamp((d.grade-.34)/.58,0,1);
+   if(style==='realistic'&&rand(x,y,seed+733)>.58-(richness*.12) && isRock(x-1,y)&&isRock(x+1,y)){
+    data[k]=clamp(data[k]+10+richness*8,0,255);data[k+1]=clamp(data[k+1]+7+richness*4,0,255);data[k+2]=clamp(data[k+2]+4+richness*3,0,255);
+   }
+   // veios mais legíveis: engrossa pequenas sequências minerais conforme a riqueza.
+   const nearOre=(inb(x-1,y)&&kinds[idx(x-1,y)]>=6)||(inb(x+1,y)&&kinds[idx(x+1,y)]>=6)||(inb(x,y-1)&&kinds[idx(x,y-1)]>=6)||(inb(x,y+1)&&kinds[idx(x,y+1)]>=6);
+   if(nearOre && style!=='retro' && rand(x,y,seed+755)<profile.thickness*(.08+richness*.20)){
+    const nx=x+(rand(x,y,seed+766)>.5?1:-1), ny=y+(rand(x,y,seed+777)>.5?0:1);
+    if(inb(nx,ny) && kinds[idx(nx,ny)]>=0 && kinds[idx(nx,ny)]<=4){
+      const q=idx(nx,ny),qk=q*4;
+      kinds[q]=7; data[qk]=palette[7][0]; data[qk+1]=palette[7][1]; data[qk+2]=palette[7][2]; data[qk+3]=255;
+    }
+   }
+   if(d.material==='ouro' && rand(x,y,seed+788)<profile.glint*(.10+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]-1,0,255);} 
+   if(d.material==='prata'&& rand(x,y,seed+799)<profile.glint*(.12+richness*.22)*combo.oreSignature){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+12,0,255);data[k+2]=clamp(data[k+2]+16,0,255);} 
+   if(d.material==='ferro' && rand(x,y,seed+810)<profile.glint*(.08+richness*.16)*combo.oreSignature){data[k]=clamp(data[k]+6,0,255);data[k+1]=clamp(data[k+1]-5,0,255);data[k+2]=clamp(data[k+2]-7,0,255);} 
+   if(d.material==='cobre' && rand(x,y,seed+821)<profile.glint*(.06+richness*.16)*combo.oreSignature){data[k+1]=clamp(data[k+1]+7,0,255); if(rand(x,y,seed+822)<.06*combo.oreSignature){data[k]=clamp(data[k]-8,0,255);data[k+1]=clamp(data[k+1]+14,0,255);data[k+2]=clamp(data[k+2]+4,0,255);}} 
+   if((d.material==='quartzo'||d.material==='quartzo_leitoso'||d.material==='quartzo_fume'||d.material==='quartzo_roseo'||d.material==='quartzo_hialino') && rand(x,y,seed+823)<profile.glint*(.14+richness*.18)*combo.oreSignature){data[k]=clamp(data[k]+16,0,255);data[k+1]=clamp(data[k+1]+12,0,255);data[k+2]=clamp(data[k+2]+18,0,255);} 
+   if(d.material==='carvao' && rand(x,y,seed+824)<profile.glint*(.04+richness*.08+((s.coalPurity||0)*.08))*combo.oreSignature){const d1=12+Math.round((s.coalDepth||0)*8);data[k]=clamp(data[k]-d1,0,255);data[k+1]=clamp(data[k+1]-d1,0,255);data[k+2]=clamp(data[k+2]-d1,0,255);} 
+   if(d.material==='enxofre' && rand(x,y,seed+825)<profile.glint*(.12+richness*.20)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+16,0,255);} 
+   if(d.material==='gemas' && rand(x,y,seed+826)<profile.glint*(.12+richness*.26)*combo.oreSignature){data[k]=clamp(data[k]+4,0,255);data[k+1]=clamp(data[k+1]+18,0,255);data[k+2]=clamp(data[k+2]+20,0,255);} 
+   if(d.material==='rubi' && rand(x,y,seed+827)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+22,0,255);data[k+1]=clamp(data[k+1]-2,0,255);data[k+2]=clamp(data[k+2]+4,0,255);} 
+   if(d.material==='safira' && rand(x,y,seed+828)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+6,0,255);data[k+1]=clamp(data[k+1]+14,0,255);data[k+2]=clamp(data[k+2]+24,0,255);} 
+   if(d.material==='esmeralda' && rand(x,y,seed+829)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]-2,0,255);data[k+1]=clamp(data[k+1]+20,0,255);data[k+2]=clamp(data[k+2]+8,0,255);} 
+   if(d.material==='ametista' && rand(x,y,seed+830)<profile.glint*(.14+richness*.24)*combo.oreSignature){data[k]=clamp(data[k]+18,0,255);data[k+1]=clamp(data[k+1]+6,0,255);data[k+2]=clamp(data[k+2]+24,0,255);} 
+   if(gemLike && ((x+y)%4===0 || rand(x,y,seed+831)<.18)){data[k]=clamp(data[k]+12,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]+10,0,255);} 
+   if(quartzLike && ((x+y)%5===0 || rand(x,y,seed+832)<.12)){data[k]=clamp(data[k]+8,0,255);data[k+1]=clamp(data[k+1]+8,0,255);data[k+2]=clamp(data[k+2]+10,0,255);} 
+  }
+ }
+
+ // Modulação tonal final: reduz áreas chapadas e aproxima a superfície de rocha real.
+ if(style!=='retro'){
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=kinds[p];
+   if(v<0||v>4)continue;
+   // variação cromática sutil por geologia
+   if(inner(x,y)) geoTint(x,y,.75 + det*.55);
+   else geoTint(x,y,.38 + det*.24);
+   // pontos minerais e poros suaves
+   const grain=fbm(x/1.55,y/1.65,seed+1021), broad=fbm(x/7.8,y/7.2,seed+1033);
+   if(inner(x,y) && grain>.56 && rand(x>>1,y>>1,seed+1041)<det*.20){modRGB(x,y,6,5,4);}
+   if(inner(x,y) && grain<-.62 && rand(x>>1,y>>1,seed+1053)<det*.18){modRGB(x,y,-7,-6,-5);}
+   // transições menos sólidas nas superfícies amplas
+   if((geology==='sandstone'||geology==='limestone') && (y+Math.floor(x*.28))%6===0 && broad>.06) modRGB(x,y,4,3,2);
+   if(geology==='slate' && (x+y)%7===0) modRGB(x,y,-2,-2,2);
+   if(geology==='granite' && rand(x,y,seed+1069)<.05*det){modRGB(x,y,5,3,3);}
+   if(geology==='basalt' && rand(x,y,seed+1079)<.06*det){modRGB(x,y,-4,-3,-2);}
+   if(archetype==='slab' && (y+Math.floor(x*.16))%5===0 && inner(x,y))modRGB(x,y,3,2,1);
+   if(archetype==='monolith' && x%6===0 && inner(x,y))modRGB(x,y,-3,-2,-1);
+   if(archetype==='gravel' && rand(x,y,seed+1087)<.11*det){modRGB(x,y,(rand(x,y,seed+1088)>.5?5:-5),(rand(x,y,seed+1089)>.5?4:-4),(rand(x,y,seed+1090)>.5?3:-3));}
+   if(archetype==='outcrop' && ((x+y)%6===0 || rand(x,y,seed+1091)<.08*det))modRGB(x,y,4,3,2);
+   if((combo.band||0)>0 && inner(x,y) && (y+Math.floor(x*.14))%5===0) modRGB(x,y,Math.round(3*combo.band),Math.round(2*combo.band),Math.round(1*combo.band));
+   if((combo.vertical||0)>0 && inner(x,y) && x%5===0) modRGB(x,y,Math.round(-2*combo.vertical),Math.round(-2*combo.vertical),Math.round(-1*combo.vertical));
+   if(d.material==='carvao' && inner(x,y)){ const seam=((y+Math.floor(x*.22)+Math.round((s.coalDepth||0)*5))%4===0); if(seam) modRGB(x,y,-10-Math.round((s.coalDepth||0)*4),-10-Math.round((s.coalDepth||0)*4),-10-Math.round((s.coalDepth||0)*4)); else if(((y+Math.floor(x*.18))%4===2)) modRGB(x,y,5+Math.round((s.coalPurity||0)*3),5+Math.round((s.coalPurity||0)*3),6+Math.round((s.coalPurity||0)*2)); }
+   if((combo.speckle||0)>0 && inner(x,y) && rand(x,y,seed+1097)<.05*combo.speckle) modRGB(x,y,(rand(x,y,seed+1098)>.5?4:-4),(rand(x,y,seed+1099)>.5?3:-3),(rand(x,y,seed+1100)>.5?2:-2));
+   if((combo.bright||0)>0) modRGB(x,y,Math.round(6*combo.bright),Math.round(5*combo.bright),Math.round(3*combo.bright));
+   if((combo.dark||0)>0 && inner(x,y)) modRGB(x,y,Math.round(-6*combo.dark),Math.round(-5*combo.dark),Math.round(-4*combo.dark));
+   if(erosion>0 && !inner(x,y)) modRGB(x,y,Math.round(7*erosion),Math.round(6*erosion),Math.round(4*erosion));
+   if(weathering>0 && rand(x,y,seed+1103)<.05*weathering) modRGB(x,y,Math.round(-5*weathering),Math.round(-4*weathering),Math.round(-3*weathering));
+   if(age>0 && inner(x,y) && rand(x,y,seed+1109)<.045*age) modRGB(x,y,Math.round(4*age),Math.round(3*age),Math.round(2*age));
+   if(gemLike && inner(x,y) && ((x-y+64)%6===0)) modRGB(x,y,10,8,10);
+   if(gemLike && inner(x,y) && ((x+y)%7===0)) modRGB(x,y,-8,-7,-6);
+   if(quartzLike && inner(x,y) && ((x-y+64)%7===0)) modRGB(x,y,6,6,8);
+  }
+  // realce de planos e recessos, simulando micro volume.
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+   const p=idx(x,y),v=kinds[p]; if(v<0||v>4)continue;
+   const light=(!isRock(x-1,y)||!isRock(x,y-1)||!isRock(x-1,y-1));
+   const recess=inner(x,y) && ((kinds[idx(x-1,y)]<v&&kinds[idx(x+1,y)]<v) || (kinds[idx(x,y-1)]<v&&kinds[idx(x,y+1)]<v));
+   if(light) modRGB(x,y,5,4,3);
+   if(recess) modRGB(x,y,-6,-5,-4);
+  }
+ }
+ cx.putImageData(img,0,0);
+ const output=makePixelCanvas(source.width,source.height),o=output.getContext('2d');
+ o.imageSmoothingEnabled=false;o.drawImage(mini,0,0,output.width,output.height);
+ output.nativePixelArt=mini;
+ output.pixelMetadata={nativeWidth:w,nativeHeight:h,paletteColors:palette.length,style,pixelScale:s.pixelSize,detail:det,seed:d.seed,tier};
+ return output;
+}
+
+// Cristais e bolsões emergentes: adorno determinístico conectado à raridade.
+// É adicionado antes da redução para pixel art, nunca por CSS ou filtro externo.
+function paintRarityFeatures(c,d,s,frameW,frameH,cx,foot,width,height){
+ const cfg=rarityOf(d);
+ if(cfg.crystalCount===0||d.material==='pedra')return;
+ const ore=oreColors[d.material]||oreColors.quartzo;
+ const r=rng(hash(d.seed,1317,d.rarity==='epic'?2:1));
+ const isCrystal=crystalMaterials.includes(d.material);
+ const count=cfg.crystalCount+(d.family==='vein'?1:0);
+ c.save();c.imageSmoothingEnabled=false;
+ for(let i=0;i<count;i++){
+  const t=(i+.5)/count, jitter=(r()-.5)*.24;
+  const x=cx+((t-.5)*.73+jitter)*width;
+  const baseY=foot-height*(.12+r()*.23);
+  const heightFactor=isCrystal?(d.rarity==='epic'?.43:.31):(d.rarity==='epic'?.20:.13);
+  const h=height*(heightFactor*(.42+r()*.72));
+  const baseWidth=Math.max(2,Math.min(width*.16,width*(isCrystal?.055:.078)*(0.55+r()*.75)));
+  const tipX=x+(r()-.5)*baseWidth*.80,tipY=baseY-h;
+  if(tipY<1)continue;
+  const front=[ [x-baseWidth,baseY],[x-baseWidth*.72,baseY-h*.68],[tipX,tipY],
+                [x+baseWidth*.72,baseY-h*.60],[x+baseWidth,baseY] ];
+  c.fillStyle=ore.dark;c.beginPath();c.moveTo(...front[0]);
+  for(let j=1;j<front.length;j++)c.lineTo(...front[j]);c.closePath();c.fill();
+  c.fillStyle=ore.base;c.beginPath();c.moveTo(x-baseWidth,baseY);c.lineTo(x-baseWidth*.72,baseY-h*.68);
+  c.lineTo(tipX,tipY);c.lineTo(x,baseY);c.closePath();c.fill();
+  c.fillStyle=ore.light;c.beginPath();c.moveTo(tipX,tipY);c.lineTo(x+baseWidth*.72,baseY-h*.60);
+  c.lineTo(x,baseY);c.closePath();c.fill();
+  if(r()>.26){c.strokeStyle=ore.accent;c.lineWidth=1;c.beginPath();c.moveTo(tipX,tipY+1);c.lineTo(x,baseY-h*.21);c.stroke();}
+  if(d.rarity==='epic' && r()>.54){c.fillStyle=ore.accent;c.fillRect(Math.round(tipX),Math.round(tipY-2),2,2);}
+ }
+ c.restore();
+}
+function rockSprite(d,s){
+ const family=d.family||d.forma||'round',variant=d.variant||0,tier=d.tier||'normal';
+ const w=tier==='macro'?384:tier==='large'?288:192,h=tier==='macro'?332:tier==='large'?246:176;
+ const cv=makeCanvas(1,1);cv.width=w;cv.height=h;
+ const c=cv.getContext('2d',{alpha:true});c.imageSmoothingEnabled=false;
+ const r=rng(d.seed^0x11335577),cx=w*.50,foot=h*.87;
+ const prof=variantShape(family,variant),scaleW=prof.scale[0],scaleH=prof.scale[1];
+ const dims={round:[.77,.79],block:[.80,.82],wedge:[.82,.82],plate:[.94,.78],column:[.59,.87],shard:[.60,.88],cluster:[.88,.80],vein:[.93,.72]}[family]||[.8,.65];
+ const tierVisual=rarityOf(d).scale;
+ const width=Math.min(w*.93,w*dims[0]*(scaleW*.87+.13)*tierVisual),height=Math.min(h*.82,h*dims[1]*(scaleH*.85+.15)*tierVisual);
+ let part=0;
+ const draw=(x,y,ww,hh,type,noiseSeed,variation=variant,override={})=>paintStone(c,{cx:x,footY:y,width:ww,height:hh,family:type,variant:variation,d:{...d,...override},s,seed:noiseSeed});
+ const pick=()=>hash(d.seed,part++,10991);
+ const geo=(d.geology||s.geology||'granite');
+ const layered=(family==='round'||family==='block'||family==='plate'||family==='wedge');
+ if(family==='cluster'){
+  const n=(tier==='macro'?8:(tier==='large'?6:4))+(variant%2);
+  const spread=width*(tier==='macro'?.82:.68);
+  for(let i=0;i<n;i++){
+   const center=Math.floor(n/2),dist=Math.abs(i-center);
+   const x=cx+((i/Math.max(1,n-1))-.5)*spread+(r()-.5)*width*.10;
+   const high=height*(i===center?1.0:(.48+Math.max(.10,.34-dist*.05)+r()*.12));
+   const ww=width*(i===center?.55:(tier==='macro'?.42:.38));
+   draw(x,foot-3-(i%2)*2,ww,high,i%2?'round':'block',pick(),(variant+i)%5);
+  }
+  if(tier!=='small')draw(cx,foot+1,width*.52,height*.22,'plate',pick(),(variant+3)%5,{grade:d.grade*.84});
+ }else if(family==='column'){
+  draw(cx,foot,width*(tier==='macro'?1.10:.99),Math.max(height*.38,18),'block',pick(),(variant+2)%5,{grade:d.grade*.82});
+  if(tier==='macro'&&geo!=='sandstone')draw(cx,foot-4,width*.76,height*.28,'plate',pick(),(variant+1)%5,{grade:d.grade*.78});
+  const count=tier==='macro'?5:(variant===4?4:variant===1?3:2);
+  for(let i=0;i<count;i++){
+   const frac=(i/Math.max(1,count-1)-.5),partW=width*(count>4?.24:count>3?.29:.39);
+   const tall=height*(i===Math.floor(count/2)?1:(.70+r()*.22));
+   draw(cx+frac*width*(tier==='macro'?.58:.48),foot-4,partW,tall,'column',pick(),(variant+i)%5);
+  }
+  draw(cx-width*.31,foot+2,width*.25,height*.19,'block',pick());
+  draw(cx+width*.34,foot+1,width*.27,height*.19,'round',pick());
+ }else if(family==='shard'){
+  if(tier!=='small')draw(cx-width*.23,foot,width*.42,height*.54,'wedge',pick(),(variant+1)%5,{grade:d.grade*.80});
+  draw(cx+width*.07,foot,width*(tier==='macro'?.79:.71),height,'shard',pick());
+  if(variant%2===1||tier==='macro')draw(cx+width*.34,foot+1,width*.27,height*.29,'block',pick());
+ }else if(family==='vein'){
+  if(tier!=='small')draw(cx,foot+2,width*(tier==='macro'?1.14:.98),height*.34,'plate',pick(),(variant+3)%5,{grade:d.grade*.72});
+  draw(cx+(variant===1?width*.05:0),foot,width,height,'vein',pick());
+  if(tier!=='small')draw(cx-width*.20,foot+1,width*.38,height*.30,'block',pick(),(variant+1)%5,{grade:d.grade*.70});
+  if(tier==='macro')draw(cx+width*.18,foot+1,width*.42,height*.24,'wedge',pick(),(variant+2)%5,{grade:d.grade*.68});
+ }else{
+  if(layered && (tier!=='small')){
+   const backType=(family==='plate'?'plate':(geo==='sandstone'?'plate':'block'));
+   draw(cx-width*.16,foot-2,width*(family==='plate'?.74:.66),height*.54,backType,pick(),(variant+1)%5,{grade:d.grade*.80});
+   if(tier==='macro'||geo==='sandstone'||geo==='slate')draw(cx+width*.18,foot-1,width*(family==='plate'?.52:.44),height*.38,backType,pick(),(variant+3)%5,{grade:d.grade*.74});
+  }
+  if(variant===4||variant===2)draw(cx-width*.30,foot,width*.37,height*.49,family==='plate'?'plate':'block',pick(),(variant+1)%5,{grade:d.grade*.80});
+  draw(cx+(variant===1?width*.05:0),foot,width,height,family,pick());
+  if(family==='plate'&&tier!=='small'){draw(cx+width*.06,foot+2,width*.68,height*.18,'plate',pick(),(variant+2)%5,{grade:d.grade*.70}); if(tier!=='small')draw(cx-width*.22,foot+1,width*.40,height*.16,'plate',pick(),(variant+4)%5,{grade:d.grade*.66});}
+  if((variant===1||variant===3||tier==='macro'))draw(cx+width*.36,foot+2,width*.27,height*.26,'block',pick(),(variant+2)%5,{grade:d.grade*.76});
+ }
+ if(family!=='vein'){
+  const rubbles=tier==='macro'?(family==='cluster'?7:4):(family==='cluster'?4:(family==='round'?4:(family==='vein'?3:(variant%3===0?3:2))));
+  for(let i=0;i<rubbles;i++){
+   const side=i%2?1:-1,x=cx+side*(width*.38+i*width*.045),y=foot+1+(i%2);
+   draw(x,y,Math.max(5,width*(.09+r()*.07)),Math.max(4,height*(.07+r()*.09)),'round',pick(),(i+variant)%5,{grade:d.grade*.62});
+  }
+ }
+ paintRarityFeatures(c,d,s,w,h,cx,foot,width,height);
+ return pixelFinish(cv,d,s);
+}
+function outcropSize(d){
+ const family=d.family||d.forma||'round';const tier=d.tier||'normal';
+ const mult=tier==='macro'?2.18:tier==='large'?1.56:tier==='small'?.72:1;
+ const base=(34+d.grade*12)*mult*rarityOf(d).scale;
+ const shape={round:[.92,.66],block:[1.08,1.02],wedge:[1.02,.94],plate:[1.34,.54],column:[.76,1.54],shard:[.74,1.56],cluster:[1.28,.74],vein:[1.34,.58]}[family]||[1,1];
+ return {w:Math.round(base*shape[0]),h:Math.round(base*shape[1])};
+}
+function drawSupportPiece(ctx,d,s,dx,dy,scale=.35,shift=1,alpha=1){
+ const family=d.family==='column'?'block':(d.family==='plate'?'plate':(d.family==='cluster'?'round':(shift%2===0?'wedge':'round')));
+ const sub={...d,tier:'normal',macro:false,large:false,tilesW:1,tilesH:1,family,forma:family,variant:((d.variant||0)+shift)%5,seed:hash(d.seed,shift,702),grade:Math.max(.36,d.grade*.7)};
+ const asset=rockSprite(sub,s),dims=outcropSize(d),w=Math.max(9,Math.round(dims.w*scale)),h=Math.max(6,Math.round(dims.h*scale*.70));
+ ctx.save();ctx.globalAlpha=alpha;ctx.imageSmoothingEnabled=false;ctx.drawImage(asset,Math.round(d.x+dx-w*.5),Math.round(d.y+dy-h*.87),w,h);ctx.restore();
+}
+function drawBurial(ctx,d,s,size){
+ if(s.burial<=0)return;
+ const r=rng(hash(d.seed,742)),colors=palettes[s.terrain].soil;
+ const buried=Math.max(1,Math.round(Math.min(10,size.h*.19)*s.burial));
+ const left=Math.round(d.x-size.w*.47),right=Math.round(d.x+size.w*.47);
+ ctx.save();
+ for(let x=left;x<=right;x++){
+  if(r()<.18)continue;
+  const wave=Math.round((noise(x/9,d.y/8,d.seed)-.5)*3+r()*2);
+  ctx.fillStyle=colors[r()>.55?0:3];ctx.globalAlpha=.80;
+  ctx.fillRect(x,Math.round(d.y-buried+wave),1,Math.max(1,buried+1-wave));
+ }
+ ctx.globalAlpha=1;
+ for(let i=0;i<Math.max(4,Math.round(size.w*.13));i++){
+  const x=Math.round(d.x+(r()-.5)*size.w*1.18),y=Math.round(d.y+(r()-.5)*6);
+  ctx.fillStyle=r()<.5?rockGeologies[d.geology]?.colors[1]||'#68605b':colors[3];ctx.fillRect(x,y,1+(r()>.7?1:0),1);
+ }
+ ctx.restore();
+}
+function drawOutcrop(ctx,d,s){
+ const sprite=rockSprite(d,s),size=outcropSize(d);
+ const r=rng(hash(d.seed,193));
+ ctx.save();ctx.imageSmoothingEnabled=false;
+ if(d.large||d.macro){
+  const n=Math.max(2,d.satellites||1);
+  for(let i=0;i<n;i++){
+   const side=i%2===0?-1:1;
+   const dx=side*size.w*(.25+r()*.17),dy=-(1+r()*4);
+   drawSupportPiece(ctx,d,s,dx,dy,.28+r()*.08,i+2,.92);
+  }
+  if(d.macro){
+   drawSupportPiece(ctx,d,s,-size.w*.18,-size.h*.04,.34,15,.62);
+   drawSupportPiece(ctx,d,s,size.w*.16,-size.h*.05,.30,16,.58);
+  }
+ }
+ ctx.drawImage(sprite,Math.round(d.x-size.w*.50),Math.round(d.y-size.h*.87),size.w,size.h);
+ if(d.large||d.macro){
+  drawSupportPiece(ctx,d,s,-size.w*.40,1,.28,7);
+  drawSupportPiece(ctx,d,s,size.w*.33,2,.24,8);
+  if(d.macro){
+   drawSupportPiece(ctx,d,s,-size.w*.12,3,.20,17,.96);
+   drawSupportPiece(ctx,d,s,size.w*.08,4,.17,18,.90);
+  }
+ }
+ drawBurial(ctx,d,s,size);
+ ctx.restore();
+}
+
+  function normalize(options={}) {
+    const biome=options.biome||'temperate';
+    if (!biomeProfiles[biome]) throw new RangeError('Bioma inválido: '+biome);
+    const s={biome,material:'mixed',rarity:'mixed',forma:'mixed',terrain:biomeProfiles[biome].soil,
+      burial:.3,density:.64,geology:'mixed',paletteMode:'reference',fractures:.55,
+      moss:.35, mineralization:.70,macroRate:.42,pixelStyle:'realistic',pixelSize:'normal',
+      surfaceDetail:.9,erosion:.24,weathering:.32,geologicalAge:.5,
+      coalPurity:.7,coalDepth:.5,autoTile:true,showGrid:false,seed:1947,...options};
+    s.seed=(Number(s.seed)||1947)>>>0;
+    if(s.terrain==='auto')s.terrain=biomeProfiles[biome].soil;
+    if(!palettes[s.terrain]) throw new RangeError('Terreno inválido: '+s.terrain);
+    if(!['mixed',...keys,'quartzo','gemas','pedra'].includes(s.material))throw new RangeError('Material inválido: '+s.material);
+    if(!['mixed',...shapeFamilies].includes(s.forma))throw new RangeError('Formato inválido: '+s.forma);
+    return s;
+  }
+  function generate(options={}) {
+    const s=normalize(options);
+    const {deposits,grid,attempts,target}=depositData(s);
+    const terrain=makeTerrainGrid(s);
+    return {schema:'rock-world/2.3',generatorVersion:'2.3',parameters:s,deposits,grid,terrain,attempts,target};
+  }
+  function createDeposit(options={}) {
+    const s=normalize(options);
+    const rngSeed=rng(s.seed^0x4af019);
+    const family=s.forma==='mixed'?chooseFamily(rngSeed):s.forma;
+    const material=resolveMaterial(s.material==='mixed'?keys[Math.floor(rngSeed()*keys.length)]:s.material,rngSeed);
+    const rarity=chooseRarity(rngSeed,s.rarity);
+    const raritySettings=rarityProfiles[rarity];
+    const grade=+(raritySettings.grade[0]+rngSeed()*(raritySettings.grade[1]-raritySettings.grade[0])).toFixed(3);
+    const variant=hash(s.seed,13,79)%5;
+    const geo=s.geology==='mixed'?weightedChoice(rngSeed,biomeProfiles[s.biome].geologies):s.geology;
+    return {id:1,x:0,y:0,size:30,seed:hash(s.seed,7,17),family,forma:family,variant,
+      material,geology:geo,rarity,rarityLabel:raritySettings.label,grade,tier:'normal',
+      heightBias:familyScale[family][1],biome:s.biome,blocksMovement:true};
+  }
+  function renderSprite(deposit,options={}) {return rockSprite(deposit,normalize(options));}
+  function renderWorld(world,options={}){
+    const s=normalize({...world.parameters,...options});
+    const cv=makeGround(s,world.deposits,true),ctx=cv.getContext('2d');
+    if(s.autoTile)drawAutoTerrain(ctx,world.terrain,s);
+    for(const deposit of world.deposits)drawOutcrop(ctx,deposit,s);
+    return cv;
+  }
+  return Object.freeze({version:'2.3',generate,createDeposit,renderSprite,renderWorld,
+    makeTileAtlas:(options={})=>makeTileAtlas(normalize(options)),
+    normalize,depositSize:outcropSize,
+    catalogs:Object.freeze({materials:keys.slice(),families:shapeFamilies.slice(),geologies:geologyKeys.slice(),biomes:Object.keys(biomeProfiles),rarities:Object.keys(rarityProfiles)}),
+    rarityProfiles,biomeProfiles,rockGeologies});
+}

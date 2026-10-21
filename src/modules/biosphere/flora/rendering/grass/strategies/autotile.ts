@@ -1,4 +1,4 @@
-/** ASTERRA: pure visual projection of already-simulated grass cohorts.
+/** Internal renderer: pure visual projection of already-simulated grass cohorts.
  * The Web Worker remains the only source of ecological truth. */
 export type GrassSample = Readonly<{biomassGPerM2:number;wetland:boolean;blocked:boolean}>;
 export type GrassTileFrame = {
@@ -26,7 +26,7 @@ export function generateGrassTileFrame(
 ):GrassTileFrame{
  if(!Number.isInteger(width)||width<=0||!Number.isInteger(height)||height<=0
    ||cells.length!==width*height||!Number.isInteger(detail)||detail<1||detail>8)
-   throw new RangeError('Invalid ASTERRA grass grid');
+   throw new RangeError('Invalid grass grid');
  const columns=width*detail,rows=height*detail;
  const states=new Uint8Array(columns*rows),masks=new Uint8Array(columns*rows);
  for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){

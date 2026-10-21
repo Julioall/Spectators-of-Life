@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { canonicalStringify } from '../../src/core/canonical-json';
 import { createNaturalWorld } from '../../src/core/natural/scenario';
 import { getNaturalWorld } from '../../src/core/natural/types';
-import { ambientRockColor, generateProceduralRocks, gravelAffinityForCell, mossMultiplierForHabitat, rockRegionAffinityForCell, rockTouchesWater } from '../../src/render/procedural-rocks';
-import { createAsterraSettings } from '../../src/render/asterra/settings';
-import { footprintAt, outcropSize } from '../../src/render/asterra/engine.js';
-import { asterraTerrainForSurface } from '../../src/render/terrain-palette';
+import { ambientRockColor, generateProceduralRocks, gravelAffinityForCell, mossMultiplierForHabitat, rockRegionAffinityForCell, rockTouchesWater } from '../../src/modules/geosphere/rendering/rocks/procedural-rocks';
+import { createRockSettings } from '../../src/modules/geosphere/rendering/rocks/legacy-settings';
+import { footprintAt, outcropSize } from '../../src/modules/geosphere/rendering/rocks/legacy-engine.js';
+import { rockTerrainForSurface } from '../../src/render/terrain-palette';
 
 describe('geração procedural de rochas', () => {
   it('repete formas e footprints com a mesma seed visual sem alterar a simulação', () => {
@@ -77,10 +77,10 @@ describe('geração procedural de rochas', () => {
     expect(rocks.some((rock) => rock.visualScale < 0.6)).toBe(true);
     expect(rocks.some((rock) => rock.deposit.tier === 'normal')).toBe(true);
     expect(rocks.some((rock) => rock.settings.terrain === 'mountain' || rock.settings.terrain === 'volcanic')).toBe(true);
-    expect(asterraTerrainForSurface('desert', 'granite')).toBe('dry');
-    expect(asterraTerrainForSurface('wetland', 'granite')).toBe('coast');
-    expect(asterraTerrainForSurface('rock', 'basalt')).toBe('volcanic');
-    expect(asterraTerrainForSurface('meadow', 'granite')).toBe('grass');
+    expect(rockTerrainForSurface('desert', 'granite')).toBe('dry');
+    expect(rockTerrainForSurface('wetland', 'granite')).toBe('coast');
+    expect(rockTerrainForSurface('rock', 'basalt')).toBe('volcanic');
+    expect(rockTerrainForSurface('meadow', 'granite')).toBe('grass');
   });
 
   it('espalha pedregulhos pequenos e reserva pontas para zonas secas', () => {
@@ -114,8 +114,8 @@ describe('geração procedural de rochas', () => {
   it('aumenta o musgo em floresta sem alterar a paleta dos veios', () => {
     expect(mossMultiplierForHabitat('woodland')).toBeGreaterThan(2);
     expect(mossMultiplierForHabitat('woodland')).toBeGreaterThan(mossMultiplierForHabitat('meadow'));
-    const forest = createAsterraSettings('temperate', 'ouro', 'granite', 1947, 'grass', mossMultiplierForHabitat('woodland'));
-    const meadow = createAsterraSettings('temperate', 'ouro', 'granite', 1947, 'grass', mossMultiplierForHabitat('meadow'));
+    const forest = createRockSettings('temperate', 'ouro', 'granite', 1947, 'grass', mossMultiplierForHabitat('woodland'));
+    const meadow = createRockSettings('temperate', 'ouro', 'granite', 1947, 'grass', mossMultiplierForHabitat('meadow'));
     expect(forest.moss).toBeGreaterThan(meadow.moss);
     expect(forest.moss).toBeLessThanOrEqual(1);
   });

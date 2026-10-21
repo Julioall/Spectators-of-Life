@@ -49,10 +49,10 @@
       "source": "data/assets/tree/Spritesheets/arvores_atlas_128.png",
       "frameSize": [128, 128],
       "anchor": [64, 123],
-      "status": "integrated",
+      "status": "deprecated",
       "license": null,
       "author": null,
-      "notes": "Atlas 12x5 com carvalho, pinheiro, bétula, árvore outonal e salgueiro; a cena usa crescimento 01–08 e estado seco para senescência. Pivot verificado na documentação do pacote; licença/autoria ainda não confirmadas."
+      "notes": "Atlas 12x5 mantido somente como referência arquivada. O runtime gera quadros de árvores por código, sem carregar este PNG. Pivot verificado na documentação do pacote; licença/autoria ainda não confirmadas."
     },
     "environment.mineral-outcrop-atlas": {
       "domain": "environment",

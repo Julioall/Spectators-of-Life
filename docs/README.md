@@ -21,7 +21,9 @@ Estado: F0 validado localmente; protótipo F1–F2 em revisão. Implementação 
 | [10 — Ecologia e biologia](10-ecologia-e-biologia.md) | Escopo natural obrigatório e abstrações |
 | [11 — Skills de agentes](11-agent-skills.md) | Roteamento de skills focadas para tarefas de desenvolvimento por IA |
 | [12 — Validação documental](12-validacao-documental.md) | Cobertura, evidências e pendências de validação |
-| [13 — Motores procedurais de rochas](13-motores-procedurais-de-rochas.md) | ASTERRA v2.3, adaptador de distribuição, grupos, paleta, água e validação |
+| [13 — Motores procedurais de rochas](13-motores-procedurais-de-rochas.md) | Adaptação da distribuição, grupos, paleta, água e validação das rochas |
+| [14 — Motores naturais internos](14-motores-naturais-e-flora.md) | Integração dos motores na apresentação da Flora e estado por sistema |
+| [15 — Módulos naturais internos](15-modulos-naturais-internos.md) | Organização interna, responsabilidades, fronteiras e proveniência |
 | [Pesquisa — Hidrologia e malha de água](research/2026-10-20-hidrologia-malha-agua-consensus.md) | Síntese SciSpace/Consensus sobre roteamento, depressões, canais e visualização |
 | [Specs de implementação](specs/README.md) | Contratos verificáveis para F0–F4, tempo lógico, métricas e critérios de aceite |
 
@@ -35,7 +37,7 @@ F0–F4 entregam mundo natural autônomo. F5–F6 introduzem humanos e tribos. F
 
 A decisão vigente de roteamento híbrido e malha visual está na [ADR 0015](adr/0015-roteamento-hibrido-e-malha-de-agua.md).
 
-[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer usa o atlas das cinco espécies de árvores e gera rochas/minérios em runtime; as referências de autotiling em `data/assets/environment/` continuam fora do runtime.
+[Contratos de dados](../data/schemas/README.md) F0 são versionados e têm fixtures. O cenário natural já tem validação runtime; schemas JSON específicos para cada sistema F1/F2 e seus critérios completos de aceite ainda estão pendentes. O renderer gera as cinco espécies de árvores, gramíneas, arbustos e rochas em runtime; imagens em `data/assets/` são referências arquivadas e não são carregadas pelo jogo. A decisão está registrada na [ADR 0017](adr/0017-arte-natural-procedural.md).
 
 ## Revisão documental
 

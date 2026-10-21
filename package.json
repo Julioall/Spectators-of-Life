@@ -11,12 +11,13 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "test:engines": "node --test tests/engines/*.test.js",
     "build": "vite build",
     "verify:boundary": "node scripts/verify-core-boundary.mjs",
     "benchmark:natural": "node --expose-gc scripts/natural-benchmark.mjs",
     "benchmark:f0": "npm run benchmark:natural",
     "soak:natural": "vitest run --config vite.natural-soak.config.ts",
-    "check": "npm run typecheck && npm test -- --run && npm run verify:boundary && npm run build",
+    "check": "npm run typecheck && npm test -- --run && npm run test:engines && npm run verify:boundary && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

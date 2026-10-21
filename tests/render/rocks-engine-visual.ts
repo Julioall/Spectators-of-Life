@@ -1,11 +1,11 @@
 import referenceUrl from '../../data/assets/rocks/asterra/ASTERRA_Gerador_Rochas_v2.3.html?url';
-import { drawProceduralRock, rockRasterBounds, type ProceduralRock } from '../../src/render/procedural-rocks';
-import { createAsterraSettings } from '../../src/render/asterra/settings';
-import { hash, type AsterraDeposit, type AsterraFamily, type AsterraGeology, type AsterraMaterial, type AsterraSettings, type AsterraTier, type AsterraRarity } from '../../src/render/asterra/engine.js';
+import { drawProceduralRock, rockRasterBounds, type ProceduralRock } from '../../src/modules/geosphere/rendering/rocks/procedural-rocks';
+import { createRockSettings } from '../../src/modules/geosphere/rendering/rocks/legacy-settings';
+import { hash, type RockDeposit, type RockFamily, type RockGeology, type RockMaterial, type RockSettings, type RockTier, type RockRarity } from '../../src/modules/geosphere/rendering/rocks/legacy-engine.js';
 
 type Reference = Window & {
-  settings: () => AsterraSettings;
-  drawOutcrop: (context: CanvasRenderingContext2D, deposit: AsterraDeposit, settings: AsterraSettings) => void;
+  settings: () => RockSettings;
+  drawOutcrop: (context: CanvasRenderingContext2D, deposit: RockDeposit, settings: RockSettings) => void;
 };
 const status = document.querySelector<HTMLPreElement>('#results')!;
 const gallery = document.querySelector<HTMLElement>('#gallery')!;
@@ -21,15 +21,15 @@ async function verify(): Promise<void> {
   document.body.append(iframe);
   await loaded;
   const reference = iframe.contentWindow as Reference;
-  const defaults = createAsterraSettings();
+  const defaults = createRockSettings();
   const originalDefaults = reference.settings();
-  const defaultsMatch = Object.entries(originalDefaults).every(([key, value]) => defaults[key as keyof AsterraSettings] === value)
+  const defaultsMatch = Object.entries(originalDefaults).every(([key, value]) => defaults[key as keyof RockSettings] === value)
     && Object.keys(originalDefaults).length === Object.keys(defaults).length;
-  const families: AsterraFamily[] = ['round', 'block', 'wedge', 'plate', 'column', 'shard', 'cluster', 'vein'];
-  const tiers: AsterraTier[] = ['normal', 'large', 'macro', 'small', 'macro'];
-  const rarities: AsterraRarity[] = ['normal', 'rare', 'epic', 'normal', 'rare'];
-  const materials: AsterraMaterial[] = ['pedra', 'cobre', 'ferro', 'prata', 'ouro'];
-  const geologies: AsterraGeology[] = ['granite', 'sandstone', 'basalt', 'slate', 'limestone', 'tuff'];
+  const families: RockFamily[] = ['round', 'block', 'wedge', 'plate', 'column', 'shard', 'cluster', 'vein'];
+  const tiers: RockTier[] = ['normal', 'large', 'macro', 'small', 'macro'];
+  const rarities: RockRarity[] = ['normal', 'rare', 'epic', 'normal', 'rare'];
+  const materials: RockMaterial[] = ['pedra', 'cobre', 'ferro', 'prata', 'ouro'];
+  const geologies: RockGeology[] = ['granite', 'sandstone', 'basalt', 'slate', 'limestone', 'tuff'];
   let count = 0;
   let differentPixels = 0;
   let boundaryPixels = 0;
@@ -40,8 +40,8 @@ async function verify(): Promise<void> {
       const rarity = rarities[variant]!;
       const geology = geologies[(familyIndex + variant) % geologies.length]!;
       const material = materials[(familyIndex + variant) % materials.length]!;
-      const settings = createAsterraSettings('temperate', material, geology);
-      const deposit: AsterraDeposit = {
+      const settings = createRockSettings('temperate', material, geology);
+      const deposit: RockDeposit = {
         id: count + 1, x: 193 + familyIndex * 3, y: 157 + variant * 7,
         family, forma: family, variant, grade: 0.72 + variant * 0.04,
         geology, material, biome: 'temperate', rarity, tier,

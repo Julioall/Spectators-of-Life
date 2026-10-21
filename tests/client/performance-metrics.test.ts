@@ -8,7 +8,13 @@ describe('métricas de desempenho da apresentação', () => {
     tracker.recordPhaserFps(59.5);
     tracker.recordRender(3.2);
     tracker.recordDynamicLayers(1.8);
+    tracker.recordRenderLayer('vegetation', 1.2);
+    tracker.recordVegetationDetail(2.1, 3.2, 0.4);
+    tracker.recordMineralCatalog(12.3, 90, 14);
+    tracker.recordMineralCreation(0.8, 0.2, 2, 12);
     tracker.recordWaterMotion(0.4);
+    tracker.recordWaterDetail(1.1, 2.2, 3.3);
+    tracker.recordWaterSurfaceDetail(0.4, 0.5, 0.6, 7);
     tracker.recordSimulation(7.1);
     tracker.recordSnapshot(9.4);
     tracker.recordWorker(12.5, 4);
@@ -21,7 +27,12 @@ describe('métricas de desempenho da apresentação', () => {
       phaserFps: 59.5,
       renderMs: 3.2,
       dynamicLayersMs: 1.8,
+      renderLayerMs: { relief: null, geology: null, water: null, minerals: null, vegetation: 1.2 },
+      vegetationDetailMs: { grass: 2.1, objects: 3.2, shadows: 0.4 },
+      mineralDetailMs: { catalog: 12.3, formations: 90, visible: 14, raster: 0.8, sprites: 0.2, created: 2, pending: 12 },
       waterMotionMs: 0.4,
+      waterDetailMs: { depth: 1.1, geometry: 2.2, surface: 3.3 },
+      waterSurfaceDetailMs: { cache: 0.4, mask: 0.5, chunks: 0.6, dirtyChunks: 7 },
       simulationMs: 7.1,
       snapshotMs: 9.4,
       renderSamples: { samples: 1, p50Ms: 3.2, p95Ms: 3.2, maxMs: 3.2 },
@@ -54,7 +65,12 @@ describe('métricas de desempenho da apresentação', () => {
       phaserFps: null,
       renderMs: null,
       dynamicLayersMs: null,
+      renderLayerMs: { relief: null, geology: null, water: null, minerals: null, vegetation: null },
+      vegetationDetailMs: { grass: null, objects: null, shadows: null },
+      mineralDetailMs: { catalog: null, formations: null, visible: null, raster: null, sprites: null, created: null, pending: null },
       waterMotionMs: null,
+      waterDetailMs: { depth: null, geometry: null, surface: null },
+      waterSurfaceDetailMs: { cache: null, mask: null, chunks: null, dirtyChunks: null },
       simulationMs: null,
       snapshotMs: null,
       renderSamples: null,
@@ -77,7 +93,12 @@ describe('métricas de desempenho da apresentação', () => {
       phaserFps: null,
       renderMs: null,
       dynamicLayersMs: null,
+      renderLayerMs: { relief: null, geology: null, water: null, minerals: null, vegetation: null },
+      vegetationDetailMs: { grass: null, objects: null, shadows: null },
+      mineralDetailMs: { catalog: null, formations: null, visible: null, raster: null, sprites: null, created: null, pending: null },
       waterMotionMs: null,
+      waterDetailMs: { depth: null, geometry: null, surface: null },
+      waterSurfaceDetailMs: { cache: null, mask: null, chunks: null, dirtyChunks: null },
       simulationMs: null,
       snapshotMs: null,
       renderSamples: null,

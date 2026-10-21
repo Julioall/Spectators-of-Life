@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createNaturalWorld } from '../../src/core/natural/scenario';
 import { getNaturalWorld } from '../../src/core/natural/types';
-import { generateProceduralRocks, treeBlockingCellsForRocks } from '../../src/render/procedural-rocks';
+import { generateProceduralRocks, treeBlockingCellsForRocks } from '../../src/modules/geosphere/rendering/rocks/procedural-rocks';
 import { worldObjectDepth } from '../../src/render/z-order';
 
 describe('ordem visual do mundo', () => {

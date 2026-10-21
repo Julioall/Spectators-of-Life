@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PerformanceTracker, type TimingSamples } from './client/performance-metrics';
+import { PerformanceTracker, type RenderLayerId, type TimingSamples } from './client/performance-metrics';
 import { shouldFetchSnapshotAfterAdvance } from './client/snapshot-policy';
 import { StepDriver, type DriverState } from './client/step-driver';
 import { SimulationClient, type WorkerPort } from './client/worker-transport';
@@ -54,7 +54,11 @@ const performancePhaserFpsOutput = requiredElement<HTMLElement>('performance-pha
 const performanceFrameOutput = requiredElement<HTMLElement>('performance-frame');
 const performanceRenderOutput = requiredElement<HTMLElement>('performance-render');
 const performanceLayersOutput = requiredElement<HTMLElement>('performance-layers');
+const performanceLayerDetailsOutput = requiredElement<HTMLElement>('performance-layer-details');
+const performanceVegetationDetailsOutput = requiredElement<HTMLElement>('performance-vegetation-details');
+const performanceMineralDetailsOutput = requiredElement<HTMLElement>('performance-mineral-details');
 const performanceWaterOutput = requiredElement<HTMLElement>('performance-water-motion');
+const performanceWaterSurfaceOutput = requiredElement<HTMLElement>('performance-water-surface-detail');
 const performanceSimulationOutput = requiredElement<HTMLElement>('performance-simulation');
 const performanceSnapshotOutput = requiredElement<HTMLElement>('performance-snapshot');
 const performanceWorkerOutput = requiredElement<HTMLElement>('performance-worker');
@@ -331,7 +335,11 @@ function updatePerformancePanel(): void {
   performanceFrameOutput.textContent = metric(metrics.frameMs, ' ms');
   performanceRenderOutput.textContent = timingMetric(metrics.renderMs, metrics.renderSamples);
   performanceLayersOutput.textContent = metric(metrics.dynamicLayersMs, ' ms');
-  performanceWaterOutput.textContent = metric(metrics.waterMotionMs, ' ms');
+  performanceLayerDetailsOutput.textContent = formatRenderLayerTimes(metrics.renderLayerMs);
+  performanceVegetationDetailsOutput.textContent = `grama ${metric(metrics.vegetationDetailMs.grass, ' ms')} · objetos ${metric(metrics.vegetationDetailMs.objects, ' ms')} · sombras ${metric(metrics.vegetationDetailMs.shadows, ' ms')}`;
+  performanceMineralDetailsOutput.textContent = `catálogo ${metric(metrics.mineralDetailMs.catalog, ' ms')} · ${metric(metrics.mineralDetailMs.formations, ' formações')} (${metric(metrics.mineralDetailMs.visible, ' visíveis')} vis.) · raster ${metric(metrics.mineralDetailMs.raster, ' ms')} · sprites ${metric(metrics.mineralDetailMs.sprites, ' ms')} · ${metric(metrics.mineralDetailMs.created, ' criadas')} · ${metric(metrics.mineralDetailMs.pending, ' pendentes')}`;
+  performanceWaterOutput.textContent = `movimento ${metric(metrics.waterMotionMs, ' ms')} · prof. ${metric(metrics.waterDetailMs.depth, ' ms')} · desenho ${metric(metrics.waterDetailMs.geometry, ' ms')} · textura ${metric(metrics.waterDetailMs.surface, ' ms')}`;
+  performanceWaterSurfaceOutput.textContent = `cache ${metric(metrics.waterSurfaceDetailMs.cache, ' ms')} · máscara ${metric(metrics.waterSurfaceDetailMs.mask, ' ms')} · chunks ${metric(metrics.waterSurfaceDetailMs.chunks, ' ms')} · ${metric(metrics.waterSurfaceDetailMs.dirtyChunks, ' chunks')}`;
   performanceSimulationOutput.textContent = timingMetric(metrics.simulationMs, metrics.simulationSamples);
   performanceSnapshotOutput.textContent = timingMetric(metrics.snapshotMs, metrics.snapshotSamples);
   performanceWorkerOutput.textContent = metric(metrics.workerMs, ' ms');
@@ -370,6 +378,16 @@ function timingMetric(value: number | null, samples: TimingSamples | null): stri
   if (samples === null) return metric(value, ' ms');
   const format = (sample: number) => sample.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
   return `${format(value)} ms · P50 ${format(samples.p50Ms)} · P95 ${format(samples.p95Ms)} · n ${samples.samples}`;
+}
+
+function formatRenderLayerTimes(values: Record<RenderLayerId, number | null>): string {
+  const labels: Record<RenderLayerId, string> = {
+    relief: 'relevo', geology: 'geologia', water: 'água', minerals: 'rochas', vegetation: 'flora',
+  };
+  return (Object.entries(values) as Array<[RenderLayerId, number | null]>)
+    .filter((entry): entry is [RenderLayerId, number] => entry[1] !== null)
+    .map(([layer, elapsedMs]) => `${labels[layer]} ${metric(elapsedMs, ' ms')}`)
+    .join(' · ') || '—';
 }
 
 function updateWorldReadings(natural: NaturalWorldEntity | null, snapshot: WorldState): void {
@@ -485,8 +503,26 @@ function getFoundationScene(): FoundationScene | null {
       onDynamicLayersMs: (elapsedMs) => {
         if (performanceEnabled) performanceTracker.recordDynamicLayers(elapsedMs);
       },
+      onRenderLayerMs: (layer, elapsedMs) => {
+        if (performanceEnabled) performanceTracker.recordRenderLayer(layer, elapsedMs);
+      },
+      onVegetationCostsMs: (grassMs, objectsMs, shadowsMs) => {
+        if (performanceEnabled) performanceTracker.recordVegetationDetail(grassMs, objectsMs, shadowsMs);
+      },
+      onMineralCatalogMs: (elapsedMs, formationCount, visibleCount) => {
+        if (performanceEnabled) performanceTracker.recordMineralCatalog(elapsedMs, formationCount, visibleCount);
+      },
+      onMineralCreationMs: (rasterMs, spriteMs, created, pending) => {
+        if (performanceEnabled) performanceTracker.recordMineralCreation(rasterMs, spriteMs, created, pending);
+      },
       onWaterMotionMs: (elapsedMs) => {
         if (performanceEnabled) performanceTracker.recordWaterMotion(elapsedMs);
+      },
+      onWaterCostsMs: (depthMs, geometryMs, surfaceMs) => {
+        if (performanceEnabled) performanceTracker.recordWaterDetail(depthMs, geometryMs, surfaceMs);
+      },
+      onWaterSurfaceCostsMs: (cacheMs, maskMs, chunkMs, dirtyChunks) => {
+        if (performanceEnabled) performanceTracker.recordWaterSurfaceDetail(cacheMs, maskMs, chunkMs, dirtyChunks);
       },
     });
     performanceSceneConfigured = true;
